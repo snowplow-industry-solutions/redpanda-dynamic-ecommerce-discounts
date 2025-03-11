@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<title>Dynamic Ecommerce Discounts with Redpanda</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Dynamic Ecommerce Discounts with Redpanda</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#introduction">1. Introduction</a></li>
+<li><a href="#architecture">2. Architecture</a></li>
+<li><a href="#prerequisites">3. Prerequisites</a></li>
+<li><a href="#steps">4. Steps (to run this application as is)</a>
+<ul class="sectlevel2">
+<li><a href="#step1">Step 1 &#8594; Start the containers</a></li>
+<li><a href="#step2">Step 2 &#8594; Know the URL provided by the services</a></li>
+<li><a href="#stepX">Step X &#8594; (optional) Use LazyDocker to monitor the containers and logs</a></li>
+</ul>
+</li>
+<li><a href="#clean-up-steps">5. Clean up steps</a>
+<ul class="sectlevel2">
+<li><a href="#cleanup-step1">Step 1 &#8594; Stop the containers</a></li>
+<li><a href="#cleanup-step2">Step 2 &#8594; Clean up</a></li>
+</ul>
+</li>
+<li><a href="#references">6. References</a></li>
+<li><a href="#demo-videos">7. Demo videos</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Git commit: 0664b37</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="introduction"><a class="anchor" href="#introduction"></a>1. Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This project is a companion to the <a href="https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store">Example Next.js Ecommerce Store for Snowplow</a>.</p>
+</div>
+<div class="paragraph">
+<p>It allows you to test this demo locally, using <a href="https://www.localstack.cloud/">LocalStack</a>, and in the <a href="https://aws.amazon.com">AWS</a> cloud.</p>
+</div>
+<div class="paragraph">
+<p>Its <a href="#architecture">Architecture</a> is designed so a developer can quickly and easily set up these two environments and test the project.</p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="architecture"><a class="anchor" href="#architecture"></a>2. Architecture</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a id="ecommerce-nextjs-example-store"></a> The <strong><a href="https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store">ecommerce-nextjs-example-store</a></strong> is a Next.js application that generates tracking events.</p>
+</li>
+<li>
+<p><a id="stream-collector"></a> The <strong>stream-collector</strong> component sends these events via Kinesis to the <strong><a href="#snowbridge">[snowbridge]</a></strong> component.</p>
+</li>
+<li>
+<p><a id="snowbridge"></a> The <strong>snowbridge</strong> component enriches these events, inserts more information (via <strong><a href="#enrich">[enrich]</a></strong> component), and sends them to Redpanda.</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="enrich"></a> Read more about the <strong>enrich</strong> component here: <a href="https://docs.snowplow.io/docs/pipeline-components-and-applications/enrichment-components/enrich-kinesis/" class="bare">https://docs.snowplow.io/docs/pipeline-components-and-applications/enrichment-components/enrich-kinesis/</a>.</p>
+</li>
+<li>
+<p>Read more about the <strong>snowbridge</strong> component here: <a href="https://docs.snowplow.io/docs/destinations/forwarding-events/snowbridge/" class="bare">https://docs.snowplow.io/docs/destinations/forwarding-events/snowbridge/</a>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div style="page-break-after: always;"></div>
+<div class="paragraph">
+<p><strong>Sequence Diagram</strong> for the <a href="#architecture">Architecture</a>:</p>
+</div>
+<div class="paragraph">
+<p>TODO</p>
+</div>
+<div class="paragraph">
+<p>All components in this <a href="#architecture">Architecture</a> run as Docker containers via <code>docker compose</code>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="compose-snowplow"></a> The Snowplow&#8217;s components (<strong><a href="#stream-collector">[stream-collector]</a></strong>, <strong><a href="#enrich">[enrich]</a></strong>, and <strong><a href="#snowbridge">[snowbridge]</a></strong>) are defined in the file <code>compose.snowplow.yaml</code>.</p>
+</li>
+<li>
+<p><a id="compose-repanda"></a> Redpanda&#8217;s infrastructure is provided by the file <code>compose.redpanda.yaml</code>.</p>
+</li>
+<li>
+<p><a id="compose-apps"></a> The apps components (<strong><a href="#ecommerce-nextjs-example-store">[ecommerce-nextjs-example-store]</a></strong>) are defined in the file <code>compose.apps.yaml</code>.</p>
+</li>
+<li>
+<p><a id="compose-localstack"></a> The infrastructure to provide the AWS resources locally (Kinesis, DyanmoDB, etc) is created by <a href="https://www.localstack.cloud/">LocalStack</a>.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Read the file <code>compose.localstack.yaml</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a id="terraform"></a> These components and resources are created in AWS using Terraform scripts.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>There is another document, in <code>docs/terraform</code> folder, explaining the details.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>3. Prerequisites</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Start a Ubuntu Linux (it can be running on a WSL2 environment) terminal.</p>
+</li>
+<li>
+<p>Make sure you have docker (and docker compose) installed.</p>
+</li>
+<li>
+<p>Clone this project with Git and cd to it.</p>
+</li>
+<li>
+<p>Create a file <code>docker/.env</code> (from <code>docker/.env.sample</code>) and configure the AWS variables on it.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You don&#8217;t need Java or Node.js configured on your machine to follow the steps below.
+<strong>You only need a Bash terminal and a Docker installation.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="steps"><a class="anchor" href="#steps"></a>4. Steps (to run this application as is)</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="step1"><a class="anchor" href="#step1"></a>Step 1 &#8594; Start the containers</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./docker/up.sh</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="title">Tips:</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>You can press <span class="keyseq"><kbd>Ctrl</kbd>+<kbd>C</kbd></span> at any time. The docker containers will remain running.</p>
+</li>
+<li>
+<p>If there is no file <code>docker/.env</code> in the project, this script will try to locate it in a file named <code>../dynamic-ecommerce-discounts-with-redpanda.env</code> and copy it to <code>docker/.env</code>.
+This allows you to call <code>git clean -fdX</code> at any time you want without losing your configuration.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>If the file <code>../dynamic-ecommerce-discounts-with-redpanda.env</code> does not exists, it will copy the file <code>docker/.env.sample</code> to <code>docker/.env</code> and use it.</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>You can pass "services" as an argument option to this script. It will list the options you can pass to it by adding the suffix "-services":</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./docker/up.sh services
+<span class="go">apps
+localstack
+redpanda
+snowplow</span></code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>By adding the "-services" to one of the options listed above, you will start only the services listed in the file <code>copose.&lt;service&gt;.yaml</code>.
+So, this will start only the kafka services (services listed in <code>compose.kafka.yaml</code>):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./docker/up.sh snowplow-services</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="step2"><a class="anchor" href="#step2"></a>Step 2 &#8594; Know the URL provided by the services</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>LocalStack</strong>: <a href="https://app.localstack.cloud/" class="bare">https://app.localstack.cloud/</a></p>
+</li>
+<li>
+<p><strong>Redpanda</strong>: <a href="http://localhost:8080" class="bare">http://localhost:8080</a></p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>User / password: jane / some-other-secret-password</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="stepX"><a class="anchor" href="#stepX"></a>Step X &#8594; (optional) Use <a href="https://github.com/jesseduffield/lazydocker">LazyDocker</a> to monitor the containers and logs</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./docker/lazy.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="images/lazydocker.png" alt="lazydocker"></span></p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="clean-up-steps"><a class="anchor" href="#clean-up-steps"></a>5. Clean up steps</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="cleanup-step1"><a class="anchor" href="#cleanup-step1"></a>Step 1 &#8594; Stop the containers</h3>
+<div class="paragraph">
+<p>To stop all the containers, type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./docker/down.sh</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="cleanup-step2"><a class="anchor" href="#cleanup-step2"></a>Step 2 &#8594; Clean up</h3>
+<div class="paragraph">
+<p>To remove all the containers and images, type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./docker/clean.sh</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="title">Warnings:</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>The script <code>clean.sh</code> will destroy any data generated by these containers.</p>
+</li>
+</ol>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="references"><a class="anchor" href="#references"></a>6. References</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><a href="https://www.localstack.cloud/">LocalStack</a></dt>
+<dt class="hdlist1"><a href="https://www.redpanda.com/">Redpanda</a></dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.redpanda.com/current/get-started/docker-compose-labs/">Docker Compose Labs</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.redpanda.com/redpanda-labs/docker-compose/single-broker/">Start a Single Redpanda Broker with Redpanda Console in Docker</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a href="https://docs.redpanda.com/current/get-started/quick-start/">Redpanda Self-Managed Quickstart</a></p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="demo-videos"><a class="anchor" href="#demo-videos"></a>7. Demo videos</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+</div>
+</body>
+</html>

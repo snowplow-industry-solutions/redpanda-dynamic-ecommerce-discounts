@@ -1,0 +1,13 @@
+// URIs
+:uri-localstack: https://www.localstack.cloud/
+:uri-redpanda: https://www.redpanda.com/
+:uri-ecommerce-nextjs-example-store: https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store
+// Attributes
+:ecommerce-nextjs-example-store: {uri-ecommerce-nextjs-example-store}[Example Next.js Ecommerce Store for Snowplow]
+:project-name: dynamic-ecommerce-discounts-with-redpanda
+:AWS: https://aws.amazon.com[AWS]
+:LocalStack: {uri-localstack}[LocalStack]
+:Redpanda: {uri-redpanda}[Redpanda]
+:LazyDocker: https://github.com/jesseduffield/lazydocker[LazyDocker]
+:Terraform: https://www.terraform.io/[Terraform]
+:Docker: https://www.docker.com/[Docker]
