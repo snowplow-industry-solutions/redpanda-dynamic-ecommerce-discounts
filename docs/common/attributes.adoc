@@ -1,4 +1,5 @@
 // URIs
+:uri-project-github: https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda
 :uri-localstack: https://www.localstack.cloud/
 :uri-redpanda: https://www.redpanda.com/
 :uri-ecommerce-nextjs-example-store: https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store

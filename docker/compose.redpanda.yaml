@@ -39,6 +39,21 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+  ####################
+  # rpk container to create the edu-filtered-domains topic #
+  # See https://docs.redpanda.com/current/reference/rpk/rpk-topic/rpk-topic-create/
+  ####################
+  createtopic:
+    command:
+      - topic
+      - create
+      - snowplow-enriched-good
+      - --brokers=redpanda:9092
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
+    container_name: redpanda-topic-create
+    depends_on:
+      redpanda:
+        condition: service_healthy
   console:
     container_name: redpanda-console
     image: docker.redpanda.com/redpandadata/console:v2.8.3
