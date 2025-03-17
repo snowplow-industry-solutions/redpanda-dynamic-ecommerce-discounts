@@ -1,6 +1,6 @@
 services:
   localstack:
-    container_name: s-localstack
+    container_name: localstack
     image: localstack/localstack:4.2.0
     restart: always
     ports:

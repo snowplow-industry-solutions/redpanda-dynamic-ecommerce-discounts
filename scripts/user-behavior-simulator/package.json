@@ -1,0 +1,16 @@
+{
+  "name": "user-behavior-simulator",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test:frequent": "node index.js frequent",
+    "test:long": "node index.js long",
+    "test:normal": "node index.js normal",
+    "test:all": "node index.js all"
+  },
+  "dependencies": {
+    "@snowplow/node-tracker": "^3.0.0",
+    "@snowplow/browser-plugin-snowplow-ecommerce": "^3.0.0"
+  }
+}

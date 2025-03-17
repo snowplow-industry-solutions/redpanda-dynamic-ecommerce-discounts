@@ -1,6 +1,6 @@
 services:
   stream-collector:
-    container_name: s-stream-collector
+    container_name: snowplow-stream-collector
     image: snowplow/scala-stream-collector-kinesis:3.2.0-distroless
     command: ["--config", "/snowplow/collector/config.hocon"]
     restart: always
@@ -19,7 +19,7 @@ services:
       - host.docker.internal:host-gateway
 
   enrich:
-    container_name: s-enrich
+    container_name: snowplow-enrich
     image: snowplow/snowplow-enrich-kinesis:5.0.0-distroless
     command: ["--config", "/snowplow/enrich/config.hocon", "--iglu-config", "/snowplow/iglu-client/iglu_resolver.json", "--enrichments", "/snowplow/enrich/enrichments"]
     restart: always
@@ -40,7 +40,7 @@ services:
         condition: service_started
 
   snowbridge:
-    container_name: s-snowbridge
+    container_name: snowplow-snowbridge
     image: snowplow/snowbridge:2.4.2-aws-only
     command: ["/opt/snowplow/snowbridge"]
     environment:
@@ -49,7 +49,7 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL:-}
-      - JS_SCRIPT_PATH=/snowbridge/video-data.js
+      - JS_SCRIPT_PATH=/snowbridge/product_view.js
       - SNOWBRIDGE_CONFIG_FILE=/snowbridge/config.hcl
     volumes:
       - ../snowbridge:/snowbridge

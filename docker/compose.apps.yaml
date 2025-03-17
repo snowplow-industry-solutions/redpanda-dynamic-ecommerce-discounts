@@ -1,6 +1,6 @@
 services:
   ecommerce-nextjs:
-    container_name: s-ecommerce
+    container_name: snowplow-ecommerce
     build: ../ecommerce-nextjs-example-store
     ports:
       - 3000:3000

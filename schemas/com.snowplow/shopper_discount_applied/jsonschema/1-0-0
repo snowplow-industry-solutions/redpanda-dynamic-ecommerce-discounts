@@ -1,0 +1,27 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Schema for tracking shopper discounts",
+  "self": {
+    "vendor": "com.snowplow",
+    "name": "shopper_discount_applied",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "shopper_id": {
+      "type": "string",
+      "description": "The ID of the hesitant shopper"
+    },
+    "product_id": {
+      "type": "string",
+      "description": "The product SKU the shopper is hesitating to buy"
+    },
+    "discount": {
+      "type": "number",
+      "description": "Discount amount as decimal (e.g., 0.1 for 10%)"
+    }
+  },
+  "required": ["shopper_id", "product_id", "discount"],
+  "additionalProperties": false
+}

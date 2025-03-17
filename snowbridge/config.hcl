@@ -11,6 +11,13 @@ source {
   }
 }
 
+transform {
+  use "js" {
+    script_path   = env.JS_SCRIPT_PATH
+    snowplow_mode = true
+  }
+}
+
 target {
   use "kafka" {
     brokers    = "redpanda:9092"

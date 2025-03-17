@@ -6,22 +6,13 @@ services:
       - redpanda
       - start
       - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
-      # Address the broker advertises to clients that connect to the Kafka API.
-      # Use the internal addresses to connect to the Redpanda brokers'
-      # from inside the same Docker network.
-      # Use the external addresses to connect to the Redpanda brokers'
-      # from outside the Docker network.
       - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
       - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
-      # Address the broker advertises to clients that connect to the HTTP Proxy.
       - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
       - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
-      # Redpanda brokers use the RPC API to communicate with each other internally.
       - --rpc-addr redpanda:33145
       - --advertise-rpc-addr redpanda:33145
-      # Mode dev-container uses well-known configuration properties for development in containers.
       - --mode dev-container
-      # Tells Seastar (the framework Redpanda uses under the hood) to use 1 core on the system.
       - --smp 1
       - --default-log-level=info
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
@@ -39,21 +30,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-  ####################
-  # rpk container to create the edu-filtered-domains topic #
-  # See https://docs.redpanda.com/current/reference/rpk/rpk-topic/rpk-topic-create/
-  ####################
-  createtopic:
-    command:
-      - topic
-      - create
-      - snowplow-enriched-good
-      - --brokers=redpanda:9092
+
+  topics-creator:
+    entrypoint: /bin/sh
+    command: -c 'for topic in snowplow-enriched-good shopper-discounts; do rpk topic create $$topic --brokers=redpanda:9092; done'
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
-    container_name: redpanda-topic-create
+    container_name: redpanda-topics-creator
     depends_on:
       redpanda:
         condition: service_healthy
+
   console:
     container_name: redpanda-console
     image: docker.redpanda.com/redpandadata/console:v2.8.3
@@ -75,3 +61,37 @@ services:
       - 8080:8080
     depends_on:
       - redpanda
+
+  discounts-processor:
+    container_name: redpanda-discounts-processor
+    image: docker.redpanda.com/redpandadata/connect
+    depends_on:
+      - redpanda
+    entrypoint: /bin/sh
+    #command: -c 'echo "$$CONNECT_CFG_FILE" > /tmp/connect.yaml; while true; do sleep 10; echo working ...; done'
+    command: -c 'echo "$$CONNECT_CFG_FILE" > /tmp/connect.yaml; /redpanda-connect -c /tmp/connect.yaml'
+    restart: unless-stopped
+    environment:
+      CONNECT_CFG_FILE: |
+        input:
+          kafka:
+            addresses: ["redpanda:9092"]
+            topics: ["snowplow-enriched-good"]
+            consumer_group: "discounts-processor"
+        pipeline:
+          processors:
+            - mapping: |
+                root = {
+                  "schema": "iglu:com.snowplow/shopper_discount_applied/jsonschema/1-0-0",
+                  "data": {
+                    "shopper_id": this.user_id,
+                    "product_id": this.product_id,
+                    "discount": 0.1
+                  }
+                }
+        output:
+          kafka:
+            addresses: ["redpanda:9092"]
+            topic: "shopper-discounts"
+            max_in_flight: 1
+            key: $${! this.data.shopper_id }
