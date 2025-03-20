@@ -2,14 +2,19 @@ import { Product } from "@/components/product";
 import { mockProducts } from "@/mocks/products";
 import Head from "next/head";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { config } from "@/config";
 import { trackTrackProductViewSpec } from "@/lib/tracking/snowplow";
+import {
+  disableActivityTracking,
+  enableActivityTrackingCallback,
+} from "@snowplow/browser-tracker";
 
 export default function ProductPage() {
   const {
     query: { id },
   } = useRouter();
+  const [, setHeartbeatCount] = useState(0);
 
   const product = mockProducts.find((product) => id === product.id);
 
@@ -29,6 +34,22 @@ export default function ProductPage() {
       size: product.size,
       currency: config.store.DEFAULT_CURRENCY,
     });
+
+    enableActivityTrackingCallback({
+      minimumVisitLength: 5,
+      heartbeatDelay: 3,
+      callback: (data) => {
+        setHeartbeatCount((prevCount) => {
+          const count = prevCount + 1;
+          console.log(`heartbeat ${count} for ${data.pageViewId}`);
+          return count;
+        });
+      },
+    });
+
+    return () => {
+      disableActivityTracking();
+    };
   }, [product]);
 
   if (!product) {

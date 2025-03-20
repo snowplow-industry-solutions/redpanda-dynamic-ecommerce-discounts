@@ -41,7 +41,7 @@ services:
 
   snowbridge:
     container_name: snowplow-snowbridge
-    image: snowplow/snowbridge:2.4.2-aws-only
+    image: snowplow/snowbridge:3.2.2-aws-only
     command: ["/opt/snowplow/snowbridge"]
     environment:
       - ACCEPT_LICENSE=${ACCEPT_LICENSE}

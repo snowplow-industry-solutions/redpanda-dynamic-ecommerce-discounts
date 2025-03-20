@@ -11,17 +11,30 @@ source {
   }
 }
 
-transform {
-  use "js" {
-    script_path   = env.JS_SCRIPT_PATH
-    snowplow_mode = true
-  }
-}
+#transform {
+#  use "spEnrichedFilter" {
+#    atomic_field = "event_name"
+#    regex = "^page_view$"
+#    filter_action = "keep"
+#  }
+#}
+
+#transform {
+#  use "js" {
+#    script_path   = env.JS_SCRIPT_PATH
+#    snowplow_mode = true
+#  }
+#}
 
 target {
-  use "kafka" {
-    brokers    = "redpanda:9092"
-    topic_name = "snowplow-enriched-good"
+#  use "kafka" {
+#    brokers    = "redpanda:9092"
+#    topic_name = "snowplow-enriched-good"
+#  }
+  use "file" {
+    path        = "/tmp/snowbridge.txt"
+    append      = true
+    permissions = 0644
   }
 }
 

@@ -22,8 +22,7 @@ mkdir -p $OUTPUT_DIR
 echo Current directory: $PWD
 echo Created output directory: $OUTPUT_DIR
 echo Connecting to Kafka broker at $KAFKA_BROKER
-echo Consuming messages from topic $TOPIC_NAME
-echo Messages will be saved to: $OUTPUT_DIR
+echo Consuming until $MAX_MESSAGES messages from topic $TOPIC_NAME
 
 messages_json_file="$OUTPUT_DIR/$MAX_MESSAGES-raw-messages.json"
 
