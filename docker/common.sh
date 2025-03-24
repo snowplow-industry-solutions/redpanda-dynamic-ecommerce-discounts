@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 
-show_logs=${show_logs:-true}
+DOCKER_DIR=$PWD
+SHOW_LOGS=${SHOW_LOGS:-true}
+CONFIG_DIR=${CONFIG_DIR:-../config}
+
+cd $CONFIG_DIR
+
+env_file=./.env
+[ -f $env_file ] || env_file=./.env.sample
+source $env_file || exit 1
+
+source ./setup.sh &> /dev/null || {
+  echo Aborting: file $CONFIG_DIR/setup.sh not found!
+  exit 1
+}
 
 warn() {
   echo WARNING: "$@"
@@ -15,7 +28,7 @@ set-env() {
     project_env_file=$project_dir/$(cd $project_dir; echo ../${PWD##*/})${env_file#./}
     if ! [ -f $env_file ] && [ -f $project_env_file ]
     then
-      echo File $project_env_file found. Copying it to $env_file ...
+      echo File $project_env_file found. Copying it to $CONFIG_DIR/$env_file ...
       cp $project_env_file $env_file
       rm -f .keep-warning
     elif ! [ -f $env_file ] || [ -f .keep-warning ]
@@ -62,9 +75,10 @@ show-services() {
 }
 
 set-env
-for service in compose.*.yaml
+! type setup &> /dev/null || setup
+for compose in compose.*.yaml
 do
-  service=$(cut -d. -f2 <<< $service)
+  service=$(cut -d. -f2 <<< $compose)
   eval "_$service-services() { list-services $service; }"
 done
 ! [ "${1:-}" = services ] || list-available-services

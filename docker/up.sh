@@ -8,4 +8,4 @@ show-services Starting
 
 docker compose up ${services:-} --build -d
 
-! $show_logs || ./logs.sh "$@"
+! $SHOW_LOGS || $DOCKER_DIR/logs.sh "$@"

@@ -11,31 +11,23 @@ source {
   }
 }
 
-#transform {
-#  use "spEnrichedFilter" {
-#    atomic_field = "event_name"
-#    regex = "^page_view$"
-#    filter_action = "keep"
-#  }
-#}
-
-#transform {
-#  use "js" {
-#    script_path   = env.JS_SCRIPT_PATH
-#    snowplow_mode = true
-#  }
-#}
+transform {
+  use "js" {
+    script_path   = env.JS_SCRIPT_PATH
+    snowplow_mode = true
+  }
+}
 
 target {
-#  use "kafka" {
-#    brokers    = "redpanda:9092"
-#    topic_name = "snowplow-enriched-good"
-#  }
-  use "file" {
-    path        = "/tmp/snowbridge.txt"
-    append      = true
-    permissions = 0644
+  use "kafka" {
+    brokers    = "redpanda:9092"
+    topic_name = "snowplow-enriched-good"
   }
+  #use "file" { # <- it requires snowplow/snowbridge:3.2.2-aws-only docker image
+  #  path        = "/tmp/snowbridge.txt"
+  #  append      = true
+  #  permissions = 0644
+  #}
 }
 
 failure_target {
