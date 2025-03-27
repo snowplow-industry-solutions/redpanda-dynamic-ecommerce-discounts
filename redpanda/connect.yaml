@@ -1,3 +1,6 @@
+logger:
+  level: DEBUG
+
 cache_resources:
   - label: view_states
     memcached:
@@ -14,7 +17,7 @@ input:
 pipeline:
   processors:
     - log:
-        level: INFO
+        level: DEBUG
         message: "Received event: ${! this }"
 
     - mapping: |
@@ -22,18 +25,18 @@ pipeline:
         meta "webpage_id" = this.webpage_id
         meta "event_name" = this.event_name
         meta "collector_tstamp" = this.collector_tstamp
-        meta "discount_generated" = false
+        meta "discount_generated" = "false"
         root = this
 
     - log:
-        level: INFO
+        level: DEBUG
         message: "Extracted metadata: user_id=${! this.user_id }, webpage_id=${! this.webpage_id }, event_name=${! this.event_name }"
 
     - switch:
         - check: this.event_name == "snowplow_ecommerce_action"
           processors:
             - log:
-                level: INFO
+                level: DEBUG
                 message: "Processing snowplow_ecommerce_action event for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
 
             - mapping: |
@@ -51,13 +54,13 @@ pipeline:
                 value: ${! this }
 
             - log:
-                level: INFO
+                level: DEBUG
                 message: "View state stored for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
 
         - check: this.event_name == "page_ping"
           processors:
             - log:
-                level: INFO
+                level: DEBUG
                 message: "Processing page_ping event for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
 
             - cache:
@@ -66,7 +69,7 @@ pipeline:
                 key: ${! this.user_id }_${! this.webpage_id }
 
             - log:
-                level: INFO
+                level: DEBUG
                 message: "Retrieved event from cache"
 
             - try:
@@ -81,7 +84,7 @@ pipeline:
                       meta "duration_seconds" = $duration
 
                       if $duration >= 90 {
-                        meta "discount_generated" = true
+                        meta "discount_generated" = "true"
                         root = {
                           "shopper_id": this.user_id,
                           "product_id": this.product_id,
@@ -91,8 +94,12 @@ pipeline:
                     }
 
                 - log:
-                    level: INFO
+                    level: DEBUG
                     message: "Duration calculated: ${! meta(\"duration_seconds\") } seconds, Discount applied: ${! meta(\"discount_generated\") }"
+
+                - log:
+                    level: INFO
+                    message: "${! if meta(\"discount_generated\") == \"true\" { \"Discount granted for: ${! this }\" } else { \"No discount granted\" } }"
 
             - catch:
                 - log:
@@ -101,10 +108,10 @@ pipeline:
 
     - log:
         level: INFO
-        message: "Final result: ${! if meta(\"discount_generated\") == true { \"A discount was generated for ${ !this } \" } else { \"No action\" } }"
+        message: "Final result: ${! if meta(\"discount_generated\") == \"true\" { \"A discount was generated for ${ !this } \" } else { \"No action\" } }"
 
     - mapping: |
-        root = if meta("discount_generated") == false {
+        root = if meta("discount_generated") == "false" {
           deleted()
         }
 
