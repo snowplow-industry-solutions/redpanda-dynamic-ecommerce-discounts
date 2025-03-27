@@ -18,26 +18,29 @@ pipeline:
   processors:
     - log:
         level: DEBUG
-        message: "Received event: ${! this }"
+        message: "-----> Received event: ${! this } <-----"
 
     - mapping: |
+        meta "seconds_till_discount" = "40"
         meta "user_id" = this.user_id
         meta "webpage_id" = this.webpage_id
+        meta "cache_key" = this.user_id + "_" + this.webpage_id
         meta "event_name" = this.event_name
         meta "collector_tstamp" = this.collector_tstamp
         meta "discount_generated" = "false"
+        meta "final_message" = "No discount granted"
         root = this
 
     - log:
         level: DEBUG
-        message: "Extracted metadata: user_id=${! this.user_id }, webpage_id=${! this.webpage_id }, event_name=${! this.event_name }"
+        message: "Extracted metadata: cache_key=${! @cache_key }, event_name=${! this.event_name }"
 
     - switch:
         - check: this.event_name == "snowplow_ecommerce_action"
           processors:
             - log:
                 level: DEBUG
-                message: "Processing snowplow_ecommerce_action event for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
+                message: "Processing snowplow_ecommerce_action event for cache_key=${! @cache_key }"
 
             - mapping: |
                 root = {
@@ -50,23 +53,23 @@ pipeline:
             - cache:
                 resource: view_states
                 operator: set
-                key: ${! this.user_id }_${! this.webpage_id }
+                key: ${! @cache_key }
                 value: ${! this }
 
             - log:
                 level: DEBUG
-                message: "View state stored for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
+                message: "View state stored for cache_key=${! @cache_key }"
 
         - check: this.event_name == "page_ping"
           processors:
             - log:
                 level: DEBUG
-                message: "Processing page_ping event for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
+                message: "Processing page_ping event for cache_key=${! @cache_key }"
 
             - cache:
                 resource: view_states
                 operator: get
-                key: ${! this.user_id }_${! this.webpage_id }
+                key: ${! @cache_key }
 
             - log:
                 level: DEBUG
@@ -78,46 +81,57 @@ pipeline:
 
                     if this != null && this.webpage_id == this.webpage_id {
                       let start = this.start_time.ts_unix()
-                      let current = meta("collector_tstamp").ts_unix()
+                      let current = @collector_tstamp.ts_unix()
 
                       let duration = $current - $start
                       meta "duration_seconds" = $duration
 
-                      if $duration >= 90 {
+                      if $duration >= @seconds_till_discount.int16() {
                         meta "discount_generated" = "true"
                         root = {
                           "shopper_id": this.user_id,
                           "product_id": this.product_id,
-                          "discount": 0.1
+                          "discount": 0.1,
+                          "discount_on_the_second": $duration
                         }
+
+                        # Interpolation is now working here (why?):
+                        # meta "final_message" = "A discount was granted to shopper_id=${! this.user_id } for product_id=${! this.product_id } after ${! @duration_seconds } seconds"
+                        meta "final_message" = "A discount was granted"
                       }
                     }
 
                 - log:
                     level: DEBUG
-                    message: "Duration calculated: ${! meta(\"duration_seconds\") } seconds, Discount applied: ${! meta(\"discount_generated\") }"
+                    message: "Duration calculated: ${! @duration_seconds } seconds, Discount applied: ${! @discount_generated }"
 
                 - log:
-                    level: INFO
-                    message: "${! if meta(\"discount_generated\") == \"true\" { \"Discount granted for: ${! this }\" } else { \"No discount granted\" } }"
+                    level: DEBUG
+                    message: "${! if @discount_generated.bool() { \"Discount granted!\" } else { @final_message } }"
 
             - catch:
                 - log:
                     level: ERROR
-                    message: "Error processing page_ping for user_id=${! meta(\"user_id\") }, webpage_id=${! meta(\"webpage_id\") }. Reason: ${! error() }"
+                    message: "Error processing page_ping for cache_key=${! @cache_key }. Reason: ${! error() }"
 
     - log:
         level: INFO
-        message: "Final result: ${! if meta(\"discount_generated\") == \"true\" { \"A discount was generated for ${ !this } \" } else { \"No action\" } }"
+        message: "-----> Final message: ${! @final_message } <-----"
 
     - mapping: |
-        root = if meta("discount_generated") == "false" {
+        root = if !@discount_generated.bool() {
           deleted()
         }
+
+    - cache:
+        resource: view_states
+        operator: delete
+        key: ${! @cache_key }
+        condition: ${! @discount_generated.bool() }
 
 output:
   kafka:
     addresses: ["redpanda:9092"]
     topic: "shopper-discounts"
     max_in_flight: 1
-    key: ${! meta("user_id") }
+    key: ${! @user_id }
