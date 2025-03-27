@@ -5,5 +5,6 @@ source ./common.sh
 
 set-services "$@"
 show-services Stopping
+[ "${options:-}" ] || options="-v"
 
-docker compose down -v ${services:-}
+docker compose down ${services:-} $options

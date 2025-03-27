@@ -14,66 +14,84 @@ input:
 pipeline:
   processors:
     - log:
-        level: DEBUG
+        level: INFO
         message: "Received event: ${! this }"
 
     - mapping: |
         meta "user_id" = this.user_id
         meta "webpage_id" = this.webpage_id
         meta "event_name" = this.event_name
+        meta "collector_tstamp" = this.collector_tstamp
+        meta "discount_generated" = false
         root = this
 
     - log:
-        level: DEBUG
-        message: "Extracted metadata: user_id=${! meta(\"user_id\") }, webpage_id=${! meta(\"webpage_id\") }, event_name=${! meta(\"event_name\") }"
+        level: INFO
+        message: "Extracted metadata: user_id=${! this.user_id }, webpage_id=${! this.webpage_id }, event_name=${! this.event_name }"
 
     - switch:
-        - check: meta("event_name") == "page_ping"
+        - check: this.event_name == "snowplow_ecommerce_action"
           processors:
             - log:
-                level: DEBUG
-                message: "Processing page_ping event for user_id=${! meta(\"user_id\") }, webpage_id=${! meta(\"webpage_id\") }"
+                level: INFO
+                message: "Processing snowplow_ecommerce_action event for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
+
+            - mapping: |
+                root = {
+                  "user_id": this.user_id,
+                  "webpage_id": this.webpage_id,
+                  "product_id": this.product_id,
+                  "start_time": this.collector_tstamp
+                }
+
+            - cache:
+                resource: view_states
+                operator: set
+                key: ${! this.user_id }_${! this.webpage_id }
+                value: ${! this }
+
+            - log:
+                level: INFO
+                message: "View state stored for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
+
+        - check: this.event_name == "page_ping"
+          processors:
+            - log:
+                level: INFO
+                message: "Processing page_ping event for user_id=${! this.user_id }, webpage_id=${! this.webpage_id }"
 
             - cache:
                 resource: view_states
                 operator: get
-                key: ${! meta("user_id") }_${! meta("webpage_id") }
+                key: ${! this.user_id }_${! this.webpage_id }
 
             - log:
-                level: DEBUG
-                message: "Retrieved cache for key=${! meta(\"user_id\") }_${! meta(\"webpage_id\") }, value=${! this }"
+                level: INFO
+                message: "Retrieved event from cache"
 
             - try:
                 - mapping: |
-                    if this.webpage_id != meta("webpage_id") {
-                      root = null
-                    }
+                    meta "duration_seconds" = 0
 
-                    let start = this.start_time.ts_unix()
-                    let current = this.collector_tstamp.ts_unix()
+                    if this != null && this.webpage_id == this.webpage_id {
+                      let start = this.start_time.ts_unix()
+                      let current = meta("collector_tstamp").ts_unix()
 
-                    let duration = current - start
-                    meta "duration_seconds" = duration
+                      let duration = $current - $start
+                      meta "duration_seconds" = $duration
 
-                    if this.user_id != null && duration >= 90 {
-                      root = {
-                        (this.user_id): {
-                          "schema": "iglu:com.snowplow/shopper_discount_applied/jsonschema/1-0-0",
-                          "data": {
-                            "shopper_id": this.user_id,
-                            "product_id": this.product_id,
-                            "discount": 0.1
-                          }
+                      if $duration >= 90 {
+                        meta "discount_generated" = true
+                        root = {
+                          "shopper_id": this.user_id,
+                          "product_id": this.product_id,
+                          "discount": 0.1
                         }
                       }
-                      meta "discount_generated" = true
-                    } else {
-                      root = null
-                      meta "discount_generated" = false
                     }
 
                 - log:
-                    level: DEBUG
+                    level: INFO
                     message: "Duration calculated: ${! meta(\"duration_seconds\") } seconds, Discount applied: ${! meta(\"discount_generated\") }"
 
             - catch:
@@ -81,34 +99,14 @@ pipeline:
                     level: ERROR
                     message: "Error processing page_ping for user_id=${! meta(\"user_id\") }, webpage_id=${! meta(\"webpage_id\") }. Reason: ${! error() }"
 
-        - check: meta("event_name") == "snowplow_ecommerce_action"
-          processors:
-            - log:
-                level: DEBUG
-                message: "Processing snowplow_ecommerce_action event for user_id=${! meta(\"user_id\") }, webpage_id=${! meta(\"webpage_id\") }"
-
-            - mapping: |
-                root = {
-                  "user_id": meta("user_id"),
-                  "webpage_id": meta("webpage_id"),
-                  "product_id": this.product_id,
-                  "start_time": this.collector_tstamp,
-                  "type": "view_state"
-                }
-
-            - cache:
-                resource: view_states
-                operator: set
-                key: ${! meta("user_id") }_${! meta("webpage_id") }
-                value: ${! this }
-
-            - log:
-                level: INFO
-                message: "View state stored for user_id=${! meta(\"user_id\") }, webpage_id=${! meta(\"webpage_id\") }, product_id=${! this.product_id }"
-
     - log:
         level: INFO
-        message: "Final result: ${! if this != null { \"Discount generated\" } else { \"No action\" } }"
+        message: "Final result: ${! if meta(\"discount_generated\") == true { \"A discount was generated for ${ !this } \" } else { \"No action\" } }"
+
+    - mapping: |
+        root = if meta("discount_generated") == false {
+          deleted()
+        }
 
 output:
   kafka:
