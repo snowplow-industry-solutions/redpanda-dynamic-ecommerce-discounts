@@ -1,47 +1,83 @@
 logger:
   level: DEBUG
-
 cache_resources:
-  - label: view_states
+  - label: view_state
     memcached:
       addresses:
         - memcached:11211
       default_ttl: 3600s
-
+  - label: discount_history
+    memcached:
+      addresses:
+        - memcached:11211
+      default_ttl: 300s
+processor_resources:
+  - label: check_discount_history
+    mapping: |
+      meta "can_receive_discount" = @event_is_on_view_state_cache
+      if this != null && this.last_discount_time != null && @can_receive_discount.bool() {
+        let current_time = @collector_tstamp.ts_unix()
+        let last_discount_time = this.last_discount_time
+        let seconds_since_last = $current_time - $last_discount_time
+        let seconds_to_wait = @seconds_between_discounts.int16() - $seconds_since_last
+        if $seconds_since_last < @seconds_between_discounts.int16() {
+          meta "can_receive_discount" = "false"
+          meta "seconds_to_wait" = $seconds_to_wait
+          meta "final_message" = "Discount not granted - must wait " + $seconds_to_wait + " more seconds"
+        }
+      }
+  - label: create_discount
+    mapping: |
+      if this != null && this.webpage_id == this.webpage_id {
+        let start = this.start_time.ts_unix()
+        let current = @collector_tstamp.ts_unix()
+        let duration = $current - $start
+        meta "duration_seconds" = $duration
+        if $duration >= @seconds_till_discount.int16() {
+          meta "discount_generated" = "true"
+          root = {
+            "shopper_id": this.user_id,
+            "product_id": this.product_id,
+            "discount": 0.1,
+            "discount_on_the_second": $duration
+          }
+          meta "final_message" = "A discount was granted"
+          let discount_record = {
+            "last_discount_time": $current
+          }
+          meta "discount_record" = $discount_record
+        }
+      }
 input:
   kafka:
     addresses: ["redpanda:9092"]
     topics: ["snowplow-enriched-good"]
     consumer_group: "discounts-processor"
-
 pipeline:
   processors:
-    - log:
-        level: DEBUG
-        message: "-----> Received event: ${! this } <-----"
-
     - mapping: |
         meta "seconds_till_discount" = "40"
+        meta "seconds_between_discounts" = "300"
+        meta "duration_seconds" = "0"
         meta "user_id" = this.user_id
         meta "webpage_id" = this.webpage_id
-        meta "cache_key" = this.user_id + "_" + this.webpage_id
+        meta "view_state_key" = this.user_id + "_" + this.webpage_id
+        meta "discount_history_key" = this.user_id
         meta "event_name" = this.event_name
+        meta "event_is_on_view_state_cache" = "true"
         meta "collector_tstamp" = this.collector_tstamp
         meta "discount_generated" = "false"
         meta "final_message" = "No discount granted"
         root = this
-
     - log:
         level: DEBUG
-        message: "Extracted metadata: cache_key=${! @cache_key }, event_name=${! this.event_name }"
-
+        message: "-----> Detected event: ${! this.event_name }, view_state_key=${! @view_state_key } <-----"
     - switch:
         - check: this.event_name == "snowplow_ecommerce_action"
           processors:
             - log:
                 level: DEBUG
-                message: "Processing snowplow_ecommerce_action event for cache_key=${! @cache_key }"
-
+                message: "Processing snowplow_ecommerce_action event for view_state_key=${! @view_state_key }"
             - mapping: |
                 root = {
                   "user_id": this.user_id,
@@ -49,86 +85,94 @@ pipeline:
                   "product_id": this.product_id,
                   "start_time": this.collector_tstamp
                 }
-
             - cache:
-                resource: view_states
+                resource: view_state
                 operator: set
-                key: ${! @cache_key }
+                key: ${! @view_state_key }
                 value: ${! this }
-
             - log:
                 level: DEBUG
-                message: "View state stored for cache_key=${! @cache_key }"
-
+                message: "View state stored for view_state_key=${! @view_state_key }"
         - check: this.event_name == "page_ping"
           processors:
             - log:
                 level: DEBUG
-                message: "Processing page_ping event for cache_key=${! @cache_key }"
-
+                message: "Processing page_ping event for view_state_key=${! @view_state_key }"
             - cache:
-                resource: view_states
+                resource: view_state
                 operator: get
-                key: ${! @cache_key }
-
-            - log:
-                level: DEBUG
-                message: "Retrieved event from cache"
-
-            - try:
+                key: ${! @view_state_key }
+            - switch:
+              - check: errored()
+                processors:
+                  - mapping: |
+                      meta "final_message" = "No view state found for user. Discarding event"
+                      meta "event_is_on_view_state_cache" = "false"
+                  - log:
+                      level: DEBUG
+                      message: ${! @final_message }
+            - switch:
+              - check: meta("event_is_on_view_state_cache") == "true"
+                processors:
+                - log:
+                    level: DEBUG
+                    message: "Retrieved event from cache"
                 - mapping: |
-                    meta "duration_seconds" = 0
-
-                    if this != null && this.webpage_id == this.webpage_id {
-                      let start = this.start_time.ts_unix()
-                      let current = @collector_tstamp.ts_unix()
-
-                      let duration = $current - $start
-                      meta "duration_seconds" = $duration
-
-                      if $duration >= @seconds_till_discount.int16() {
-                        meta "discount_generated" = "true"
-                        root = {
-                          "shopper_id": this.user_id,
-                          "product_id": this.product_id,
-                          "discount": 0.1,
-                          "discount_on_the_second": $duration
-                        }
-
-                        # Interpolation is now working here (why?):
-                        # meta "final_message" = "A discount was granted to shopper_id=${! this.user_id } for product_id=${! this.product_id } after ${! @duration_seconds } seconds"
-                        meta "final_message" = "A discount was granted"
-                      }
-                    }
-
+                    meta "saved_view_state" = this
                 - log:
                     level: DEBUG
-                    message: "Duration calculated: ${! @duration_seconds } seconds, Discount applied: ${! @discount_generated }"
-
-                - log:
-                    level: DEBUG
-                    message: "${! if @discount_generated.bool() { \"Discount granted!\" } else { @final_message } }"
-
+                    message: "Checking if user is eligible for discount based on discount_history"
+                - cache:
+                    resource: discount_history
+                    operator: get
+                    key: ${! @discount_history_key }
             - catch:
                 - log:
-                    level: ERROR
-                    message: "Error processing page_ping for cache_key=${! @cache_key }. Reason: ${! error() }"
-
+                    level: DEBUG
+                    message: "No discount history found. User is eligible for a discount"
+                - catch: []
+            - try:
+              - resource: check_discount_history
+              - switch:
+                - check: meta("can_receive_discount") == "true"
+                  processors:
+                  - mapping: |
+                      root = @saved_view_state
+                  - resource: create_discount
+                  - log:
+                      level: DEBUG
+                      message: "Duration calculated: ${! @duration_seconds } seconds, Discount applied: ${! @discount_generated }"
+                  - log:
+                      level: DEBUG
+                      message: "${! if @discount_generated.bool() { \"Discount granted!\" } else { @final_message } }"
+                  - switch:
+                    - check: meta("discount_generated") == "true"
+                      processors:
+                        - cache:
+                            resource: discount_history
+                            operator: set
+                            key: ${! @discount_history_key }
+                            value: ${! @discount_record }
+              - switch:
+                - check: meta("can_receive_discount") == "false"
+                  processors:
+                  - log:
+                      level: DEBUG
+                      message: "User needs wait ${! @seconds_to_wait } seconds before receiving a new discount"
     - log:
         level: INFO
-        message: "-----> Final message: ${! @final_message } <-----"
-
+        message: "-----> Final message: ${! @final_message }. <-----"
     - mapping: |
         root = if !@discount_generated.bool() {
           deleted()
         }
-
-    - cache:
-        resource: view_states
-        operator: delete
-        key: ${! @cache_key }
-        condition: ${! @discount_generated.bool() }
-
+    - switch:
+        - check: meta("discount_generated") == "true"
+          processors:
+            - cache:
+                resource: view_state
+                operator: delete
+                key: ${! @view_state_key }
 output:
   kafka:
     addresses: ["redpanda:9092"]
