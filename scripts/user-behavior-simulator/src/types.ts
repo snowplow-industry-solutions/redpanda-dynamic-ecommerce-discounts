@@ -1,0 +1,79 @@
+export interface Product {
+  id: string
+  name: string
+  price: number
+  webpage_id: string
+}
+
+export interface User {
+  id: string
+  name: string
+}
+
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+
+export interface LoggerConfig {
+  level: LogLevel
+  timestamp: boolean
+}
+
+export interface Config {
+  snowplow: {
+    endpoint: string
+    port: number
+  }
+  kafka: {
+    clientId: string
+    brokers: string[]
+    topic: string
+  }
+  logging: LoggerConfig
+  mocks: {
+    users: User[]
+    products: Product[]
+  }
+  simulation: {
+    cycle: {
+      duration: number
+      warningInterval: number
+    }
+    longView: {
+      pagePingInterval: number
+      duration: number
+    }
+    betweenLongViewInterval: number
+    betweenNormalViewInterval: number
+    frequentView: {
+      minDuration: number
+      maxDuration: number
+    }
+  }
+}
+
+export interface Logger {
+  debug: (message: string) => void
+  info: (message: string) => void
+  warn: (message: string) => void
+  error: (message: string) => void
+}
+
+export interface ProductStats {
+  views: number
+  totalDuration: number
+}
+
+export interface IntervalTracker {
+  getCycleData(arg0: string): unknown
+  setCycleData(arg0: string, arg1: Map<string, ProductStats>): unknown
+  start: () => void
+  stop: () => void
+  getCurrentCycleTime: () => number
+  getCycleProgress: () => {
+    elapsedMs: number
+    remainingMs: number
+    totalMs: number
+    percentComplete: number
+  }
+  isNewCycle: () => boolean
+  setOnCycleEnd: (callback: () => void) => void
+}

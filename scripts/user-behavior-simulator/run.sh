@@ -23,4 +23,6 @@ esac
 
 export KAFKAJS_NO_PARTITIONER_WARNING=1
 [ -d node_modules ] || npm install
-node index.js "$@"
+
+NODE_OPTIONS="--no-warnings --no-deprecation --loader ts-node/esm" \
+  ./node_modules/.bin/ts-node --esm src/index.ts "$@"

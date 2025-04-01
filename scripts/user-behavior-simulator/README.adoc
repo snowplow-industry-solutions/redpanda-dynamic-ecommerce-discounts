@@ -1,0 +1,86 @@
+= User Behavior Simulator
+include::common/head.adoc[]
+
+:uri-tracker: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/node-js-tracker/
+
+A tool to simulate different user behaviors for product viewing in an e-commerce environment, sending events to Snowplow collector or Kafka topic.
+
+toc::[]
+
+== Overview
+
+This simulator generates different patterns of product viewing behavior:
+
+* Frequent views of the same product
+* Long duration views
+* Normal browsing patterns
+
+There are two modes for sending events:
+
+* Snowplow - Sends events directly to a Snowplow collector
+** All events are tracked using the Snowplow {uri-tracker}[Node.js Tracker] and sent to a local collector.
+* Kafka - Sends events to a Kafka topic
+** Events are generated as JSON and sent to a Kafka topic.
+
+== Event Structure
+
+The simulator (for Snowplow mode) generates Snowplow ecommerce events with the following schema:
+
+* Event: `product_view`
+* Schema: `iglu:com.snowplowanalytics.snowplow.ecommerce/product_view/jsonschema/1-0-0`
+* Context: Product information using `iglu:com.snowplowanalytics.snowplow.ecommerce/product/jsonschema/1-0-0`
+
+== Prerequisites
+
+. Docker installed
+. Node.js installed
+. npm or yarn package manager
+. For Snowplow mode:
+.. A running Snowplow collector (default: `http://localhost:9090`)
+. For Kafka (Redpanda) mode:
+.. A running Kafka broker (default: `localhost:19092`)
+
+== Usage
+
+=== Kafka mode
+
+. Step 1: Start the Redpanda services:
++
+[,console]
+----
+$ ./run.sh redpanda up
+----
+. Step 2: Watch the logs for the `discounts-processor` service:
++
+[,console]
+----
+$ ./run.sh redpanda logs
+----
++
+. Step 3: Run the simulator in `kafka` mode:
+.. To run the simulator in `long` mode, type:
++
+[,console]
+----
+$ ./run.sh long kafka
+----
++
+.. To run the simulator in `frequent` mode, type:
++
+[,console]
+----
+$ ./run.sh frequent kafka
+----
++
+TIP: The `normal` mode is also available.
++
+. Step 4: Stop the Redpanda services:
++
+[,console]
+----
+$ ./run.sh redpanda down
+----
+
+== Configuration
+
+To configure aspects such as Snowplow collector endpoint, Kafka broker, and user behavior patterns, copy the file `config.sample.js` to `config.js` and edit it as needed.
