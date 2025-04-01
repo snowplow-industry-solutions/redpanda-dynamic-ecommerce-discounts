@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<title>Redpanda Connect Tester</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Redpanda Connect Tester</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#running-a-simple-test-and-through-rpk">1. Running a simple test and through rpk</a></li>
+<li><a href="#testing">2. Testing</a></li>
+<li><a href="#references">3. References</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Git commit: 91d014f</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="running-a-simple-test-and-through-rpk"><a class="anchor" href="#running-a-simple-test-and-through-rpk"></a>1. Running a simple test and through rpk</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Step 1:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="nb">cat</span> <span class="o">&gt;</span> naughty_man.blobl <span class="o">&lt;&lt;</span><span class="sh">'</span><span class="no">EOF</span><span class="sh">'
+</span><span class="go">map remove_naughty_man {
+  root = match {
+</span><span class="gp">    this.type() == "object" =&gt;</span><span class="w"> </span>this.map_each<span class="o">(</span>item -&gt; item.value.apply<span class="o">(</span><span class="s2">"remove_naughty_man"</span><span class="o">))</span>,
+<span class="gp">    this.type() == "array" =&gt;</span><span class="w"> </span>this.map_each<span class="o">(</span>ele -&gt; ele.apply<span class="o">(</span><span class="s2">"remove_naughty_man"</span><span class="o">))</span>,
+<span class="gp">    this.type() == "string" =&gt;</span><span class="w"> </span><span class="k">if </span>this.lowercase<span class="o">()</span>.contains<span class="o">(</span><span class="s2">"voldemort"</span><span class="o">)</span> <span class="o">{</span> deleted<span class="o">()</span> <span class="o">}</span>,
+<span class="gp">    this.type() == "bytes" =&gt;</span><span class="w"> </span><span class="k">if </span>this.lowercase<span class="o">()</span>.contains<span class="o">(</span><span class="s2">"voldemort"</span><span class="o">)</span> <span class="o">{</span> deleted<span class="o">()</span> <span class="o">}</span>,
+<span class="gp">    _ =&gt;</span><span class="w"> </span>this,
+<span class="go">  }
+}
+
+root = this.apply("remove_naughty_man")
+EOF</span></code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Step 2:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="nb">cat</span> <span class="o">&gt;</span> naughty_man_test.yaml <span class="o">&lt;&lt;</span><span class="sh">'</span><span class="no">EOF</span><span class="sh">'
+</span><span class="go">tests:
+  - name: test naughty man scrubber
+    target_mapping: './naughty_man.blobl'
+    environment: {}
+    input_batch:
+      - content: |
+          {
+            "summer_party": {
+              "theme": "the woman in black",
+              "guests": [
+                "Emma Bunton",
+                "the seal I spotted in Trebarwith",
+                "Voldemort",
+                "The cast of Swiss Army Man",
+                "Richard"
+              ]
+            }
+          }
+    output_batches:
+      -
+        - json_equals: {
+            "summer_party": {
+              "theme": "the woman in black",
+              "guests": [
+                "Emma Bunton",
+                "the dolphin I spotted in Trebarwith",
+                "The cast of Swiss Army Man",
+                "Richard"
+              ]
+            }
+          }
+EOF</span></code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Step 3:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>rpk connnect <span class="nb">test</span> ./naughty_man_test.yaml</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>References: <a href="#ref1">ref1</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="testing"><a class="anchor" href="#testing"></a>2. Testing</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Start Redpanda:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>../../docker/up.sh redpanda-services</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Stop Redpanda:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>../../docker/down.sh redpanda-services</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="references"><a class="anchor" href="#references"></a>3. References</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p><a id="ref1"></a> ref1:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.redpanda.com/redpanda-connect/guides/bloblang/walkthrough/#unit-testing" class="bare">https://docs.redpanda.com/redpanda-connect/guides/bloblang/walkthrough/#unit-testing</a></p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

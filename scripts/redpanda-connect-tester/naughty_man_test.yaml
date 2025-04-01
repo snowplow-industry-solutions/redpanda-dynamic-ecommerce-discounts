@@ -1,0 +1,31 @@
+tests:
+  - name: test naughty man scrubber
+    target_mapping: './naughty_man.blobl'
+    environment: {}
+    input_batch:
+      - content: |
+          {
+            "summer_party": {
+              "theme": "the woman in black",
+              "guests": [
+                "Emma Bunton",
+                "the seal I spotted in Trebarwith",
+                "Voldemort",
+                "The cast of Swiss Army Man",
+                "Richard"
+              ]
+            }
+          }
+    output_batches:
+      -
+        - json_equals: {
+            "summer_party": {
+              "theme": "the woman in black",
+              "guests": [
+                "Emma Bunton",
+                "the dolphin I spotted in Trebarwith",
+                "The cast of Swiss Army Man",
+                "Richard"
+              ]
+            }
+          }

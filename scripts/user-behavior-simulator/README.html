@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<title>User Behavior Simulator</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>User Behavior Simulator</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#overview">1. Overview</a></li>
+<li><a href="#event-structure">2. Event Structure</a></li>
+<li><a href="#prerequisites">3. Prerequisites</a></li>
+<li><a href="#usage">4. Usage</a>
+<ul class="sectlevel2">
+<li><a href="#kafka-mode">4.1. Kafka mode</a></li>
+</ul>
+</li>
+<li><a href="#configuration">5. Configuration</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Git commit: 5ade898</strong></p>
+</div>
+<div class="paragraph">
+<p>A tool to simulate different user behaviors for product viewing in an e-commerce environment, sending events to Snowplow collector or Kafka topic.</p>
+</div>
+<!-- toc disabled -->
+</div>
+</div>
+<div class="sect1">
+<h2 id="overview"><a class="anchor" href="#overview"></a>1. Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This simulator generates different patterns of product viewing behavior:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Frequent views of the same product</p>
+</li>
+<li>
+<p>Long duration views</p>
+</li>
+<li>
+<p>Normal browsing patterns</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>There are two modes for sending events:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Snowplow - Sends events directly to a Snowplow collector</p>
+<div class="ulist">
+<ul>
+<li>
+<p>All events are tracked using the Snowplow <a href="https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/node-js-tracker/">Node.js Tracker</a> and sent to a local collector.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Kafka - Sends events to a Kafka topic</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Events are generated as JSON and sent to a Kafka topic.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="event-structure"><a class="anchor" href="#event-structure"></a>2. Event Structure</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The simulator (for Snowplow mode) generates Snowplow ecommerce events with the following schema:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Event: <code>product_view</code></p>
+</li>
+<li>
+<p>Schema: <code>iglu:com.snowplowanalytics.snowplow.ecommerce/product_view/jsonschema/1-0-0</code></p>
+</li>
+<li>
+<p>Context: Product information using <code>iglu:com.snowplowanalytics.snowplow.ecommerce/product/jsonschema/1-0-0</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>3. Prerequisites</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Docker installed</p>
+</li>
+<li>
+<p>Node.js installed</p>
+</li>
+<li>
+<p>npm or yarn package manager</p>
+</li>
+<li>
+<p>For Snowplow mode:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>A running Snowplow collector (default: <code><a href="http://localhost:9090" class="bare">http://localhost:9090</a></code>)</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>For Kafka (Redpanda) mode:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>A running Kafka broker (default: <code>localhost:19092</code>)</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="usage"><a class="anchor" href="#usage"></a>4. Usage</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="kafka-mode"><a class="anchor" href="#kafka-mode"></a>4.1. Kafka mode</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Step 1: Start the Redpanda services:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./run.sh redpanda up</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Step 2: Watch the logs for the <code>discounts-processor</code> service:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./run.sh redpanda logs</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Step 3: Run the simulator in <code>kafka</code> mode:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>To run the simulator in <code>long</code> mode, type:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./run.sh long kafka</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>To run the simulator in <code>frequent</code> mode, type:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./run.sh frequent kafka</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+The <code>normal</code> mode is also available.
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Step 4: Stop the Redpanda services:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./run.sh redpanda down</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuration"><a class="anchor" href="#configuration"></a>5. Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To configure aspects such as Snowplow collector endpoint, Kafka broker, and user behavior patterns, copy the file <code>config.sample.js</code> to <code>config.js</code> and edit it as needed.</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
