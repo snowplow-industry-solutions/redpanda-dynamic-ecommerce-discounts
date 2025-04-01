@@ -128,4 +128,10 @@ export class IntervalTracker {
   setOnCycleEnd(callback: () => void): void {
     this.onCycleEnd = callback
   }
+
+  checkIfNewCycle(callback?: () => void): void {
+    if (this.isNewCycle() && callback) {
+      callback()
+    }
+  }
 }

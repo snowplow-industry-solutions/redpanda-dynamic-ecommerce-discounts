@@ -7,12 +7,6 @@ import {
   simulateLongViewKafka,
   simulateNormalViewKafka,
 } from './kafka-simulators.js'
-import {
-  createSnowplowTracker,
-  simulateFrequentView,
-  simulateLongView,
-  simulateNormalView,
-} from './snowplow-simulators.js'
 
 const config = await loadConfig()
 const logger = createLogger(config.logging)
@@ -25,65 +19,50 @@ const intervalTracker = new IntervalTracker(
 
 function showUsage(): void {
   logger.info(`
-Usage: node index.js <behavior> [mode]
+Usage: node index.js <behavior>
 
 Available behaviors:
   frequent  - Simulates frequent views of the same product
   long      - Simulates a long duration product view
   normal    - Simulates normal browsing behavior
 
-Available modes:
-  snowplow  - Sends events to Snowplow collector (default)
-  kafka     - Sends events to Kafka topic
-
 Example: 
   node index.js frequent
-  node index.js frequent kafka
+  node index.js long
 `)
   process.exit(1)
 }
 
-async function simulateUserBehavior(behavior: string, mode: string = 'snowplow'): Promise<void> {
+async function simulateUserBehavior(behavior: string): Promise<void> {
   let kafka
   let producer
-  let snowplowTracker
 
   try {
-    if (mode === 'kafka') {
-      kafka = createKafkaClient(config)
-      producer = kafka.producer()
-      try {
-        await producer.connect()
-        logger.info('Connected to Kafka')
-      } catch (error) {
-        logger.error('Kafka is not available')
-        process.exit(1)
-      }
-    } else {
-      snowplowTracker = createSnowplowTracker(config)
+    kafka = createKafkaClient(config)
+    producer = kafka.producer()
+    try {
+      await producer.connect()
+      logger.info('Connected to Kafka')
+    } catch (error) {
+      logger.error('Kafka is not available')
+      process.exit(1)
     }
 
     switch (behavior) {
       case 'frequent':
-        await (mode === 'kafka'
-          ? simulateFrequentViewKafka(producer!, config, logger, intervalTracker)
-          : simulateFrequentView(snowplowTracker!, config, logger, intervalTracker))
+        await simulateFrequentViewKafka(producer, config, logger, intervalTracker)
         break
       case 'long':
-        await (mode === 'kafka'
-          ? simulateLongViewKafka(producer!, config, logger, intervalTracker)
-          : simulateLongView(snowplowTracker!, config, logger))
+        await simulateLongViewKafka(producer, config, logger, intervalTracker)
         break
       case 'normal':
-        await (mode === 'kafka'
-          ? simulateNormalViewKafka(producer!, config, logger)
-          : simulateNormalView(snowplowTracker!, config, logger))
+        await simulateNormalViewKafka(producer, config, logger)
         break
       default:
         showUsage()
     }
   } catch (error) {
-    logger.error(`Error during simulation: ${error}`)
+    logger.error(`Error during simulation: ${error instanceof Error ? error.message : String(error)}`)
     if (producer) {
       await producer.disconnect()
     }
@@ -103,12 +82,11 @@ process.on('unhandledRejection', error => {
 })
 
 const behavior = process.argv[2]
-const mode = process.argv[3] || 'snowplow'
 
 if (!behavior) {
   showUsage()
 } else {
-  simulateUserBehavior(behavior, mode).catch(error => {
+  simulateUserBehavior(behavior).catch(error => {
     logger.error(
       `Error during simulation: ${error instanceof Error ? error.message : String(error)}`
     )

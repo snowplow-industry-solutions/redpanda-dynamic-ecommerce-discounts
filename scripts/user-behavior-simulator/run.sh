@@ -2,10 +2,18 @@
 set -eou pipefail
 cd $(dirname $0)
 
+if [ $# -lt 2 ]; then
+  echo "Error: Missing required parameters"
+  echo "Usage: $0 <behavior> <mode>"
+  echo "  behavior: frequent | long | normal"
+  echo "  mode: kafka | ui"
+  exit 1
+fi
+
 docker_dir=${docker_dir:-../../docker}
 
 case "${1:-}" in
-snowplow | redpanda)
+redpanda)
   group=$1
   shift
   case "${1:-}" in
@@ -14,7 +22,7 @@ snowplow | redpanda)
     exit 0
     ;;
   logs)
-    ! [[ $group = redpanda ]] || $docker_dir/logs.sh discounts-processor
+    $docker_dir/logs.sh discounts-processor
     exit 0
     ;;
   esac
@@ -24,5 +32,19 @@ esac
 export KAFKAJS_NO_PARTITIONER_WARNING=1
 [ -d node_modules ] || npm install
 
-NODE_OPTIONS="--no-warnings --no-deprecation --loader ts-node/esm" \
-  ./node_modules/.bin/ts-node --esm src/index.ts "$@"
+behavior=$1
+mode=$2
+
+case $mode in
+ui)
+  NODE_OPTIONS="--no-warnings --no-deprecation" \
+    ./node_modules/.bin/playwright test tests/${behavior}.spec.ts
+  ;;
+kafka)
+  NODE_OPTIONS="--no-warnings --no-deprecation --loader ts-node/esm" \
+    ./node_modules/.bin/ts-node --esm src/index.ts "$behavior"
+  ;;
+*)
+  echo "Error: Invalid mode: $mode"
+  ;;
+esac

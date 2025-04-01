@@ -18,10 +18,6 @@ export interface LoggerConfig {
 }
 
 export interface Config {
-  snowplow: {
-    endpoint: string
-    port: number
-  }
   kafka: {
     clientId: string
     brokers: string[]
@@ -75,5 +71,6 @@ export interface IntervalTracker {
     percentComplete: number
   }
   isNewCycle: () => boolean
+  checkIfNewCycle: (callback?: () => void) => void
   setOnCycleEnd: (callback: () => void) => void
 }

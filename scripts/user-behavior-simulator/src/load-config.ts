@@ -40,9 +40,6 @@ function validateConfig(config: Config): void {
   if (!config.kafka?.brokers?.length) {
     throw new Error('Kafka brokers configuration is missing or empty')
   }
-  if (!config.snowplow?.endpoint) {
-    throw new Error('Snowplow endpoint configuration is missing')
-  }
   if (!config.logging?.level) {
     throw new Error('Logging level configuration is missing')
   }

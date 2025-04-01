@@ -4,9 +4,9 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test:frequent": "./run.sh frequent",
-    "test:long": "./run.sh long",
-    "test:normal": "./run.sh normal",
+    "test:frequent": "./run.sh frequent ui",
+    "test:long": "./run.sh long ui",
+    "test:normal": "./run.sh normal ui",
     "test:frequent:kafka": "./run.sh frequent kafka",
     "test:long:kafka": "./run.sh long kafka",
     "test:normal:kafka": "./run.sh normal kafka",
@@ -14,14 +14,13 @@
     "format:check": "prettier --check \"{src/**/*,*}.{js,ts}\""
   },
   "dependencies": {
-    "@snowplow/node-tracker": "^3.0.0",
-    "@snowplow/browser-plugin-snowplow-ecommerce": "^3.0.0",
     "kafkajs": "^2.2.4",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.42.1",
     "@types/node": "^22.13.10",
-    "typescript": "^5.0.0",
+    "typescript": "^5.3.3",
     "ts-node": "^10.9.1",
     "prettier": "^3.1.0"
   }

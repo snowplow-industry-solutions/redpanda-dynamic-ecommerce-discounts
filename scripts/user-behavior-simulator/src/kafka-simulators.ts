@@ -95,7 +95,6 @@ export async function simulateFrequentViewKafka(
   }
 
   intervalTracker.setOnCycleEnd(() => {
-    logger.info('Cycle completed')
     const productStats = intervalTracker.getCycleData('productStats') as Map<string, ProductStats>
 
     logger.debug('End of cycle stats:')
@@ -110,7 +109,7 @@ export async function simulateFrequentViewKafka(
     if (bestProduct) {
       const stats = productStats.get(bestProduct.id)
       logger.info(
-        `Cycle completed - DISCOUNT WINNER: "${bestProduct.name}" with ${
+        `DISCOUNT WINNER: "${bestProduct.name}" with ${
           stats!.views
         } views and ${stats!.totalDuration}s total duration`
       )
@@ -202,9 +201,7 @@ export async function simulateLongViewKafka(
       const longViewDurationMs = config.simulation.longView.duration * 1000
 
       while (Date.now() - startTime < longViewDurationMs) {
-        if (intervalTracker.isNewCycle()) {
-          // The IntervalTracker already logs cycle start messages
-        }
+        intervalTracker.checkIfNewCycle()
         currentProduct = await sendEventAndWait(
           producer,
           config,

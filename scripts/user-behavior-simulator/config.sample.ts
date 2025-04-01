@@ -6,10 +6,6 @@ const config: Config = {
     brokers: ['localhost:19092'],
     topic: 'snowplow-enriched-good',
   },
-  snowplow: {
-    endpoint: 'localhost',
-    port: 9090,
-  },
   logging: {
     level: 'info',
     timestamp: true,
