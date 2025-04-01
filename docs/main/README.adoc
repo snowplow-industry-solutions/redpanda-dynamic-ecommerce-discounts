@@ -1,0 +1,212 @@
+= Dynamic Ecommerce Discounts with Redpanda
+include::common/head.adoc[]
+
+== Introduction
+
+This project is a companion to the {ecommerce-nextjs-example-store}.
+
+It allows you to test this demo locally, using {LocalStack}, and in the {AWS} cloud.
+
+Its <<architecture>> is designed so a developer can quickly and easily set up these two environments and test the project.
+
+<<<
+[[architecture]]
+== Architecture
+
+* [[ecommerce-nextjs-example-store]] The *{uri-ecommerce-nextjs-example-store}[ecommerce-nextjs-example-store]* is a Next.js application that generates tracking events.
+* [[stream-collector]] The *stream-collector* component sends these events via Kinesis to the *<<snowbridge>>* component.
+* [[snowbridge]] The *snowbridge* component enriches these events, inserts more information (via *<<enrich>>* component), and sends them to <<redpanda>>.
+** [[enrich]] Read more about the *enrich* component here: https://docs.snowplow.io/docs/pipeline-components-and-applications/enrichment-components/enrich-kinesis/.
+** Read more about the *snowbridge* component here: https://docs.snowplow.io/docs/destinations/forwarding-events/snowbridge/.
+* [[redpanda]] The *redpanda* broker is receives the events from use [[redpanda-connector]] (aka Bethos) to apply the dynamic discounts.
+* [[redpanda-connector]] The *redpanda-connector* ...
+
+<<<
+*Sequence Diagram* for the <<architecture>>:
+
+TODO
+//image:architecture.png[]
+
+All components in this <<architecture>> run as Docker containers via `docker compose`:
+
+* [[compose-snowplow]] The Snowplow's components (*<<stream-collector>>*, *<<enrich>>*, and *<<snowbridge>>*) are defined in the file `compose.snowplow.yaml`.
+* [[compose-repanda]] Redpanda's infrastructure is provided by the file `compose.redpanda.yaml`.
+* [[compose-apps]] The apps components (*<<ecommerce-nextjs-example-store>>*) are defined in the file `compose.apps.yaml`.
+* [[compose-localstack]] The infrastructure to provide the AWS resources locally (Kinesis, DyanmoDB, etc) is created by {LocalStack}.
+** Read the file `compose.localstack.yaml`.
+* [[terraform]] These components and resources are created in AWS using Terraform scripts.
+** There is another document, in `docs/terraform` folder, explaining the details.
+
+<<<
+== Prerequisites
+
+. Start a Ubuntu Linux (it can be running on a WSL2 environment) terminal.
+. Make sure you have docker (and docker compose) installed.
+. Clone this project with Git and cd to it.
+. Create a file `docker/.env` (from `docker/.env.sample`) and configure the AWS variables on it.
+
+NOTE: You don't need Java or Node.js configured on your machine to follow the steps below.
+*You only need a Bash terminal and a Docker installation.*
+
+<<<
+[[steps]]
+== Steps (to run this application as is)
+:numbered!:
+
+[[step1]]
+=== Step 1 -> Start the containers
+
+[,console]
+----
+$ ./docker/up.sh
+----
+
+[TIP]
+.Tips:
+====
+. You can press kbd:[Ctrl+C] at any time. The docker containers will remain running.
+. If there is no file `docker/.env` in the project, this script will try to locate it in a file named `../{project-name}.env` and copy it to `docker/.env`.
+This allows you to call `git clean -fdX` at any time you want without losing your configuration.
+.. If the file `../{project-name}.env` does not exists, it will copy the file `docker/.env.sample` to `docker/.env` and use it.
+. You can pass "services" as an argument option to this script. It will list the options you can pass to it by adding the suffix "-services":
++
+[,console]
+----
+$ ./docker/up.sh services
+apps
+localstack
+redpanda
+snowplow
+----
++
+. By adding the "-services" to one of the options listed above, you will start only the services listed in the file `copose.<service>.yaml`.
+So, this will start only the redpanda services (services listed in `compose.redpanda.yaml`):
++
+[,console]
+----
+$ ./docker/up.sh redpanda-services
+----
++
+. You can also call the script `up.sh` by using the `compose.sh` script this way:
++
+[,console]
+----
+$ ./docker/compose.sh up
+----
+====
+
+[[step2]]
+=== Step 2 -> Know the URL provided by the services
+
+. *LocalStack*: https://app.localstack.cloud <- [[localstack]] localstack
+. *Redpanda*: 
+.. *Internal (docker containers access)* http://localhost:9092 <- [[redpanda-internal]] redpanda-internal
+.. *Console*: http://localhost:8080 <- [[redpanda-console]] redpanda-console
+... User / password: jane / some-other-secret-password
+. *Ecommerce store*: http://localhost:3000 <- [[ecommerce-store]] ecommerce-store
+.. It connects with *Snowplow collector* configured to run in http://localhost:9090 <- [[snowplow-collector]] snowplow-collector
+
+[[step3]]
+=== Step 3 -> Browse the application pages
+:uri-page-view-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/page-views/
+:uri-product-view-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#product-view
+:uri-internal-promotion-view-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#promotion-view
+:uri-internal-promotion-click-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#promotion-click
+:uri-product-list-view-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#product-list-view
+:uri-product-list-click-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#product-list-click
+:uri-add-to-cart-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#add-to-cart
+:uri-checkout-step-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#checkout-step
+:uri-transaction-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#transaction
+:uri-enriched-tsv-format: https://docs.snowplow.io/docs/fundamentals/canonical-event/understanding-the-enriched-tsv-format/
+:uri-raw-messages-dir: {uri-project-github}/tree/main/scripts/raw-messages.sample
+:uri-images-dir: {uri-project-github}/tree/main/docs/main/images
+
+As expected, in the <<ecommerce-store>>, during every page navigation, we are tracking a {uri-page-view-event}[page view] event.
+
+For ecommerce interactions we track the following:
+
+* When a customer goes to a product page we track a {uri-product-view-event}[product view] event.
+* When a customer sees an internal promotion list, e.g. Homepage promotions, we track an {uri-internal-promotion-view-event}[internal promotion view] event.
+* When a customer clicks an internal promotion, we track an {uri-internal-promotion-click-event}[internal promotion click] event.
+* When a customer goes to a product list page, we track a {uri-product-list-view-event}[product list view] event.
+* When a customer clicks a product on a product list page, we track a {uri-product-list-click-event}[product list click] event.
+* When a customer sees a recommended product list on the product page, we track a {uri-product-list-view-event}[product list view] event.
+* When a customer clicks on a recommended product list on the product page, we track a {uri-product-list-click-event}[product list click] event.
+* When the customer adds a product to the cart, we track an {uri-add-to-cart-event}[add to cart] event.
+* When the customer goes to the cart page we track a {uri-checkout-step-event}[checkout step] event.
+* When they go to the payment step, another {uri-checkout-step-event}[checkout step] event is tracked.
+* When the customer successfully completes a transaction, we track a {uri-transaction-event}[transaction] event (triggered on the server-side but formulated with the spec of Snowplow ecommerce)
+
+[[step4]]
+=== Step 4 -> Access the redpanda-console and check the generated events
+
+After browsing the [[ecommerce-store]], you can access the [[redpanda-console]] and check the generated events in the topic `snowplow-enriched-good`.
+See these images: {uri-images-dir}/redpanda-1.png[redpanda-1.png], {uri-images-dir}/redpanda-2.png[redpanda-2.png].
+
+You can explore the data format of these events in {uri-enriched-tsv-format}[enriched TSV format].
+In the {uri-raw-messages-dir}[scripts/raw-messages.sample] directory, there are examples of the events recorded by Snowplow when they are transferred to Redpanda.
+These sample TSV files were created by running the script {uri-project-github}/tree/main/scripts/extract-snowplow-raw-messages.sh[extract-snowplow-raw-messages.sh].
+Note: _these are not the events final format of the events sent from <<snowbridge>> component to <<redpanda>>_.
+
+[[stepX]]
+=== Step N -> (optional) Use {LazyDocker} to monitor the containers and logs
+
+[,console]
+----
+$ ./docker/compose.sh lazy
+----
+
+image:lazydocker.png[]
+
+:numbered:
+<<<
+== Clean up steps
+:numbered!:
+
+[[cleanup-step1]]
+=== Step 1 -> Stop the containers
+
+To stop all the containers, type:
+
+[,console]
+----
+$ ./docker/down.sh
+----
+
+[[cleanup-step2]]
+=== Step 2 -> Clean up
+
+To remove all the containers and images, type:
+
+[,console]
+----
+$ ./docker/clean.sh
+----
+
+[WARNING]
+.Warnings:
+====
+. The script `clean.sh` will destroy any data generated by these containers.
+====
+
+:numbered:
+<<<
+== References
+
+{LocalStack}::
+
+{Redpanda}::
+* https://docs.redpanda.com/current/get-started/docker-compose-labs/[Docker Compose Labs]
+** https://docs.redpanda.com/redpanda-labs/docker-compose/single-broker/[Start a Single Redpanda Broker with Redpanda Console in Docker]
+* https://docs.redpanda.com/current/get-started/quick-start/[Redpanda Self-Managed Quickstart]
+* https://redpanda-data.medium.com/how-we-engineered-our-cli-to-improve-developer-productivity-347a497e45e8[How we engineered our CLI to improve developer productivity]
+* Some YouTube videos:
+** https://www.youtube.com/watch?v=WWQu01vsFwo[Why did Redpanda rewrite Apache Kafka? (with Christina Lin)]
+** https://www.youtube.com/watch?v=dbqRJgPgXcU[Redpanda Office Hour: HUGE rpk - Redpanda CLI update!]
+Redpanda Connect::
+* https://docs.redpanda.com/redpanda-connect/get-started/quickstarts/rpk/
+* https://docs.redpanda.com/current/get-started/quick-start/
+
+<<<
+== Demo videos
+

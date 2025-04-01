@@ -1,0 +1,92 @@
+= Redpanda Connect Tester
+include::common/head.adoc[]
+
+== Running a simple test and through rpk
+
+. Step 1:
++
+[,console]
+----
+$ cat > naughty_man.blobl <<'EOF'
+map remove_naughty_man {
+  root = match {
+    this.type() == "object" => this.map_each(item -> item.value.apply("remove_naughty_man")),
+    this.type() == "array" => this.map_each(ele -> ele.apply("remove_naughty_man")),
+    this.type() == "string" => if this.lowercase().contains("voldemort") { deleted() },
+    this.type() == "bytes" => if this.lowercase().contains("voldemort") { deleted() },
+    _ => this,
+  }
+}
+
+root = this.apply("remove_naughty_man")
+EOF
+----
++
+. Step 2:
++
+[,console]
+----
+$ cat > naughty_man_test.yaml <<'EOF'
+tests:
+  - name: test naughty man scrubber
+    target_mapping: './naughty_man.blobl'
+    environment: {}
+    input_batch:
+      - content: |
+          {
+            "summer_party": {
+              "theme": "the woman in black",
+              "guests": [
+                "Emma Bunton",
+                "the seal I spotted in Trebarwith",
+                "Voldemort",
+                "The cast of Swiss Army Man",
+                "Richard"
+              ]
+            }
+          }
+    output_batches:
+      -
+        - json_equals: {
+            "summer_party": {
+              "theme": "the woman in black",
+              "guests": [
+                "Emma Bunton",
+                "the dolphin I spotted in Trebarwith",
+                "The cast of Swiss Army Man",
+                "Richard"
+              ]
+            }
+          }
+EOF
+----
++
+. Step 3:
++
+[,console]
+----
+$ rpk connnect test ./naughty_man_test.yaml
+----
+
+References: <<ref1,ref1>>
+
+== Testing
+
+. Start Redpanda:
++
+[,console]
+----
+$ ../../docker/up.sh redpanda-services
+----
++
+. Stop Redpanda:
++
+[,console]
+----
+$ ../../docker/down.sh redpanda-services
+----
+
+== References
+
+* [[ref1]] ref1:
+** https://docs.redpanda.com/redpanda-connect/guides/bloblang/walkthrough/#unit-testing
