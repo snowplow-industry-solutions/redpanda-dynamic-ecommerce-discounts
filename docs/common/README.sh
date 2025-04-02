@@ -3,10 +3,13 @@
 common_dir=${BASH_SOURCE[0]}
 common_dir=${common_dir%/README.sh}
 
+echo Current directory: $PWD
+echo common_dir: $common_dir
+
+echo Syncing common_dir to .
 rsync -a --exclude=build.sh $common_dir .
 
-for f in .gitignore .docker-asciidoctor-builder README.css
-do
+for f in .gitignore .docker-asciidoctor-builder README.css; do
   [ -f $f ] || {
     echo Copying $f '(from common)' to .
     cp common/$f .
@@ -22,7 +25,7 @@ additional_functions=./functions.sh
 build-docs() {
   local project_dir=${PWD##*/}
 
-  ! type before-build-docs &> /dev/null || {
+  ! type before-build-docs &>/dev/null || {
     echo Running before-build-docs function ...
     before-build-docs
   }
@@ -33,5 +36,5 @@ build-docs() {
     -a project-dir=$project_dir \
     "$@"
 
-  ! type after-build-docs &> /dev/null || after-build-docs
+  ! type after-build-docs &>/dev/null || after-build-docs
 }

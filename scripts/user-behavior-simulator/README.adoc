@@ -1,3 +1,7 @@
+ifdef::env-github[]
+Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/scripts/user-behavior-simulator/README.html[here]
+endif::env-github[]
+ifndef::env-github[]
 = User Behavior Simulator
 include::common/head.adoc[]
 
@@ -84,3 +88,4 @@ $ ./run.sh redpanda down
 == Configuration
 
 To configure aspects such as Snowplow collector endpoint, Kafka broker, and user behavior patterns, copy the file `config.sample.js` to `config.js` and edit it as needed.
+endif::env-github[]
