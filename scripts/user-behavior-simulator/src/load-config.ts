@@ -43,8 +43,8 @@ function validateConfig(config: Config): void {
   if (!config.kafka?.brokers?.length) {
     throw new Error('Kafka brokers configuration is missing or empty')
   }
-  if (!config.logging?.level) {
-    throw new Error('Logging level configuration is missing')
+  if (!config.logging?.console?.level || !config.logging?.file?.level) {
+    throw new Error('Logging configuration is missing or incomplete')
   }
   if (!config.simulation) {
     throw new Error('Simulation configuration is missing')

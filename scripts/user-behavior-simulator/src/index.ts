@@ -8,11 +8,19 @@ import {
   simulateNormalViewKafka,
 } from './kafka-simulators'
 import { Producer } from 'kafkajs'
+import { Config, Logger } from './types'
 
-const { config, usedConfigFile } = await loadConfig()
-const logger = createLogger(config.logging)
+let config: Config, usedConfigFile, logger: Logger
 
-logger.info(`Using configuration from: ${usedConfigFile}`)
+try {
+  ;({ config, usedConfigFile } = await loadConfig())
+  logger = createLogger(config.logging)
+} catch (error) {
+  console.error(`Initialization error: ${error instanceof Error ? error.message : String(error)}`)
+  process.exit(1)
+}
+
+logger.info(`Config file: ${usedConfigFile}`)
 
 const intervalTracker = new IntervalTracker(
   logger,

@@ -1,5 +1,6 @@
 import fs from 'fs'
-import { LoggerConfig, Logger, LogLevel } from './types.js'
+import path from 'path'
+import { Config, Logger, LogLevel } from './types'
 
 const LOG_LEVELS: Record<LogLevel, number> = {
   debug: 0,
@@ -8,74 +9,117 @@ const LOG_LEVELS: Record<LogLevel, number> = {
   error: 3,
 }
 
+export function getNextLogFile(logFile: string): string {
+  const dir = path.dirname(logFile)
+  const ext = path.extname(logFile)
+  const baseName = path.basename(logFile, ext)
+
+  if (!fs.existsSync(logFile)) {
+    return logFile
+  }
+  const files = fs
+    .readdirSync(dir)
+    .filter(file => file.startsWith(baseName) && file.endsWith(ext))
+    .map(file => {
+      const match = file.match(new RegExp(`^${baseName}(?:\\.(\\d+))?${ext}$`))
+      return match ? { file, counter: match[1] ? parseInt(match[1]) : 0 } : null
+    })
+    .filter((item): item is { file: string; counter: number } => item !== null)
+  const maxCounter = files.reduce((max, item) => Math.max(max, item.counter), 0)
+  return path.join(dir, `${baseName}.${maxCounter + 1}${ext}`)
+}
+
+export function updateLatestLogFile(logFile: string): void {
+  const dir = path.dirname(logFile)
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true })
+  }
+  const latestFile = path.join(dir, 'latest')
+  const logFileName = path.basename(logFile)
+  fs.writeFileSync(latestFile, logFileName)
+}
+
 export class AppLogger implements Logger {
-  private config: LoggerConfig
-  private currentLevel: number
-  private logFile: fs.WriteStream | null = null
+  private logFile: string | null = null
+  private consoleConfig: Config['logging']['console']
+  private fileConfig: Config['logging']['file']
+  private logStream: fs.WriteStream | null = null
 
-  constructor(config: LoggerConfig) {
-    this.config = config
-    this.currentLevel = LOG_LEVELS[config.level]
-    
-    const logFilePath = process.env.LOG_FILE
-    if (logFilePath) {
-      this.logFile = fs.createWriteStream(logFilePath, { flags: 'a' })
+  constructor(config: Config['logging']) {
+    this.consoleConfig = config.console
+    this.fileConfig = config.file
+
+    const envLogFile = process.env.LOG_FILE
+    if (envLogFile) {
+      this.logFile = getNextLogFile(envLogFile)
+      this.logStream = fs.createWriteStream(this.logFile, { flags: 'a' })
+      updateLatestLogFile(this.logFile)
+      this.info(`Log file: ${this.logFile}`)
     }
   }
 
-  private formatMessage(level: LogLevel, message: string): string {
-    const parts: string[] = []
+  private formatConsoleMessage(level: LogLevel, message: string, caller?: string): string {
+    let output = message
 
-    if (this.config.timestamp) {
-      parts.push(`[${new Date().toISOString()}]`)
+    if (this.consoleConfig.showLevel) {
+      output = `${level.toUpperCase()}: ${output}`
     }
 
-    if (this.config.showLevel) {
-      parts.push(`${level.toUpperCase()}:`)
+    if (this.consoleConfig.timestamp) {
+      output = `[${new Date().toISOString()}] ${output}`
     }
 
-    parts.push(message)
+    if (caller) {
+      output = `${output} (${caller})`
+    }
 
-    return parts.join(' ')
+    return output
   }
 
-  private log(level: LogLevel, message: string): void {
-    if (LOG_LEVELS[level] >= this.currentLevel) {
-      const formattedMessage = this.formatMessage(level, message)
-      
-      // Write to console
-      console.log(formattedMessage)
-      
-      // Write to file if available
-      if (this.logFile) {
-        this.logFile.write(formattedMessage + '\n')
-      }
+  private writeToFile(data: object): void {
+    if (this.logStream) {
+      this.logStream.write(JSON.stringify(data) + '\n')
     }
   }
 
-  debug(message: string): void {
-    this.log('debug', message)
+  private log(level: LogLevel, message: string, caller?: string): void {
+    if (LOG_LEVELS[level] >= LOG_LEVELS[this.consoleConfig.level]) {
+      console.log(this.formatConsoleMessage(level, message, caller))
+    }
+
+    if (this.logStream && LOG_LEVELS[level] >= LOG_LEVELS[this.fileConfig.level]) {
+      this.writeToFile({
+        timestamp: new Date().toISOString(),
+        level,
+        message,
+        ...(caller && { caller }),
+      })
+    }
   }
 
-  info(message: string): void {
-    this.log('info', message)
+  debug(message: string, caller?: string): void {
+    this.log('debug', message, caller)
   }
 
-  warn(message: string): void {
-    this.log('warn', message)
+  info(message: string, caller?: string): void {
+    this.log('info', message, caller)
   }
 
-  error(message: string): void {
-    this.log('error', message)
+  warn(message: string, caller?: string): void {
+    this.log('warn', message, caller)
+  }
+
+  error(message: string, caller?: string): void {
+    this.log('error', message, caller)
   }
 
   cleanup(): void {
-    if (this.logFile) {
-      this.logFile.end()
+    if (this.logStream) {
+      this.logStream.end()
     }
   }
 }
 
-export function createLogger(config: LoggerConfig): Logger {
+export function createLogger(config: Config['logging']): Logger {
   return new AppLogger(config)
 }

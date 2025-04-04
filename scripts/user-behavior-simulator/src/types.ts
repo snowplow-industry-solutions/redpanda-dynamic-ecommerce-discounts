@@ -24,7 +24,10 @@ export interface Config {
     brokers: string[]
     topic: string
   }
-  logging: LoggerConfig
+  logging: {
+    console: LoggerConfig
+    file: LoggerConfig
+  }
   mocks: {
     users: User[]
     products: Product[]
@@ -49,10 +52,11 @@ export interface Config {
 }
 
 export interface Logger {
-  debug: (message: string) => void
-  info: (message: string) => void
-  warn: (message: string) => void
-  error: (message: string) => void
+  debug: (message: string, caller?: string) => void
+  info: (message: string, caller?: string) => void
+  warn: (message: string, caller?: string) => void
+  error: (message: string, caller?: string) => void
+  cleanup: () => void
 }
 
 export interface ProductStats {

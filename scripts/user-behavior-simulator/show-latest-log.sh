@@ -1,0 +1,1 @@
+../discounts-processor/show-latest-log.sh

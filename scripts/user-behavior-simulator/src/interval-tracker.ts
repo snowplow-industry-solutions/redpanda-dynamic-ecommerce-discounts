@@ -60,13 +60,13 @@ export class IntervalTracker {
     if (now - this.lastCycleTime >= this.duration) {
       if (this.onCycleEnd) {
         this.logger.info('Cycle completed')
-        this.onCycleEnd() // Chama o callback antes de resetar
+        this.onCycleEnd()
       }
 
       this.cycleCount++
       this.lastCycleTime = now
       this.startTime = now
-      this.clearCycleData() // Move a limpeza para depois do callback
+      this.clearCycleData()
 
       this.logger.info(`Starting cycle #${this.cycleCount} of ${this.formatDuration()}`)
       return true
@@ -108,12 +108,12 @@ export class IntervalTracker {
     this.interval = setInterval(() => {
       if (this.onCycleEnd) {
         this.logger.info('Cycle completed')
-        this.onCycleEnd() // Chama o callback antes de resetar
+        this.onCycleEnd()
       }
 
       this.cycleCount++
       this.startTime = Date.now()
-      this.clearCycleData() // Move a limpeza para depois do callback
+      this.clearCycleData()
 
       this.logger.info(`Starting cycle #${this.cycleCount} of ${this.formatDuration()}`)
     }, this.duration)

@@ -7,9 +7,16 @@ const config: Config = {
     topic: 'snowplow-enriched-good',
   },
   logging: {
-    level: 'info',
-    timestamp: false,
-    showLevel: false,
+    console: {
+      level: 'info',
+      timestamp: false,
+      showLevel: false,
+    },
+    file: {
+      level: 'debug',
+      timestamp: true,
+      showLevel: true,
+    },
   },
   simulation: {
     cycle: {

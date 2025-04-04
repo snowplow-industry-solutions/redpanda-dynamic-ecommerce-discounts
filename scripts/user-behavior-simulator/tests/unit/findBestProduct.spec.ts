@@ -23,7 +23,7 @@ test.describe('findBestProduct', () => {
     ])
 
     const result = findBestProduct(mockProducts, stats)
-    expect(result).toEqual(mockProducts[1]) // Product B has most views
+    expect(result).toEqual(mockProducts[1])
   })
 
   test('should use totalDuration as tiebreaker when views are equal', () => {
@@ -34,7 +34,7 @@ test.describe('findBestProduct', () => {
     ])
 
     const result = findBestProduct(mockProducts, stats)
-    expect(result).toEqual(mockProducts[1]) // Product B has highest duration
+    expect(result).toEqual(mockProducts[1])
   })
 
   test('should handle products with no stats', () => {
@@ -45,7 +45,7 @@ test.describe('findBestProduct', () => {
     ])
 
     const result = findBestProduct(mockProducts, stats)
-    expect(result).toEqual(mockProducts[0]) // Product A is best among those with stats
+    expect(result).toEqual(mockProducts[0])
   })
 
   test('should handle empty product list', () => {

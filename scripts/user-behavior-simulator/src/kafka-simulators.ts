@@ -55,12 +55,29 @@ async function sendEvent(
   }
 }
 
+export function generateStatsLog(
+  productStats: Map<string, ProductStats>,
+  products: Product[],
+  progress: { percentComplete: number }
+): string {
+  const statsLog = Array.from(productStats.entries())
+    .map(([productId, stats]) => {
+      const product = products.find(p => p.id === productId)
+      return `  "${product?.name}": ${stats.views} views, ${stats.totalDuration}s total`
+    })
+    .join('\n')
+
+  return `\nCycle progress: ${Math.floor(progress.percentComplete)}% - Current stats:\n${statsLog}`
+}
+
 export async function simulateFrequentViewKafka(
   producer: Producer,
   config: Config,
   logger: Logger,
   intervalTracker: IntervalTracker
 ): Promise<void> {
+  logger.info('Starting frequent view simulation...', 'simulateFrequentViewKafka')
+
   intervalTracker.setOnCycleEnd(() => {
     const productStats = intervalTracker.getCycleData('productStats') as Map<string, ProductStats>
     if (!productStats) return
@@ -78,7 +95,7 @@ export async function simulateFrequentViewKafka(
       const stats = productStats.get(bestProduct.id)
       logger.info(
         `DISCOUNT WINNER: "${bestProduct.name}" with ${stats!.views} views and ` +
-          `${stats!.totalDuration}s total duration`
+        `${stats!.totalDuration}s total duration`
       )
     } else {
       logger.debug('No product qualified for discount in this cycle')
@@ -120,25 +137,17 @@ export async function simulateFrequentViewKafka(
       await sendEvent(producer, config, product, false, productStats)
 
       if (productStats.size > 0) {
-        const statsLog = Array.from(productStats.entries())
-          .map(([productId, stats]) => {
-            const product = config.mocks.products.find(p => p.id === productId)
-            return `  "${product?.name}": ${stats.views} views, ${stats.totalDuration}s total`
-          })
-          .join('\n')
-
         const progress = intervalTracker.getCycleProgress()
-        logger.info(
-          `\nCycle progress: ${Math.floor(progress.percentComplete)}% - Current stats:\n${statsLog}`
-        )
+        const statsMessage = generateStatsLog(productStats, config.mocks.products, progress)
+        logger.info(statsMessage, 'simulateFrequentViewKafka')
       }
 
       await sleepSeconds(viewDuration)
     } catch (error) {
       logger.error(
-        `Error in frequent view simulation: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Error in frequent view simulation: ${error instanceof Error ? error.message : String(error)
+        }`,
+        'simulateFrequentViewKafka'
       )
       const newProductStats = new Map<string, ProductStats>()
       intervalTracker.setCycleData('productStats', newProductStats)

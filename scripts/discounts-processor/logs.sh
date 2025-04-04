@@ -4,9 +4,9 @@ cd $(dirname $0)
 mkdir -p logs
 tstamp=$(date +%s)
 service=discounts-processor
-log=logs/$tstamp.txt
-echo "$tstamp.txt" >logs/latest
-echo Generating logs in file $log ...
+log=logs/$tstamp.log
+echo "${log##*/}" >logs/latest
+echo Log file: $log
 docker_logs=../../docker/logs.sh
 
 if [ "${1:-}" = raw ]; then
@@ -14,4 +14,4 @@ if [ "${1:-}" = raw ]; then
   exit 0
 fi
 
-$docker_logs $service | tee $log | ./format.awk
+$docker_logs $service | tee $log | ./console.awk
