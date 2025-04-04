@@ -1,5 +1,6 @@
 logger:
   level: DEBUG
+
 cache_resources:
   - label: view_state
     memcached:
@@ -11,6 +12,7 @@ cache_resources:
       addresses:
         - memcached:11211
       default_ttl: 300s
+
 processor_resources:
   - label: check_discount_history
     mapping: |
@@ -23,7 +25,8 @@ processor_resources:
         if $seconds_since_last < @seconds_between_discounts.int16() {
           meta "can_receive_discount" = "false"
           meta "seconds_to_wait" = $seconds_to_wait
-          meta "final_message" = "Discount not granted - must wait " + $seconds_to_wait + " more seconds"
+          meta "final_message" = "Discount not granted - must wait " +
+            @seconds_to_wait + " more seconds"
         }
       }
   - label: create_discount
@@ -48,36 +51,48 @@ processor_resources:
           meta "discount_record" = $discount_record
         }
       }
+
 input:
   kafka:
     addresses: ["redpanda:9092"]
     topics: ["snowplow-enriched-good"]
     consumer_group: "discounts-processor"
+
 pipeline:
   processors:
     - mapping: |
-        meta "seconds_till_discount" = "40"
-        meta "seconds_between_discounts" = "300"
+        meta "seconds_till_discount" = "${SECONDS_TILL_DISCOUNT:90}"
+        meta "seconds_between_discounts" = "${SECONDS_BETWEEN_DISCOUNTS:300}"
         meta "duration_seconds" = "0"
+        meta "event_is_on_view_state_cache" = "true"
+        meta "discount_generated" = "false"
+        meta "final_message" = "No discount granted"
+
         meta "user_id" = this.user_id
         meta "webpage_id" = this.webpage_id
         meta "view_state_key" = this.user_id + "_" + this.webpage_id
         meta "discount_history_key" = this.user_id
         meta "event_name" = this.event_name
-        meta "event_is_on_view_state_cache" = "true"
         meta "collector_tstamp" = this.collector_tstamp
-        meta "discount_generated" = "false"
-        meta "final_message" = "No discount granted"
+
         root = this
     - log:
         level: DEBUG
-        message: "-----> Detected event: ${! this.event_name }, view_state_key=${! @view_state_key } <-----"
+        message: |
+         \n\n\n----- BEGIN -----
+         seconds_till_discount: ${! @seconds_till_discount },
+         seconds_between_discounts: ${! @seconds_between_discounts }
+
+         event_name: ${! this.event_name },
+         user_id: ${! @user_id },
+         view_state_key: ${! @view_state_key },
+         -----
     - switch:
         - check: this.event_name == "snowplow_ecommerce_action"
           processors:
             - log:
                 level: DEBUG
-                message: "Processing snowplow_ecommerce_action event for view_state_key=${! @view_state_key }"
+                message: Processing snowplow_ecommerce_action event
             - mapping: |
                 root = {
                   "user_id": this.user_id,
@@ -92,12 +107,13 @@ pipeline:
                 value: ${! this }
             - log:
                 level: DEBUG
-                message: "View state stored for view_state_key=${! @view_state_key }"
+                message: >
+                 View state stored for view_state_key=${! @view_state_key }
         - check: this.event_name == "page_ping"
           processors:
             - log:
                 level: DEBUG
-                message: "Processing page_ping event for view_state_key=${! @view_state_key }"
+                message: Processing page_ping event
             - cache:
                 resource: view_state
                 operator: get
@@ -108,20 +124,18 @@ pipeline:
                   - mapping: |
                       meta "final_message" = "No view state found for user. Discarding event"
                       meta "event_is_on_view_state_cache" = "false"
-                  - log:
-                      level: DEBUG
-                      message: ${! @final_message }
             - switch:
               - check: meta("event_is_on_view_state_cache") == "true"
                 processors:
                 - log:
                     level: DEBUG
-                    message: "Retrieved event from cache"
+                    message: Retrieved event from cache
                 - mapping: |
                     meta "saved_view_state" = this
                 - log:
                     level: DEBUG
-                    message: "Checking if user is eligible for discount based on discount_history"
+                    message: >
+                     Checking if user is eligible for discount based on discount_history
                 - cache:
                     resource: discount_history
                     operator: get
@@ -129,7 +143,7 @@ pipeline:
             - catch:
                 - log:
                     level: DEBUG
-                    message: "No discount history found. User is eligible for a discount"
+                    message: No discount history found. User is eligible for a discount
                 - catch: []
             - try:
               - resource: check_discount_history
@@ -141,10 +155,9 @@ pipeline:
                   - resource: create_discount
                   - log:
                       level: DEBUG
-                      message: "Duration calculated: ${! @duration_seconds } seconds, Discount applied: ${! @discount_generated }"
-                  - log:
-                      level: DEBUG
-                      message: "${! if @discount_generated.bool() { \"Discount granted!\" } else { @final_message } }"
+                      message: >
+                       Duration calculated: ${! @duration_seconds } seconds,
+                       Discount applied: ${! @discount_generated }
                   - switch:
                     - check: meta("discount_generated") == "true"
                       processors:
@@ -158,10 +171,16 @@ pipeline:
                   processors:
                   - log:
                       level: DEBUG
-                      message: "User needs wait ${! @seconds_to_wait } seconds before receiving a new discount"
+                      message: >
+                       User needs wait ${! @seconds_to_wait } seconds
+                       before receiving a new discount
     - log:
         level: INFO
-        message: "-----> Final message: ${! @final_message }. <-----"
+        message: |
+         -----
+         Final message: ${! @final_message }.
+         ----- END -----
+
     - mapping: |
         root = if !@discount_generated.bool() {
           deleted()
@@ -173,6 +192,7 @@ pipeline:
                 resource: view_state
                 operator: delete
                 key: ${! @view_state_key }
+
 output:
   kafka:
     addresses: ["redpanda:9092"]

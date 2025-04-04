@@ -40,6 +40,16 @@ services:
       redpanda:
         condition: service_healthy
 
+  topics-remover:
+    entrypoint: /bin/sh
+    command: -c 'for topic in snowplow-enriched-good shopper-discounts; do rpk topic delete $$topic --brokers=redpanda:9092; done'
+    image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
+    container_name: redpanda-topics-remover
+    profiles: ["tools"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
   console:
     container_name: redpanda-console
     image: docker.redpanda.com/redpandadata/console:v2.8.3
@@ -72,7 +82,8 @@ services:
     container_name: redpanda-discounts-processor
     image: docker.redpanda.com/redpandadata/connect
     depends_on:
-      - redpanda
+      - console
+      - topics-creator
       - memcached
     entrypoint: /bin/sh
     command: -c '/redpanda-connect --chilled -c /etc/redpanda/connect.yaml'

@@ -1,12 +1,17 @@
 import { Kafka, Producer } from 'kafkajs'
 import { Config, Product, Logger, IntervalTracker } from './types'
+import { ProductStats, findBestProduct } from './product-analytics'
+import { getRandomProduct, updateProductStats, sleepSeconds } from './product-utils'
 
-interface ProductStats {
-  views: number
-  totalDuration: number
+interface Event {
+  collector_tstamp: string
+  event_name: 'page_ping' | 'snowplow_ecommerce_action'
+  user_id: string
+  product_id?: string
+  product_name?: string
+  product_price?: number
+  webpage_id: string
 }
-
-const productStats = new Map<string, ProductStats>()
 
 export function createKafkaClient(config: Config): Kafka {
   return new Kafka({
@@ -15,53 +20,39 @@ export function createKafkaClient(config: Config): Kafka {
   })
 }
 
-const sleepSeconds = (seconds: number): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, seconds * 1000))
-
-const getRandomProduct = (products: Product[]): Product =>
-  products[Math.floor(Math.random() * products.length)]
-
-async function sendKafkaEvent(
+async function sendEvent(
   producer: Producer,
   config: Config,
   product: Product,
-  isPing: boolean = false
+  isPing: boolean = false,
+  productStats?: Map<string, ProductStats>
 ): Promise<void> {
-  const event = {
-    timestamp: new Date().toISOString(),
-    type: isPing ? 'product_view_ping' : 'product_view',
-    userId: config.mocks.users[0].id,
-    productId: product.id,
-    productName: product.name,
-    price: product.price,
+  let event: Event = {
+    collector_tstamp: new Date().toISOString(),
+    event_name: isPing ? 'page_ping' : 'snowplow_ecommerce_action',
+    user_id: config.mocks.users[0].id,
+    webpage_id: product.webpage_id,
+  }
+
+  if (!isPing) {
+    event.product_id = product.id
+    event.product_name = product.name
+    event.product_price = product.price
   }
 
   await producer.send({
     topic: config.kafka.topic,
-    messages: [{ value: JSON.stringify(event) }],
+    messages: [
+      {
+        key: config.mocks.users[0].id,
+        value: JSON.stringify(event),
+      },
+    ],
   })
 
-  const stats = productStats.get(product.id) || { views: 0, totalDuration: 0 }
-  stats.views += 1
-  stats.totalDuration += isPing ? 10 : 0
-  productStats.set(product.id, stats)
-}
-
-async function sendEventAndWait(
-  producer: Producer,
-  config: Config,
-  logger: Logger,
-  product: Product,
-  isPing: boolean,
-  currentProduct: Product | null
-): Promise<Product> {
-  if (!isPing || currentProduct?.id !== product.id) {
-    await sendKafkaEvent(producer, config, product, false)
-    logger.info(`Sent ${isPing ? 'ping' : 'view'} event for product "${product.name}"`)
-    return product
+  if (productStats) {
+    updateProductStats(product, isPing, productStats)
   }
-  await sendKafkaEvent(producer, config, product, true)
-  return currentProduct
 }
 
 export async function simulateFrequentViewKafka(
@@ -70,32 +61,9 @@ export async function simulateFrequentViewKafka(
   logger: Logger,
   intervalTracker: IntervalTracker
 ): Promise<void> {
-  const findBestProduct = (
-    products: Product[],
-    stats: Map<string, ProductStats>
-  ): Product | null => {
-    let bestProduct: Product | null = null
-    let maxViews = 0
-    let maxDuration = 0
-
-    for (const product of products) {
-      const productStats = stats.get(product.id)
-      if (
-        productStats &&
-        (productStats.views > maxViews ||
-          (productStats.views === maxViews && productStats.totalDuration > maxDuration))
-      ) {
-        maxViews = productStats.views
-        maxDuration = productStats.totalDuration
-        bestProduct = product
-      }
-    }
-
-    return bestProduct
-  }
-
   intervalTracker.setOnCycleEnd(() => {
     const productStats = intervalTracker.getCycleData('productStats') as Map<string, ProductStats>
+    if (!productStats) return
 
     logger.debug('End of cycle stats:')
     for (const [productId, stats] of productStats.entries()) {
@@ -109,57 +77,61 @@ export async function simulateFrequentViewKafka(
     if (bestProduct) {
       const stats = productStats.get(bestProduct.id)
       logger.info(
-        `DISCOUNT WINNER: "${bestProduct.name}" with ${
-          stats!.views
-        } views and ${stats!.totalDuration}s total duration`
+        `DISCOUNT WINNER: "${bestProduct.name}" with ${stats!.views} views and ` +
+          `${stats!.totalDuration}s total duration`
       )
     } else {
       logger.debug('No product qualified for discount in this cycle')
     }
   })
 
-  intervalTracker.setCycleData('productStats', new Map<string, ProductStats>())
+  const initialProductStats = new Map<string, ProductStats>()
+  intervalTracker.setCycleData('productStats', initialProductStats)
+  logger.info('Starting frequent view simulation...')
 
   while (true) {
     try {
+      let productStats: Map<string, ProductStats>
       if (intervalTracker.isNewCycle()) {
-        intervalTracker.setCycleData('productStats', new Map<string, ProductStats>())
-      }
-
-      const productStats = intervalTracker.getCycleData('productStats')
-      if (!productStats) {
-        intervalTracker.setCycleData('productStats', new Map<string, ProductStats>())
-        continue
+        productStats = new Map<string, ProductStats>()
+        intervalTracker.setCycleData('productStats', productStats)
+      } else {
+        productStats = intervalTracker.getCycleData('productStats') as Map<string, ProductStats>
+        if (!productStats) {
+          productStats = new Map<string, ProductStats>()
+          intervalTracker.setCycleData('productStats', productStats)
+        }
       }
 
       const product = getRandomProduct(config.mocks.products)
-
       const minDuration = config.simulation.frequentView.minDuration
       const maxDuration = config.simulation.frequentView.maxDuration
       const viewDuration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration
 
-      const currentStats = (productStats as Map<string, ProductStats>).get(product.id) || {
+      const currentStats = productStats.get(product.id) || {
         views: 0,
         totalDuration: 0,
       }
-      ;(productStats as Map<string, ProductStats>).set(product.id, {
+      productStats.set(product.id, {
         views: currentStats.views + 1,
         totalDuration: currentStats.totalDuration + viewDuration,
       })
 
-      await sendKafkaEvent(producer, config, product, false)
+      await sendEvent(producer, config, product, false, productStats)
 
-      const statsLog = Array.from((productStats as Map<string, ProductStats>).entries())
-        .map(([productId, stats]) => {
-          const product = config.mocks.products.find(p => p.id === productId)
-          return `"${product?.name}": ${stats.views} views, ${stats.totalDuration}s total`
-        })
-        .join(', ')
+      if (productStats.size > 0) {
+        const statsLog = Array.from(productStats.entries())
+          .map(([productId, stats]) => {
+            const product = config.mocks.products.find(p => p.id === productId)
+            return `  "${product?.name}": ${stats.views} views, ${stats.totalDuration}s total`
+          })
+          .join('\n')
 
-      const progress = intervalTracker.getCycleProgress()
-      logger.info(
-        `Cycle progress: ${Math.floor(progress.percentComplete)}% - Current stats - ${statsLog}`
-      )
+        const progress = intervalTracker.getCycleProgress()
+        logger.info(
+          `\nCycle progress: ${Math.floor(progress.percentComplete)}% - Current stats:\n${statsLog}`
+        )
+      }
 
       await sleepSeconds(viewDuration)
     } catch (error) {
@@ -168,7 +140,9 @@ export async function simulateFrequentViewKafka(
           error instanceof Error ? error.message : String(error)
         }`
       )
-      intervalTracker.setCycleData('productStats', new Map<string, ProductStats>())
+      const newProductStats = new Map<string, ProductStats>()
+      intervalTracker.setCycleData('productStats', newProductStats)
+      await sleepSeconds(1)
     }
   }
 }
@@ -179,48 +153,52 @@ export async function simulateLongViewKafka(
   logger: Logger,
   intervalTracker: IntervalTracker
 ): Promise<void> {
-  let currentProduct: Product | null = null
+  const sendEventByType = async (isPing: boolean, product: Product, eventCount?: number) => {
+    let message =
+      (isPing
+        ? `Sent page_ping event ${eventCount ? eventCount + 1 : 1}`
+        : 'Sent snowplow_ecommerce_action event') + '.'
+    const seconds = isPing
+      ? config.simulation.longView.pagePingInterval
+      : config.simulation.snowplowEcommerceActionInterval
+    message = message + ` Waiting ${seconds} seconds...`
+
+    await sendEvent(producer, config, product, isPing)
+    await sleepSeconds(seconds, message)
+  }
+
+  let lastProduct: Product | null = null
+  const longViewDurationMs = config.simulation.longView.duration * 1000
 
   while (true) {
     try {
-      const product = getRandomProduct(config.mocks.products)
+      let product: Product
+      do {
+        product = getRandomProduct(config.mocks.products)
+      } while (lastProduct && product.id === lastProduct.id)
+
+      lastProduct = product
       logger.info(`Starting new long view simulation for product "${product.name}"`)
+
+      await sendEventByType(false, product)
 
       const startTime = Date.now()
       let eventCount = 0
-
-      currentProduct = await sendEventAndWait(
-        producer,
-        config,
-        logger,
-        product,
-        false,
-        currentProduct
-      )
-
-      const longViewDurationMs = config.simulation.longView.duration * 1000
-
-      while (Date.now() - startTime < longViewDurationMs) {
+      do {
         intervalTracker.checkIfNewCycle()
-        currentProduct = await sendEventAndWait(
-          producer,
-          config,
-          logger,
-          product,
-          true,
-          currentProduct
-        )
+        await sendEventByType(true, product, eventCount)
         eventCount++
-        logger.info(`Duration: ${Math.floor((Date.now() - startTime) / 1000)}s`)
-        await sleepSeconds(config.simulation.longView.pagePingInterval)
-      }
+      } while (Date.now() - startTime <= longViewDurationMs)
 
       logger.info(
         `Completed long view simulation with ${eventCount} events over ${Math.floor(
           (Date.now() - startTime) / 1000
         )} seconds`
       )
-      await sleepSeconds(config.simulation.betweenLongViewInterval)
+      await sleepSeconds(
+        config.simulation.betweenLongViewInterval,
+        `Waiting ${config.simulation.betweenLongViewInterval} seconds between long views`
+      )
     } catch (error) {
       logger.error(
         `Error in long view simulation: ${error instanceof Error ? error.message : String(error)}`
@@ -234,20 +212,5 @@ export async function simulateNormalViewKafka(
   config: Config,
   logger: Logger
 ): Promise<void> {
-  let currentProduct: Product | null = null
-
-  while (true) {
-    logger.info('Starting new normal viewing pattern simulation')
-
-    const randomProduct = getRandomProduct(config.mocks.products)
-    currentProduct = await sendEventAndWait(
-      producer,
-      config,
-      logger,
-      randomProduct,
-      false,
-      currentProduct
-    )
-    await sleepSeconds(config.simulation.betweenNormalViewInterval)
-  }
+  // TODO
 }

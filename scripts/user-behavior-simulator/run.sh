@@ -11,6 +11,7 @@ if [ $# -lt 2 ]; then
 fi
 
 docker_dir=${docker_dir:-../../docker}
+discounts_processor_logs_dir=${discounts_processor_logs_dir:-../discounts-processor/logs}
 
 case "${1:-}" in
 redpanda)
@@ -35,14 +36,31 @@ export KAFKAJS_NO_PARTITIONER_WARNING=1
 behavior=$1
 mode=$2
 
+cleanup() {
+  pkill -P $$
+  exit 0
+}
+
+trap cleanup SIGINT SIGTERM
+
 case $mode in
 ui)
+  behavior_file=tests/${behavior}.spec.ts
+  [ -f $behavior_file ] || { echo "File not found: $behavior_file" && exit 1; }
   NODE_OPTIONS="--no-warnings --no-deprecation" \
-    ./node_modules/.bin/playwright test tests/${behavior}.spec.ts
+    ./node_modules/.bin/playwright test $behavior_file
   ;;
 kafka)
-  NODE_OPTIONS="--no-warnings --no-deprecation --loader ts-node/esm" \
-    ./node_modules/.bin/ts-node --esm src/index.ts "$behavior"
+  latest_file=$discounts_processor_logs_dir/latest
+  if [ -f $latest_file ]; then
+    logs_file=./logs/$(<$latest_file)
+    echo Generating logs in file $logs_file ...
+    mkdir -p ./logs
+    NODE_OPTIONS="--no-warnings --no-deprecation --loader ts-node/esm" \
+      LOG_FILE="$logs_file" node --experimental-specifier-resolution=node src/index.ts "$behavior"
+  else
+    echo "File $latest_file not found!"
+  fi
   ;;
 *)
   echo "Error: Invalid mode: $mode"

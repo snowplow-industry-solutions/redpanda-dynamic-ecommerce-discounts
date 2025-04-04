@@ -1,21 +1,25 @@
-import { loadConfig } from './load-config.js'
-import { createLogger } from './logger.js'
-import { IntervalTracker } from './interval-tracker.js'
+import { loadConfig } from './load-config'
+import { createLogger } from './logger'
+import { IntervalTracker } from './interval-tracker'
 import {
   createKafkaClient,
   simulateFrequentViewKafka,
   simulateLongViewKafka,
   simulateNormalViewKafka,
-} from './kafka-simulators.js'
+} from './kafka-simulators'
+import { Producer } from 'kafkajs'
 
-const config = await loadConfig()
+const { config, usedConfigFile } = await loadConfig()
 const logger = createLogger(config.logging)
+
+logger.info(`Using configuration from: ${usedConfigFile}`)
 
 const intervalTracker = new IntervalTracker(
   logger,
   config.simulation.cycle.duration,
   config.simulation.cycle.warningInterval
 )
+intervalTracker.start()
 
 function showUsage(): void {
   logger.info(`
@@ -33,10 +37,10 @@ Example:
   process.exit(1)
 }
 
-async function simulateUserBehavior(behavior: string): Promise<void> {
-  let kafka
-  let producer
+let kafka
+let producer: Producer
 
+async function simulateUserBehavior(behavior: string): Promise<void> {
   try {
     kafka = createKafkaClient(config)
     producer = kafka.producer()
@@ -62,7 +66,9 @@ async function simulateUserBehavior(behavior: string): Promise<void> {
         showUsage()
     }
   } catch (error) {
-    logger.error(`Error during simulation: ${error instanceof Error ? error.message : String(error)}`)
+    logger.error(
+      `Error during simulation: ${error instanceof Error ? error.message : String(error)}`
+    )
     if (producer) {
       await producer.disconnect()
     }
@@ -70,10 +76,23 @@ async function simulateUserBehavior(behavior: string): Promise<void> {
   }
 }
 
+let isShuttingDown = false
+
 process.on('SIGINT', async () => {
-  logger.info('Gracefully shutting down...')
-  intervalTracker.stop()
-  process.exit(0)
+  if (isShuttingDown) return
+  isShuttingDown = true
+
+  try {
+    logger.info('Gracefully shutting down...')
+    intervalTracker.stop()
+    if (producer) {
+      await producer.disconnect()
+    }
+  } catch (error) {
+    // Silently handle any errors during shutdown
+  } finally {
+    process.exit(0)
+  }
 })
 
 process.on('unhandledRejection', error => {

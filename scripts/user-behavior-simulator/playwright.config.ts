@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests',
@@ -10,10 +10,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
-    video: 'on-first-retry'
+    video: 'on-first-retry',
   },
   timeout: 180000,
   expect: {
-    timeout: 60000
-  }
-});
+    timeout: 60000,
+  },
+})

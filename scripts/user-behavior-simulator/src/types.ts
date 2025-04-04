@@ -15,6 +15,7 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 export interface LoggerConfig {
   level: LogLevel
   timestamp: boolean
+  showLevel: boolean
 }
 
 export interface Config {
@@ -37,12 +38,13 @@ export interface Config {
       pagePingInterval: number
       duration: number
     }
-    betweenLongViewInterval: number
-    betweenNormalViewInterval: number
     frequentView: {
       minDuration: number
       maxDuration: number
     }
+    betweenLongViewInterval: number
+    betweenNormalViewInterval: number
+    snowplowEcommerceActionInterval: number
   }
 }
 

@@ -10,6 +10,7 @@ export class IntervalTracker {
   private interval?: NodeJS.Timeout
   private warningTimer?: NodeJS.Timeout
   private onCycleEnd?: () => void
+  private cycleCount: number = 0
 
   constructor(
     logger: Logger,
@@ -24,7 +25,7 @@ export class IntervalTracker {
     this.lastCycleTime = Date.now()
     this.startTime = Date.now()
     this.onCycleEnd = onCycleEnd
-    this.logger.info(`Starting first cycle of ${this.formatDuration()}`)
+    this.cycleCount = 1
   }
 
   private formatTimeRemaining(remainingSeconds: number): string {
@@ -59,11 +60,15 @@ export class IntervalTracker {
     if (now - this.lastCycleTime >= this.duration) {
       if (this.onCycleEnd) {
         this.logger.info('Cycle completed')
-        this.onCycleEnd()
+        this.onCycleEnd() // Chama o callback antes de resetar
       }
+
+      this.cycleCount++
       this.lastCycleTime = now
       this.startTime = now
-      this.logger.info(`Starting new ${this.formatDuration()} cycle`)
+      this.clearCycleData() // Move a limpeza para depois do callback
+
+      this.logger.info(`Starting cycle #${this.cycleCount} of ${this.formatDuration()}`)
       return true
     }
     return false
@@ -97,21 +102,27 @@ export class IntervalTracker {
   }
 
   start(): void {
-    this.logger.info(`Starting new ${this.formatDuration()} cycle`)
+    this.logger.info(`Starting cycle #${this.cycleCount} of ${this.formatDuration()}`)
     this.startTime = Date.now()
-    this.clearCycleData()
 
     this.interval = setInterval(() => {
-      this.logger.info(`Starting new ${this.formatDuration()} cycle`)
+      if (this.onCycleEnd) {
+        this.logger.info('Cycle completed')
+        this.onCycleEnd() // Chama o callback antes de resetar
+      }
+
+      this.cycleCount++
       this.startTime = Date.now()
-      this.clearCycleData()
+      this.clearCycleData() // Move a limpeza para depois do callback
+
+      this.logger.info(`Starting cycle #${this.cycleCount} of ${this.formatDuration()}`)
     }, this.duration)
 
     this.warningTimer = setInterval(() => {
       const remainingTime = this.getRemainingTime()
       const remainingSeconds = Math.floor(remainingTime / 1000)
       this.logger.info(
-        `${this.formatTimeRemaining(remainingSeconds)} remaining until new cycle starts`
+        `Cycle #${this.cycleCount}: ${this.formatTimeRemaining(remainingSeconds)} remaining until new cycle starts`
       )
     }, this.warningInterval)
   }

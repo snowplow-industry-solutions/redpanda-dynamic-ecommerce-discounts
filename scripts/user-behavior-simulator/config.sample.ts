@@ -8,16 +8,17 @@ const config: Config = {
   },
   logging: {
     level: 'info',
-    timestamp: true,
+    timestamp: false,
+    showLevel: false,
   },
   simulation: {
     cycle: {
-      duration: 60,
-      warningInterval: 15,
+      duration: 5 * 60,
+      warningInterval: 30,
     },
     longView: {
-      pagePingInterval: 5,
-      duration: 30,
+      pagePingInterval: 10,
+      duration: 90,
     },
     frequentView: {
       minDuration: 3,
@@ -25,6 +26,7 @@ const config: Config = {
     },
     betweenLongViewInterval: 10,
     betweenNormalViewInterval: 30,
+    snowplowEcommerceActionInterval: 2 + 10,
   },
   mocks: {
     users: [

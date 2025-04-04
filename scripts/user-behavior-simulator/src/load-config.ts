@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const PROJECT_ROOT = join(__dirname, '..')
 
-export async function loadConfig(): Promise<Config> {
+export async function loadConfig(): Promise<{ config: Config; usedConfigFile: string }> {
   const configPaths = {
     user: join(PROJECT_ROOT, 'config.ts'),
     sample: join(PROJECT_ROOT, 'config.sample.ts'),
@@ -27,7 +27,10 @@ export async function loadConfig(): Promise<Config> {
     const configModule = await import(configPath)
     const config = configModule.default as Config
     validateConfig(config)
-    return config
+    return {
+      config,
+      usedConfigFile: configExists ? 'config.ts' : 'config.sample.ts',
+    }
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Failed to load configuration: ${error.message}`)
