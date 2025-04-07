@@ -1,5 +1,6 @@
 // URIs
 :uri-project-github: https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda
+:uri-project-github-simulator: {uri-project-github}/tree/main/scripts/user-behavior-simulator
 :uri-localstack: https://www.localstack.cloud/
 :uri-redpanda: https://www.redpanda.com/
 :uri-ecommerce-nextjs-example-store: https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store
@@ -12,3 +13,6 @@
 :LazyDocker: https://github.com/jesseduffield/lazydocker[LazyDocker]
 :Terraform: https://www.terraform.io/[Terraform]
 :Docker: https://www.docker.com/[Docker]
+:ApacheFlink: https://flink.apache.org/[Apache Flink]
+:RedpandaConnect: https://www.redpanda.com/connect[Redpanda Connect]
+:TestContainers: https://www.testcontainers.org/[TestContainers]

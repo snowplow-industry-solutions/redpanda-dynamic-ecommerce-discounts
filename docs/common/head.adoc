@@ -9,6 +9,7 @@
 :source-highlighter: rouge
 :stylesheet: README.css
 :toc: left
+:toclevels: 5
 ifdef::backend-pdf[]
 :toc-title!:
 :toc: macro
