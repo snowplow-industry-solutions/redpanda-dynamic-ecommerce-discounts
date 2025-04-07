@@ -1,0 +1,253 @@
+ifdef::env-github[]
+Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/discounts-processor/README.html[here]
+endif::env-github[]
+ifndef::env-github[]
+= Discounts Processor
+include::common/head.adoc[]
+
+:uri-project-github-connect-yaml: {uri-project-github}/blob/main/redpanda/connect.yaml
+
+== Overview
+
+This project (*{doctitle}*) is a Java/ {ApacheFlink} application that processes event data from {Redpanda} and generates discount events based on user behavior patterns. It analyzes user interactions with products and creates targeted discount opportunities.
+
+[[main-project-relation]]
+This module can be treated almost{empty}footnote:[It only relies on scripts that generate documentation.] entirely independently of {uri-project-github}[the main project] that encompasses it. It is an alternative intended to produce the same result as the {uri-project-github-connect-yaml}[connect.yaml] file configured using {RedpandaConnect}. In other words, it is a discount processor that works under the same <<rules,rules>>.
+
+This module also contains <<integration-tests,real integration tests>> that are executed with the help of {TestContainers}.
+
+== Running the Application
+
+=== Prerequisites
+
+. Bash
+. Java
+. {Docker}
+
+These were the versions used during development:
+
+[,console]
+----
+$ echo $BASH_VERSION
+5.2.21(1)-release
+
+$ java -version
+openjdk version "17.0.14" 2025-01-21
+OpenJDK Runtime Environment Temurin-17.0.14+7 (build 17.0.14+7)
+OpenJDK 64-Bit Server VM Temurin-17.0.14+7 (build 17.0.14+7, mixed mode, sharing)
+
+$ docker --version
+Docker version 27.3.1, build ce12230
+----
+
+=== Using the Run Script
+
+==== In development mode
+
+First, you need to start Redpanda using docker. To simplify the start/stop, use the link:docker.sh[] script:
+
+----
+$ ./docker.sh up
+----
+
+The application can be executed using the provided link:run.sh[] script, which handles building and running the application:
+
+Alternative 1: Start the application with an existing JAR:
+
+[,console]
+----
+$ ./run.sh
+----
+
+Alternative 2: Force a rebuild and start the application:
+
+[,console]
+----
+$ ./run.sh --build
+----
+
+The script will:
+
+* Build the application if the JAR doesn't exist or if `--build` is specified
+* Configure appropriate JVM options
+* Handle graceful shutdown on SIGTERM/SIGINT
+* Display colored status messages during execution
+
+NOTE: The script automatically manages the application lifecycle and provides proper cleanup on shutdown.
+
+To generate events in order to trigger discounts, use {uri-project-github-simulator}[the Simulator project].
+
+To verify that discounts are being generated correctly, consume from the output topic:
+
+[,console]
+----
+$ docker exec -it redpanda rpk topic consume shopper-discounts
+----
+
+You should see discount events in the output that match the expected patterns based on the input events.
+
+==== In production mode (integrated with the main project)
+
+In this mode you can test this script integrated with <<main-project-relation,the main project>>.
+
+WARNING: This is not finished yet.
+
+== Testing Procedures
+
+This document outlines the testing procedures for the Discounts Processor application.
+
+=== Unit and Mock Tests
+
+Unit tests verify the core business logic of the discount processors without external dependencies.
+
+==== Running
+
+To run all unit and mock tests:
+
+[,console]
+----
+$ ./gradlew test
+----
+
+To run a specific test class:
+
+[,console]
+----
+$ ./gradlew test --tests "com.example.DiscountsProcessorTest"
+----
+
+To run a mocked test for the discount processor:
+
+[,console]
+----
+$ ./gradlew test --tests "com.example.DiscountsProcessorMockTest"
+----
+
+[[integration-tests]]
+=== Integration Tests
+
+The integration tests cover tests for the following processors:
+
+* link:src/main/java/com/example/processor/ContinuousViewProcessor.java[].
+* link:src/main/java/com/example/processor/MostViewedProcessor.java[].
+
+[[real-integration-tests]]
+==== Running Integration Tests with TestContainers
+
+To run the a integration test with {TestContainers}:
+
+[,bash]
+----
+$ ./gradlew test --tests "com.example.DiscountsProcessorIntegrationTest"
+----
+
+To run all integration tests:
+
+[,bash]
+----
+$ ./gradlew integrationTest
+----
+
+=== Troubleshooting
+
+==== Common Issues
+
+* *No discounts generated*: Ensure that enough events are being sent to trigger the discount conditions (9+ events for continuous view, 5+ events for most viewed).
+* *Connection issues*: Verify that Redpanda is running and accessible.
+* *Serialization errors*: Check that the event format matches the expected schema.
+
+==== Logs
+
+Application logs can be configured in two files depending on the environment (real or test):
+
+. link:src/main/resources/logback.xml[logback.xml]
+. link:src/test/resources/logback-test.xml[logback-test.xml]
+
+[[rules]]
+== Discount Conditions
+
+[[continuous-view-discount]]
+=== Continuous View Discount
+
+A single discount of 10% (witin a 5-minute window) is generated when:
+
+* A user views the same product continuously within a 90-second window.
+
+[[most-viewed-product-discount]]
+=== Most Viewed Product Discount
+
+A single discount of 10% (witin a 5-minute window) is generated when:
+
+* A product is viewed at least 3 times by the same user.
+
+WARNING: This rule is being reworked to: the product with the most views within a 5 minute window gets the discount. If two products have the same number of views, then the one with the longest viewing time will get the discount.
+
+== Event examples
+
+=== Input (in `snowplow-enriched-good` topic)
+
+`snowplow_ecommerce_action` event:
+
+[,json]
+----
+{
+  "collector_tstamp": "2025-04-04T07:05:00.119Z",
+  "event_name": "snowplow_ecommerce_action",
+  "user_id": "1",
+  "product_id": "5",
+  "product_name": "SP Flex Runner 2",
+  "product_price": 42.99,
+  "webpage_id": "page_5"
+}
+----
+
+`page_view` event:
+
+[,json]
+----
+{
+  "collector_tstamp": "2025-04-04T07:05:12.130Z",
+  "event_name": "page_ping",
+  "user_id": "1",
+  "webpage_id": "page_5"
+}
+----
+
+=== Output (in `shopper-discounts` topic)
+
+`discount` event examples:
+
+<<continuous-view-discount>>:
+
+[,json]
+----
+{
+  "user_id": "1",
+  "product_id": "5",
+  "discount": {
+    "rate": 0.1,
+    "by_view_time": {
+      "duration_in_seconds": 100
+    }
+  }
+}
+----
+
+<<most-viewed-product-discount>>:
+
+[,json]
+----
+{
+  "user_id": "1",
+  "product_id": "5",
+  "discount": {
+    "rate": 0.1,
+    "by_number_of_views": {
+      "views": 5,
+      "duration_in_seconds": 30
+    }
+  }
+}
+----
+
+endif::env-github[]

@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<title>Discounts Processor</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Discounts Processor</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#overview">1. Overview</a></li>
+<li><a href="#running-the-application">2. Running the Application</a>
+<ul class="sectlevel2">
+<li><a href="#prerequisites">2.1. Prerequisites</a></li>
+<li><a href="#using-the-run-script">2.2. Using the Run Script</a>
+<ul class="sectlevel3">
+<li><a href="#in-development-mode">2.2.1. In development mode</a></li>
+<li><a href="#in-production-mode-integrated-with-the-main-project">2.2.2. In production mode (integrated with the main project)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#testing-procedures">3. Testing Procedures</a>
+<ul class="sectlevel2">
+<li><a href="#unit-and-mock-tests">3.1. Unit and Mock Tests</a>
+<ul class="sectlevel3">
+<li><a href="#running">3.1.1. Running</a></li>
+</ul>
+</li>
+<li><a href="#integration-tests">3.2. Integration Tests</a>
+<ul class="sectlevel3">
+<li><a href="#real-integration-tests">3.2.1. Running Integration Tests with TestContainers</a></li>
+</ul>
+</li>
+<li><a href="#troubleshooting">3.3. Troubleshooting</a>
+<ul class="sectlevel3">
+<li><a href="#common-issues">3.3.1. Common Issues</a></li>
+<li><a href="#logs">3.3.2. Logs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#rules">4. Discount Conditions</a>
+<ul class="sectlevel2">
+<li><a href="#continuous-view-discount">4.1. Continuous View Discount</a></li>
+<li><a href="#most-viewed-product-discount">4.2. Most Viewed Product Discount</a></li>
+</ul>
+</li>
+<li><a href="#event-examples">5. Event examples</a>
+<ul class="sectlevel2">
+<li><a href="#input-in-snowplow-enriched-good-topic">5.1. Input (in <code>snowplow-enriched-good</code> topic)</a></li>
+<li><a href="#output-in-shopper-discounts-topic">5.2. Output (in <code>shopper-discounts</code> topic)</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Git commit: d9181bd</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="overview"><a class="anchor" href="#overview"></a>1. Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This project (<strong>Discounts Processor</strong>) is a Java/ <a href="https://flink.apache.org/">Apache Flink</a> application that processes event data from <a href="https://www.redpanda.com/">Redpanda</a> and generates discount events based on user behavior patterns. It analyzes user interactions with products and creates targeted discount opportunities.</p>
+</div>
+<div id="main-project-relation" class="paragraph">
+<p>This module can be treated almost<sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnotedef_1" title="View footnote.">1</a>]</sup> entirely independently of <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda">the main project</a> that encompasses it. It is an alternative intended to produce the same result as the <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/redpanda/connect.yaml">connect.yaml</a> file configured using <a href="https://www.redpanda.com/connect">Redpanda Connect</a>. In other words, it is a discount processor that works under the same <a href="#rules">rules</a>.</p>
+</div>
+<div class="paragraph">
+<p>This module also contains <a href="#integration-tests">real integration tests</a> that are executed with the help of <a href="https://www.testcontainers.org/">TestContainers</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="running-the-application"><a class="anchor" href="#running-the-application"></a>2. Running the Application</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="prerequisites"><a class="anchor" href="#prerequisites"></a>2.1. Prerequisites</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Bash</p>
+</li>
+<li>
+<p>Java</p>
+</li>
+<li>
+<p><a href="https://www.docker.com/">Docker</a></p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>These were the versions used during development:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="nb">echo</span> <span class="nv">$BASH_VERSION</span>
+<span class="go">5.2.21(1)-release
+
+</span><span class="gp">$</span><span class="w"> </span>java <span class="nt">-version</span>
+<span class="go">openjdk version "17.0.14" 2025-01-21
+OpenJDK Runtime Environment Temurin-17.0.14+7 (build 17.0.14+7)
+OpenJDK 64-Bit Server VM Temurin-17.0.14+7 (build 17.0.14+7, mixed mode, sharing)
+
+</span><span class="gp">$</span><span class="w"> </span>docker <span class="nt">--version</span>
+<span class="go">Docker version 27.3.1, build ce12230</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="using-the-run-script"><a class="anchor" href="#using-the-run-script"></a>2.2. Using the Run Script</h3>
+<div class="sect3">
+<h4 id="in-development-mode"><a class="anchor" href="#in-development-mode"></a>2.2.1. In development mode</h4>
+<div class="paragraph">
+<p>First, you need to start Redpanda using docker. To simplify the start/stop, use the <a href="docker.sh" class="bare">docker.sh</a> script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ ./docker.sh up</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The application can be executed using the provided <a href="run.sh" class="bare">run.sh</a> script, which handles building and running the application:</p>
+</div>
+<div class="paragraph">
+<p>Alternative 1: Start the application with an existing JAR:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./run.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternative 2: Force a rebuild and start the application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./run.sh <span class="nt">--build</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The script will:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Build the application if the JAR doesn&#8217;t exist or if <code>--build</code> is specified</p>
+</li>
+<li>
+<p>Configure appropriate JVM options</p>
+</li>
+<li>
+<p>Handle graceful shutdown on SIGTERM/SIGINT</p>
+</li>
+<li>
+<p>Display colored status messages during execution</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The script automatically manages the application lifecycle and provides proper cleanup on shutdown.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>To generate events in order to trigger discounts, use <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/tree/main/scripts/user-behavior-simulator">the Simulator project</a>.</p>
+</div>
+<div class="paragraph">
+<p>To verify that discounts are being generated correctly, consume from the output topic:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-it</span> redpanda rpk topic consume shopper-discounts</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You should see discount events in the output that match the expected patterns based on the input events.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="in-production-mode-integrated-with-the-main-project"><a class="anchor" href="#in-production-mode-integrated-with-the-main-project"></a>2.2.2. In production mode (integrated with the main project)</h4>
+<div class="paragraph">
+<p>In this mode you can test this script integrated with <a href="#main-project-relation">the main project</a>.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+This is not finished yet.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="testing-procedures"><a class="anchor" href="#testing-procedures"></a>3. Testing Procedures</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This document outlines the testing procedures for the Discounts Processor application.</p>
+</div>
+<div class="sect2">
+<h3 id="unit-and-mock-tests"><a class="anchor" href="#unit-and-mock-tests"></a>3.1. Unit and Mock Tests</h3>
+<div class="paragraph">
+<p>Unit tests verify the core business logic of the discount processors without external dependencies.</p>
+</div>
+<div class="sect3">
+<h4 id="running"><a class="anchor" href="#running"></a>3.1.1. Running</h4>
+<div class="paragraph">
+<p>To run all unit and mock tests:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./gradlew <span class="nb">test</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To run a specific test class:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./gradlew <span class="nb">test</span> <span class="nt">--tests</span> <span class="s2">"com.example.DiscountsProcessorTest"</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To run a mocked test for the discount processor:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./gradlew <span class="nb">test</span> <span class="nt">--tests</span> <span class="s2">"com.example.DiscountsProcessorMockTest"</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="integration-tests"><a class="anchor" href="#integration-tests"></a>3.2. Integration Tests</h3>
+<div class="paragraph">
+<p>The integration tests cover tests for the following processors:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="src/main/java/com/example/processor/ContinuousViewProcessor.java" class="bare">src/main/java/com/example/processor/ContinuousViewProcessor.java</a>.</p>
+</li>
+<li>
+<p><a href="src/main/java/com/example/processor/MostViewedProcessor.java" class="bare">src/main/java/com/example/processor/MostViewedProcessor.java</a>.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="real-integration-tests"><a class="anchor" href="#real-integration-tests"></a>3.2.1. Running Integration Tests with TestContainers</h4>
+<div class="paragraph">
+<p>To run the a integration test with <a href="https://www.testcontainers.org/">TestContainers</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash"><span class="nv">$ </span>./gradlew <span class="nb">test</span> <span class="nt">--tests</span> <span class="s2">"com.example.DiscountsProcessorIntegrationTest"</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To run all integration tests:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash"><span class="nv">$ </span>./gradlew integrationTest</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="troubleshooting"><a class="anchor" href="#troubleshooting"></a>3.3. Troubleshooting</h3>
+<div class="sect3">
+<h4 id="common-issues"><a class="anchor" href="#common-issues"></a>3.3.1. Common Issues</h4>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>No discounts generated</strong>: Ensure that enough events are being sent to trigger the discount conditions (9+ events for continuous view, 5+ events for most viewed).</p>
+</li>
+<li>
+<p><strong>Connection issues</strong>: Verify that Redpanda is running and accessible.</p>
+</li>
+<li>
+<p><strong>Serialization errors</strong>: Check that the event format matches the expected schema.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="logs"><a class="anchor" href="#logs"></a>3.3.2. Logs</h4>
+<div class="paragraph">
+<p>Application logs can be configured in two files depending on the environment (real or test):</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="src/main/resources/logback.xml">logback.xml</a></p>
+</li>
+<li>
+<p><a href="src/test/resources/logback-test.xml">logback-test.xml</a></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="rules"><a class="anchor" href="#rules"></a>4. Discount Conditions</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="continuous-view-discount"><a class="anchor" href="#continuous-view-discount"></a>4.1. Continuous View Discount</h3>
+<div class="paragraph">
+<p>A single discount of 10% (witin a 5-minute window) is generated when:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A user views the same product continuously within a 90-second window.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="most-viewed-product-discount"><a class="anchor" href="#most-viewed-product-discount"></a>4.2. Most Viewed Product Discount</h3>
+<div class="paragraph">
+<p>A single discount of 10% (witin a 5-minute window) is generated when:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A product is viewed at least 3 times by the same user.</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+This rule is being reworked to: the product with the most views within a 5 minute window gets the discount. If two products have the same number of views, then the one with the longest viewing time will get the discount.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="event-examples"><a class="anchor" href="#event-examples"></a>5. Event examples</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="input-in-snowplow-enriched-good-topic"><a class="anchor" href="#input-in-snowplow-enriched-good-topic"></a>5.1. Input (in <code>snowplow-enriched-good</code> topic)</h3>
+<div class="paragraph">
+<p><code>snowplow_ecommerce_action</code> event:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"collector_tstamp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-04T07:05:00.119Z"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"event_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"snowplow_ecommerce_action"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"product_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"product_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"SP Flex Runner 2"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"product_price"</span><span class="p">:</span><span class="w"> </span><span class="mf">42.99</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"webpage_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"page_5"</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>page_view</code> event:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"collector_tstamp"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-04T07:05:12.130Z"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"event_name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"page_ping"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"webpage_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"page_5"</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="output-in-shopper-discounts-topic"><a class="anchor" href="#output-in-shopper-discounts-topic"></a>5.2. Output (in <code>shopper-discounts</code> topic)</h3>
+<div class="paragraph">
+<p><code>discount</code> event examples:</p>
+</div>
+<div class="paragraph">
+<p><a href="#continuous-view-discount">Continuous View Discount</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"product_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"discount"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"rate"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"by_view_time"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"duration_in_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">100</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><a href="#most-viewed-product-discount">Most Viewed Product Discount</a>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"product_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"5"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"discount"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"rate"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"by_number_of_views"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"views"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"duration_in_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footnotes">
+<hr>
+<div class="footnote" id="_footnotedef_1">
+<a href="#_footnoteref_1">1</a>. It only relies on scripts that generate documentation.
+</div>
+</div>
+</body>
+</html>
