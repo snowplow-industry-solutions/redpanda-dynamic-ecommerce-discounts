@@ -4,3 +4,4 @@ playwright-report/
 test-results/
 logs/
 /config.ts
+/data

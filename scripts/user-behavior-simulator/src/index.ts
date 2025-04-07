@@ -6,6 +6,7 @@ import {
   simulateFrequentViewKafka,
   simulateLongViewKafka,
   simulateNormalViewKafka,
+  cleanup,
 } from './kafka-simulators'
 import { Producer } from 'kafkajs'
 import { Config, Logger } from './types'
@@ -46,18 +47,20 @@ Example:
 }
 
 let kafka
-let producer: Producer
+let producer: Producer | null = null
 
 async function simulateUserBehavior(behavior: string): Promise<void> {
   try {
-    kafka = createKafkaClient(config)
-    producer = kafka.producer()
-    try {
-      await producer.connect()
-      logger.info('Connected to Kafka')
-    } catch (error) {
-      logger.error('Kafka is not available')
-      process.exit(1)
+    if (config.sink_type === 'kafka') {
+      kafka = createKafkaClient(config)
+      producer = kafka.producer()
+      try {
+        await producer.connect()
+        logger.info('Connected to Kafka')
+      } catch (error) {
+        logger.error('Kafka is not available')
+        process.exit(1)
+      }
     }
 
     switch (behavior) {
@@ -96,6 +99,7 @@ process.on('SIGINT', async () => {
     if (producer) {
       await producer.disconnect()
     }
+    await cleanup()
   } catch (error) {
     // Silently handle any errors during shutdown
   } finally {

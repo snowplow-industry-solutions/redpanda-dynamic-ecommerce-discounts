@@ -24,6 +24,7 @@ export interface Config {
     brokers: string[]
     topic: string
   }
+  sink_type: 'kafka' | 'jsonl'
   logging: {
     console: LoggerConfig
     file: LoggerConfig

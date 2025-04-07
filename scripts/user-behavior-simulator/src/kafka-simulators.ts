@@ -1,8 +1,11 @@
+import fs from 'fs'
+import path from 'path'
 import { Kafka, Producer } from 'kafkajs'
 import { Config, Product, Logger, IntervalTracker } from './types'
 import { ProductStats, findBestProduct } from './product-analytics'
 import { getRandomProduct, updateProductStats, sleepSeconds } from './product-utils'
 
+type SimulationType = 'frequent' | 'long' | 'normal'
 interface Event {
   collector_tstamp: string
   event_name: 'page_ping' | 'snowplow_ecommerce_action'
@@ -13,6 +16,36 @@ interface Event {
   webpage_id: string
 }
 
+class JsonlSink {
+  private stream: fs.WriteStream
+
+  constructor(filePath: string) {
+    const normalizedPath = path.resolve(filePath)
+    const dir = path.dirname(normalizedPath)
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+    this.stream = fs.createWriteStream(normalizedPath, { flags: 'a' })
+  }
+
+  async send(message: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.stream.write(message + '\n', (error: any) => {
+        if (error) reject(error)
+        else resolve()
+      })
+    })
+  }
+
+  async close(): Promise<void> {
+    return new Promise(resolve => {
+      this.stream.end(() => resolve())
+    })
+  }
+}
+
+let jsonlSink: JsonlSink | null = null
+
 export function createKafkaClient(config: Config): Kafka {
   return new Kafka({
     clientId: 'user-behavior-simulator',
@@ -21,10 +54,11 @@ export function createKafkaClient(config: Config): Kafka {
 }
 
 async function sendEvent(
-  producer: Producer,
+  producer: Producer | null,
   config: Config,
   product: Product,
   isPing: boolean = false,
+  simulationType: SimulationType,
   productStats?: Map<string, ProductStats>
 ): Promise<void> {
   let event: Event = {
@@ -40,15 +74,25 @@ async function sendEvent(
     event.product_price = product.price
   }
 
-  await producer.send({
-    topic: config.kafka.topic,
-    messages: [
-      {
-        key: config.mocks.users[0].id,
-        value: JSON.stringify(event),
-      },
-    ],
-  })
+  const message = JSON.stringify(event)
+
+  if (config.sink_type === 'jsonl') {
+    if (!jsonlSink) {
+      const filePath = `data/${simulationType}.jsonl`
+      jsonlSink = new JsonlSink(filePath)
+    }
+    await jsonlSink.send(message)
+  } else if (producer) {
+    await producer.send({
+      topic: config.kafka.topic,
+      messages: [
+        {
+          key: config.mocks.users[0].id,
+          value: message,
+        },
+      ],
+    })
+  }
 
   if (productStats) {
     updateProductStats(product, isPing, productStats)
@@ -71,7 +115,7 @@ export function generateStatsLog(
 }
 
 export async function simulateFrequentViewKafka(
-  producer: Producer,
+  producer: Producer | null,
   config: Config,
   logger: Logger,
   intervalTracker: IntervalTracker
@@ -95,7 +139,7 @@ export async function simulateFrequentViewKafka(
       const stats = productStats.get(bestProduct.id)
       logger.info(
         `DISCOUNT WINNER: "${bestProduct.name}" with ${stats!.views} views and ` +
-        `${stats!.totalDuration}s total duration`
+          `${stats!.totalDuration}s total duration`
       )
     } else {
       logger.debug('No product qualified for discount in this cycle')
@@ -134,7 +178,7 @@ export async function simulateFrequentViewKafka(
         totalDuration: currentStats.totalDuration + viewDuration,
       })
 
-      await sendEvent(producer, config, product, false, productStats)
+      await sendEvent(producer, config, product, false, 'frequent', productStats)
 
       if (productStats.size > 0) {
         const progress = intervalTracker.getCycleProgress()
@@ -145,7 +189,8 @@ export async function simulateFrequentViewKafka(
       await sleepSeconds(viewDuration)
     } catch (error) {
       logger.error(
-        `Error in frequent view simulation: ${error instanceof Error ? error.message : String(error)
+        `Error in frequent view simulation: ${
+          error instanceof Error ? error.message : String(error)
         }`,
         'simulateFrequentViewKafka'
       )
@@ -156,26 +201,32 @@ export async function simulateFrequentViewKafka(
   }
 }
 
+const sendEventByType = async (
+  isPing: boolean,
+  product: Product,
+  producer: Producer | null,
+  config: Config,
+  eventCount?: number
+) => {
+  let message =
+    (isPing
+      ? `Sent page_ping event ${eventCount ? eventCount + 1 : 1}`
+      : 'Sent snowplow_ecommerce_action event') + '.'
+  const seconds = isPing
+    ? config.simulation.longView.pagePingInterval
+    : config.simulation.snowplowEcommerceActionInterval
+  message = message + ` Waiting ${seconds} seconds...`
+
+  await sendEvent(producer, config, product, isPing, 'long')
+  await sleepSeconds(seconds, message)
+}
+
 export async function simulateLongViewKafka(
-  producer: Producer,
+  producer: Producer | null,
   config: Config,
   logger: Logger,
   intervalTracker: IntervalTracker
 ): Promise<void> {
-  const sendEventByType = async (isPing: boolean, product: Product, eventCount?: number) => {
-    let message =
-      (isPing
-        ? `Sent page_ping event ${eventCount ? eventCount + 1 : 1}`
-        : 'Sent snowplow_ecommerce_action event') + '.'
-    const seconds = isPing
-      ? config.simulation.longView.pagePingInterval
-      : config.simulation.snowplowEcommerceActionInterval
-    message = message + ` Waiting ${seconds} seconds...`
-
-    await sendEvent(producer, config, product, isPing)
-    await sleepSeconds(seconds, message)
-  }
-
   let lastProduct: Product | null = null
   const longViewDurationMs = config.simulation.longView.duration * 1000
 
@@ -189,13 +240,13 @@ export async function simulateLongViewKafka(
       lastProduct = product
       logger.info(`Starting new long view simulation for product "${product.name}"`)
 
-      await sendEventByType(false, product)
+      await sendEventByType(false, product, producer, config)
 
       const startTime = Date.now()
       let eventCount = 0
       do {
         intervalTracker.checkIfNewCycle()
-        await sendEventByType(true, product, eventCount)
+        await sendEventByType(true, product, producer, config, eventCount)
         eventCount++
       } while (Date.now() - startTime <= longViewDurationMs)
 
@@ -217,9 +268,16 @@ export async function simulateLongViewKafka(
 }
 
 export async function simulateNormalViewKafka(
-  producer: Producer,
+  producer: Producer | null,
   config: Config,
   logger: Logger
 ): Promise<void> {
   // TODO
+}
+
+export async function cleanup(): Promise<void> {
+  if (jsonlSink) {
+    await jsonlSink.close()
+    jsonlSink = null
+  }
 }

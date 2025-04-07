@@ -6,6 +6,7 @@ const config: Config = {
     brokers: ['localhost:19092'],
     topic: 'snowplow-enriched-good',
   },
+  sink_type: 'kafka',
   logging: {
     console: {
       level: 'info',
