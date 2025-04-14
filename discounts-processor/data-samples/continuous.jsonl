@@ -1,0 +1,11 @@
+{"collector_tstamp":"2025-04-12T07:27:51.230Z","event_name":"product_view","user_id":"1","webpage_id":"page_5","product_id":"5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-04-12T07:28:03.236Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:28:13.248Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:28:23.253Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:28:33.266Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:28:43.278Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:28:53.283Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:29:03.295Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:29:13.307Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:29:23.311Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}
+{"collector_tstamp":"2025-04-12T07:29:33.311Z","event_name":"page_ping","user_id":"1","webpage_id":"page_5"}

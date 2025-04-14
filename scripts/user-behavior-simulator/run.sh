@@ -31,12 +31,13 @@ ui)
   ;;
 kafka)
   latest_file=$discounts_processor_logs_dir/latest
-  if [ -f $latest_file ]; then
-    logs_file=./logs/$(<$latest_file)
-    NODE_OPTIONS="--no-warnings --no-deprecation --loader ts-node/esm" \
-      LOG_FILE="$logs_file" node --experimental-specifier-resolution=node src/index.ts "$behavior"
-  else
-    echo "File $latest_file not found!"
-  fi
+  [ -f $latest_file ] || {
+    latest_file=./logs/latest
+    mkdir -p ${latest_file%/*}
+    echo "$(date +%s).log" >$latest_file
+  }
+  logs_file=./logs/$(<$latest_file)
+  NODE_OPTIONS="--no-warnings --no-deprecation --loader ts-node/esm" \
+    LOG_FILE="$logs_file" node --experimental-specifier-resolution=node src/index.ts "$behavior"
   ;;
 esac

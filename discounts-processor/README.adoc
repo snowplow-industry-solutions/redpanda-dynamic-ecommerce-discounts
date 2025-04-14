@@ -159,7 +159,7 @@ If a user has multiple products with the same number of views:
 ----
 
 <<<
-== Running the Application
+== Running the application
 
 === Prerequisites
 
@@ -205,14 +205,14 @@ $ sed -n 's/val flinkVersion = "\(.*\)"/\1/p' build.gradle.kts
 First, you need to start Redpanda using `docker compose`:
 
 ----
-$ docker compose -f compose.redpanda.yaml up -d
+$ docker compose -f compose.redpanda.yaml up -d # <- ./redpanda.sh up
 ----
 
 [TIP]
 ====
 When you're done, use this command to stop Redpanda and remove all data:
 ----
-$ docker compose -f compose.redpanda.yaml down -v --remove-orphans
+$ docker compose -f compose.redpanda.yaml down -v --remove-orphans # <- ./redpanda.sh down
 ----
 ====
 
@@ -250,6 +250,32 @@ NOTE: The script automatically manages the application lifecycle and provides pr
 ==== Generating events
 
 To generate events in order to trigger discounts, use {uri-project-github-simulator}[the Simulator project].
+You can use it to generate events (containing `product_view` and `page_ping` events in JSONL format) and send them to Redpanda.
+
+So, the file link:data-samples/continuous.jsonl[] is an example of such a file.
+You can send the events in this file to the input topic using the following command:
+
+[,console]
+----
+$ docker exec -i redpanda rpk topic produce snowplow-enriched-good < \
+  data-samples/continuous.jsonl # <- ./redpanda.sh produce
+----
+
+[NOTE]
+====
+Using the `tstamp-diff.sh` script (available in main project) you can verify that the time difference between the collector timestamps for the `page_ping` events in this file is greater than 90 seconds as per the rule. Therefore, these `page_ping` events on it should generate a discount event according to <<continuous-view-discount,the rule>>.
+
+[,console]
+----
+$ {
+  f=data-samples/continuous.jsonl
+  start=$(sed -n 2p $f | jq -r .collector_tstamp)
+  end=$(sed -n 11p $f | jq -r .collector_tstamp)
+  ../scripts/tstamp-diff.sh $start $end
+}
+90.075
+----
+====
 
 [[verifying-discounts]]
 ==== Verifying discounts
@@ -258,10 +284,12 @@ To verify that discounts are being generated correctly, consume from the output 
 
 [,console]
 ----
-$ docker exec -it redpanda rpk topic consume shopper-discounts
+$ docker exec -it redpanda rpk topic consume shopper-discounts # <- ./redpanda.sh consume
 ----
 
 You should see discount events in the output that match the expected patterns based on the input events.
+
+TIP: You can also open the Redpanda console at http://localhost:8080 to observe each of the events produced in the shopper-discounts topic.
 
 === Running via Docker Compose
 
@@ -289,10 +317,10 @@ $ docker compose down -v --remove-orphans
 
 <<<
 [[testing-procedures]]
-== Testing Procedures
+== Testing procedures
 
 [[unit-tests]]
-=== Unit and Mock Tests
+=== Unit tests
 
 Unit tests verify the core business logic of the discount processors without external dependencies.
 
@@ -304,6 +332,14 @@ $ ./gradlew test
 ----
 
 TIP: Since all tests are mocked, there is no need to start Redpanda.
+
+[[mock-tests]]
+=== Mock Tests
+
+These are the two mock tests created for the {discount-processors}:
+
+* [[continuous-view-discount-mock-test]] link:src/test/kotlin/com/example/processor/ContinuousViewProcessorTest.kt[]::
+* [[most-viewed-product-discount-mock-test]] link:src/test/kotlin/com/example/processor/MostViewedProcessorTest.kt[]::
 
 To run a specific test class (e.g., link:src/test/kotlin/com/example/serialization/DiscountEventSerializationSchemaTest.kt[DiscountEventSerializationSchemaTest]):
 
@@ -336,6 +372,7 @@ To run all integration tests:
 $ ./gradlew integrationTest
 ----
 
+<<<
 [[discount-processors]]
 == Discount processors
 
@@ -343,12 +380,13 @@ This project contains two discount processors:
 
 link:src/main/java/com/example/processor/ContinuousViewProcessor.java[]::
 Cover all the rules for the <<continuous-view-discount,Continuous View Discount>>. +
-Test code: link:src/test/kotlin/com/example/processor/ContinuousViewProcessorTest.kt[]
+Test code: <<continuous-view-discount-mock-test,ContinuousViewProcessorTest>>
 
 link:src/main/java/com/example/processor/MostViewedProcessor.java[]::
 Cover all the rules for the <<most-viewed-product-discount,Most Viewed Product Discount>>. +
-Test code: link:src/test/kotlin/com/example/processor/MostViewedProcessorTest.kt[]
+Test code: <<most-viewed-product-discount-mock-test,MostViewedProcessorTest>>
 
+<<<
 == Troubleshooting
 
 === Common Issues

@@ -1,0 +1,3 @@
+include:
+  - compose.redpanda.yaml
+  - compose.discounts-processor.yaml

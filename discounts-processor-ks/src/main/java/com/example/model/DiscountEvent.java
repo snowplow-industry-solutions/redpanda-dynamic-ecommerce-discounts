@@ -53,26 +53,26 @@ public class DiscountEvent {
         private long durationInSeconds;
     }
 
-    public static DiscountEvent createContinuousViewDiscount(String userId, String productId, long durationInSeconds) {
+    public static DiscountEvent createContinuousViewDiscount(String userId, String productId, long durationInSeconds, double discountRate) {
         DiscountEvent event = new DiscountEvent();
         event.setUserId(userId);
         event.setProductId(productId);
         
         Discount discount = new Discount();
-        discount.setRate(0.1);
+        discount.setRate(discountRate);
         discount.setByViewTime(new ViewTime(durationInSeconds));
         
         event.setDiscount(discount);
         return event;
     }
 
-    public static DiscountEvent createMostViewedDiscount(String userId, String productId, int views, long durationInSeconds) {
+    public static DiscountEvent createMostViewedDiscount(String userId, String productId, int views, long durationInSeconds, double discountRate) {
         DiscountEvent event = new DiscountEvent();
         event.setUserId(userId);
         event.setProductId(productId);
         
         Discount discount = new Discount();
-        discount.setRate(0.1);
+        discount.setRate(discountRate);
         discount.setByNumberOfViews(new NumberOfViews(views, durationInSeconds));
         
         event.setDiscount(discount);

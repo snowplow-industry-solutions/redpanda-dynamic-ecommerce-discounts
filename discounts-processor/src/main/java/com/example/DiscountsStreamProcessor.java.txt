@@ -1,0 +1,115 @@
+package com.example;
+
+import com.example.model.DiscountEvent;
+import com.example.model.PagePingEvent;
+import com.example.config.ConfigurationManager;
+import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.StreamsConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.Properties;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DiscountsStreamProcessor {
+    private static final Logger log = LoggerFactory.getLogger(DiscountsStreamProcessor.class);
+    private final ConfigurationManager config = ConfigurationManager.getInstance();
+
+    public void start() {
+        Properties props = new Properties();
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "discounts-processor");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, "org.apache.kafka.common.serialization.Serdes$StringSerde");
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, "com.example.serialization.PagePingEventSerde");
+
+        StreamsBuilder builder = new StreamsBuilder();
+
+        // Lê eventos do tópico de entrada
+        KStream<String, PagePingEvent> events = builder.stream(config.getInputTopic());
+
+        // Agrupa por userId e processa em janelas
+        events
+            .groupByKey()
+            .windowedBy(TimeWindows.of(config.getWindowDuration())
+                       .grace(Duration.ofMinutes(5)))
+            .aggregate(
+                ArrayList::new,
+                (userId, event, accumulator) -> {
+                    accumulator.add(event);
+                    return accumulator;
+                },
+                Materialized.as("page-views-store")
+            )
+            .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
+            .toStream()
+            .flatMapValues((key, events) -> processEvents(key.key(), events))
+            .to(config.getOutputTopic());
+
+        KafkaStreams streams = new KafkaStreams(builder.build(), props);
+        streams.start();
+
+        // Graceful shutdown
+        Runtime.getRuntime().addShutdownHook(new Thread(streams::close));
+    }
+
+    private List<DiscountEvent> processEvents(String userId, List<PagePingEvent> events) {
+        List<DiscountEvent> discounts = new ArrayList<>();
+        
+        // Agrupa eventos por produto
+        Map<String, List<PagePingEvent>> eventsByProduct = events.stream()
+            .sorted(Comparator.comparing(PagePingEvent::getCollectorTimestamp))
+            .collect(Collectors.groupingBy(PagePingEvent::getWebpageId));
+
+        for (Map.Entry<String, List<PagePingEvent>> entry : eventsByProduct.entrySet()) {
+            String webpageId = entry.getKey();
+            List<PagePingEvent> productEvents = entry.getValue();
+
+            Optional<PagePingEvent> productView = productEvents.stream()
+                .filter(e -> "product_view".equals(e.getEventName()))
+                .findFirst();
+
+            if (!productView.isPresent()) {
+                continue;
+            }
+
+            long pingCount = productEvents.stream()
+                .filter(e -> "page_ping".equals(e.getEventName()))
+                .filter(e -> e.getCollectorTimestamp().isAfter(productView.get().getCollectorTimestamp()))
+                .count();
+
+            if (pingCount >= config.getMinPings()) {
+                Optional<PagePingEvent> lastPing = productEvents.stream()
+                    .filter(e -> "page_ping".equals(e.getEventName()))
+                    .max(Comparator.comparing(PagePingEvent::getCollectorTimestamp));
+
+                if (lastPing.isPresent()) {
+                    Duration viewDuration = Duration.between(
+                        productView.get().getCollectorTimestamp(),
+                        lastPing.get().getCollectorTimestamp()
+                    );
+
+                    if (viewDuration.compareTo(config.getCalculatedMinDuration()) >= 0) {
+                        log.info("Generating discount for user {} on product {} (duration: {}s, pings: {})",
+                            userId, productView.get().getProductId(), viewDuration.getSeconds(), pingCount);
+
+                        discounts.add(DiscountEvent.createContinuousViewDiscount(
+                            userId,
+                            productView.get().getProductId(),
+                            viewDuration.toSeconds()
+                        ));
+                    }
+                }
+            }
+        }
+
+        return discounts;
+    }
+
+    public static void main(String[] args) {
+        new DiscountsStreamProcessor().start();
+    }
+}

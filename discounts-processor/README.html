@@ -42,7 +42,7 @@
 <li><a href="#output-events">3.2. Output (in <code>shopper-discounts</code> topic)</a></li>
 </ul>
 </li>
-<li><a href="#running-the-application">4. Running the Application</a>
+<li><a href="#running-the-application">4. Running the application</a>
 <ul class="sectlevel2">
 <li><a href="#prerequisites">4.1. Prerequisites</a></li>
 <li><a href="#version-information">4.2. Version Information</a></li>
@@ -57,10 +57,11 @@
 <li><a href="#running-via-docker-compose">4.4. Running via Docker Compose</a></li>
 </ul>
 </li>
-<li><a href="#testing-procedures">5. Testing Procedures</a>
+<li><a href="#testing-procedures">5. Testing procedures</a>
 <ul class="sectlevel2">
-<li><a href="#unit-tests">5.1. Unit and Mock Tests</a></li>
-<li><a href="#integration-tests">5.2. Integration Tests</a></li>
+<li><a href="#unit-tests">5.1. Unit tests</a></li>
+<li><a href="#mock-tests">5.2. Mock Tests</a></li>
+<li><a href="#integration-tests">5.3. Integration Tests</a></li>
 </ul>
 </li>
 <li><a href="#discount-processors">6. Discount processors</a></li>
@@ -78,7 +79,7 @@
 <div class="sectionbody">
 <div class="paragraph text-center">
 <p><strong><a href="README.pdf">PDF version</a></strong><br>
-<strong>Git commit: 3214b38</strong></p>
+<strong>Git commit: 4ebacef</strong></p>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
@@ -349,7 +350,7 @@ Some of them are written in <a href="https://kotlinlang.org/">Kotlin</a> followi
 </div>
 </div>
 <div class="sect1">
-<h2 id="running-the-application"><a class="anchor" href="#running-the-application"></a>4. Running the Application</h2>
+<h2 id="running-the-application"><a class="anchor" href="#running-the-application"></a>4. Running the application</h2>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="prerequisites"><a class="anchor" href="#prerequisites"></a>4.1. Prerequisites</h3>
@@ -417,7 +418,7 @@ Currently, the Flink&#8217;s version used by this project can be found by this c
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ docker compose -f compose.redpanda.yaml up -d</pre>
+<pre>$ docker compose -f compose.redpanda.yaml up -d # &lt;- ./redpanda.sh up</pre>
 </div>
 </div>
 <div class="admonitionblock tip">
@@ -432,7 +433,7 @@ Currently, the Flink&#8217;s version used by this project can be found by this c
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ docker compose -f compose.redpanda.yaml down -v --remove-orphans</pre>
+<pre>$ docker compose -f compose.redpanda.yaml down -v --remove-orphans # &lt;- ./redpanda.sh down</pre>
 </div>
 </div>
 </td>
@@ -507,7 +508,43 @@ The script automatically manages the application lifecycle and provides proper c
 <div class="sect3">
 <h4 id="generating-events"><a class="anchor" href="#generating-events"></a>4.3.3. Generating events</h4>
 <div class="paragraph">
-<p>To generate events in order to trigger discounts, use <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/tree/main/scripts/user-behavior-simulator">the Simulator project</a>.</p>
+<p>To generate events in order to trigger discounts, use <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/tree/main/scripts/user-behavior-simulator">the Simulator project</a>.
+You can use it to generate events (containing <code>product_view</code> and <code>page_ping</code> events in JSONL format) and send them to Redpanda.</p>
+</div>
+<div class="paragraph">
+<p>So, the file <a href="data-samples/continuous.jsonl" class="bare">data-samples/continuous.jsonl</a> is an example of such a file.
+You can send the events in this file to the input topic using the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-i</span> redpanda rpk topic produce snowplow-enriched-good &lt; <span class="se">\</span>
+<span class="gp">  data-samples/continuous.jsonl #</span><span class="w"> </span>&lt;- ./redpanda.sh produce</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Using the <code>tstamp-diff.sh</code> script (available in main project) you can verify that the time difference between the collector timestamps for the <code>page_ping</code> events in this file is greater than 90 seconds as per the rule. Therefore, these <code>page_ping</code> events on it should generate a discount event according to <a href="#continuous-view-discount">the rule</a>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="o">{</span>
+<span class="go">  f=data-samples/continuous.jsonl
+</span><span class="gp">  start=$</span><span class="o">(</span><span class="nb">sed</span> <span class="nt">-n</span> 2p <span class="nv">$f</span> | jq <span class="nt">-r</span> .collector_tstamp<span class="o">)</span>
+<span class="gp">  end=$</span><span class="o">(</span><span class="nb">sed</span> <span class="nt">-n</span> 11p <span class="nv">$f</span> | jq <span class="nt">-r</span> .collector_tstamp<span class="o">)</span>
+<span class="gp">  ../scripts/tstamp-diff.sh $</span>start <span class="nv">$end</span>
+<span class="go">}
+90.075</span></code></pre>
+</div>
+</div>
+</td>
+</tr>
+</table>
 </div>
 </div>
 <div class="sect3">
@@ -517,11 +554,23 @@ The script automatically manages the application lifecycle and provides proper c
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-it</span> redpanda rpk topic consume shopper-discounts</code></pre>
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-it</span> redpanda rpk topic consume shopper-discounts <span class="c"># &lt;- ./redpanda.sh consume</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>You should see discount events in the output that match the expected patterns based on the input events.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+You can also open the Redpanda console at <a href="http://localhost:8080" class="bare">http://localhost:8080</a> to observe each of the events produced in the shopper-discounts topic.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -562,10 +611,10 @@ The script automatically manages the application lifecycle and provides proper c
 </div>
 </div>
 <div class="sect1">
-<h2 id="testing-procedures"><a class="anchor" href="#testing-procedures"></a>5. Testing Procedures</h2>
+<h2 id="testing-procedures"><a class="anchor" href="#testing-procedures"></a>5. Testing procedures</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="unit-tests"><a class="anchor" href="#unit-tests"></a>5.1. Unit and Mock Tests</h3>
+<h3 id="unit-tests"><a class="anchor" href="#unit-tests"></a>5.1. Unit tests</h3>
 <div class="paragraph">
 <p>Unit tests verify the core business logic of the discount processors without external dependencies.</p>
 </div>
@@ -589,6 +638,22 @@ Since all tests are mocked, there is no need to start Redpanda.
 </tr>
 </table>
 </div>
+</div>
+<div class="sect2">
+<h3 id="mock-tests"><a class="anchor" href="#mock-tests"></a>5.2. Mock Tests</h3>
+<div class="paragraph">
+<p>These are the two mock tests created for the <a href="#discount-processors">discount processors</a>:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="continuous-view-discount-mock-test"></a> <a href="src/test/kotlin/com/example/processor/ContinuousViewProcessorTest.kt" class="bare">src/test/kotlin/com/example/processor/ContinuousViewProcessorTest.kt</a>::</p>
+</li>
+<li>
+<p><a id="most-viewed-product-discount-mock-test"></a> <a href="src/test/kotlin/com/example/processor/MostViewedProcessorTest.kt" class="bare">src/test/kotlin/com/example/processor/MostViewedProcessorTest.kt</a>::</p>
+</li>
+</ul>
+</div>
 <div class="paragraph">
 <p>To run a specific test class (e.g., <a href="src/test/kotlin/com/example/serialization/DiscountEventSerializationSchemaTest.kt">DiscountEventSerializationSchemaTest</a>):</p>
 </div>
@@ -607,7 +672,7 @@ Since all tests are mocked, there is no need to start Redpanda.
 </div>
 </div>
 <div class="sect2">
-<h3 id="integration-tests"><a class="anchor" href="#integration-tests"></a>5.2. Integration Tests</h3>
+<h3 id="integration-tests"><a class="anchor" href="#integration-tests"></a>5.3. Integration Tests</h3>
 <div class="paragraph">
 <p>The integration tests cover tests for the <a href="#discount-processors">discount processors</a> and is running with <a href="https://www.testcontainers.org/">TestContainers</a>.</p>
 </div>
@@ -624,6 +689,7 @@ Since all tests are mocked, there is no need to start Redpanda.
 <pre class="rouge highlight"><code data-lang="bash"><span class="nv">$ </span>./gradlew integrationTest</code></pre>
 </div>
 </div>
+<div style="page-break-after: always;"></div>
 </div>
 </div>
 </div>
@@ -638,15 +704,16 @@ Since all tests are mocked, there is no need to start Redpanda.
 <dt class="hdlist1"><a href="src/main/java/com/example/processor/ContinuousViewProcessor.java" class="bare">src/main/java/com/example/processor/ContinuousViewProcessor.java</a></dt>
 <dd>
 <p>Cover all the rules for the <a href="#continuous-view-discount">Continuous View Discount</a>.<br>
-Test code: <a href="src/test/kotlin/com/example/processor/ContinuousViewProcessorTest.kt" class="bare">src/test/kotlin/com/example/processor/ContinuousViewProcessorTest.kt</a></p>
+Test code: <a href="#continuous-view-discount-mock-test">ContinuousViewProcessorTest</a></p>
 </dd>
 <dt class="hdlist1"><a href="src/main/java/com/example/processor/MostViewedProcessor.java" class="bare">src/main/java/com/example/processor/MostViewedProcessor.java</a></dt>
 <dd>
 <p>Cover all the rules for the <a href="#most-viewed-product-discount">Most Viewed Product Discount</a>.<br>
-Test code: <a href="src/test/kotlin/com/example/processor/MostViewedProcessorTest.kt" class="bare">src/test/kotlin/com/example/processor/MostViewedProcessorTest.kt</a></p>
+Test code: <a href="#most-viewed-product-discount-mock-test">MostViewedProcessorTest</a></p>
 </dd>
 </dl>
 </div>
+<div style="page-break-after: always;"></div>
 </div>
 </div>
 <div class="sect1">

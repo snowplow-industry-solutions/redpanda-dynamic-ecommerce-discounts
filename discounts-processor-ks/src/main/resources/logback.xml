@@ -4,13 +4,16 @@
   <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>INFO</level>
+    </filter>
     <encoder>
       <pattern>%msg%n</pattern>
     </encoder>
   </appender>
 
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>logs/discounts-processor.log</file>
+    <file>logs/main.log</file>
     <append>false</append>
     <immediateFlush>true</immediateFlush>
     <encoder>
@@ -18,13 +21,13 @@
     </encoder>
   </appender>
 
-  <!-- Set root level to DEBUG to allow all DEBUG messages -->
+  <!-- Set root level to DEBUG and log only to file -->
   <root level="DEBUG">
     <appender-ref ref="FILE" />
   </root>
 
-  <!-- Show com.example logs in console with DEBUG level -->
-  <logger name="com.example" level="DEBUG" additivity="false">
+  <!-- Show only com.example logs in console with INFO level -->
+  <logger name="com.example" level="INFO" additivity="false">
     <appender-ref ref="CONSOLE" />
     <appender-ref ref="FILE" />
   </logger>

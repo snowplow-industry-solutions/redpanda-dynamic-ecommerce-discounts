@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.util.Properties;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 
 @Slf4j
 public class ConfigurationManager implements Serializable {
@@ -15,40 +16,48 @@ public class ConfigurationManager implements Serializable {
 
   private final Properties properties;
 
-  private final Duration continuousViewWindowDuration;
-  private final Duration mostViewedWindowDuration;
-
-  private final int continuousViewMinPings;
-  private final int mostViewedMinViews;
-
-  private final double continuousViewDiscountRate;
-  private final double mostViewedDiscountRate;
-
-  private final Duration discountCooldownPeriod;
-
-  private final int kafkaTransactionTimeoutMs;
+  private final Duration windowDuration;
+  private final Duration pingInterval;
+  private final int minPings;
+  private final Duration calculatedMinDuration;
+  private final double discountRate;
+  private final boolean processorEnabled;
 
   private ConfigurationManager() {
     this.properties = loadProperties();
 
-    this.continuousViewWindowDuration = Duration.ofSeconds(
-        Long.parseLong(properties.getProperty("window.continuous-view.duration.seconds", "90")));
-    this.mostViewedWindowDuration = Duration.ofMinutes(
-        Long.parseLong(properties.getProperty("window.most-viewed.duration.minutes", "5")));
-    this.continuousViewMinPings = Integer.parseInt(
-        properties.getProperty("discount.continuous-view.min-pings", "9"));
-    this.mostViewedMinViews = Integer.parseInt(
-        properties.getProperty("discount.most-viewed.min-views", "3"));
-    this.continuousViewDiscountRate = Double.parseDouble(
-        properties.getProperty("discount.continuous-view.rate", "0.1"));
-    this.mostViewedDiscountRate = Double.parseDouble(
-        properties.getProperty("discount.most-viewed.rate", "0.1"));
-    this.discountCooldownPeriod = Duration.ofMinutes(
-        Long.parseLong(properties.getProperty("discount.cooldown.minutes", "5")));
-    this.kafkaTransactionTimeoutMs = Integer.parseInt(
-        properties.getProperty("kafka.transaction.timeout.ms", "30000"));
+    try {
+      this.pingInterval = Duration.ofSeconds(
+          Long.parseLong(properties.getProperty("window.continuous-view.ping-interval.seconds")));
+      
+      this.minPings = Integer.parseInt(
+          properties.getProperty("discount.continuous-view.min-pings"));
+      
+      this.calculatedMinDuration = this.pingInterval.multipliedBy(this.minPings);
 
-    logConfiguration();
+      this.windowDuration = Duration.ofSeconds(
+          Long.parseLong(properties.getProperty("window.continuous-view.duration.seconds")));
+      
+      this.discountRate = Double.parseDouble(
+          properties.getProperty("discount.continuous-view.rate"));
+      
+      this.processorEnabled = Boolean.parseBoolean(
+          properties.getProperty("processor.continuous-view.enabled"));
+
+      validateConfiguration();
+      logConfiguration();
+    } catch (Exception e) {
+      log.error("Failed to initialize configuration", e);
+      throw new IllegalStateException("Configuration initialization failed. Aborting application.", e);
+    }
+  }
+
+  private void validateConfiguration() {
+    if (windowDuration.compareTo(calculatedMinDuration) < 0) {
+      throw new IllegalStateException(
+          String.format("Window duration (%ds) must be greater than or equal to calculated minimum duration (%ds)",
+              windowDuration.getSeconds(), calculatedMinDuration.getSeconds()));
+    }
   }
 
   private static Properties loadProperties() {
@@ -69,18 +78,51 @@ public class ConfigurationManager implements Serializable {
 
   private void logConfiguration() {
     log.info("Configuration loaded with values:");
-    log.info("  Continuous view window: {}s", continuousViewWindowDuration.getSeconds());
-    log.info("  Most viewed window: {}m", mostViewedWindowDuration.toMinutes());
-    log.info("  Minimum pings for continuous view: {}", continuousViewMinPings);
-    log.info("  Minimum views for most viewed: {}", mostViewedMinViews);
-    log.info("  Continuous view discount rate: {}%", continuousViewDiscountRate * 100);
-    log.info("  Most viewed discount rate: {}%", mostViewedDiscountRate * 100);
-    log.info("  Discount cooldown period: {}m", discountCooldownPeriod.toMinutes());
-    log.info("  Kafka transaction timeout: {}ms", kafkaTransactionTimeoutMs);
+    log.info("  Window duration: {}s", windowDuration.getSeconds());
+    log.info("  Ping interval: {}s", pingInterval.getSeconds());
+    log.info("  Minimum pings required: {}", minPings);
+    log.info("  Calculated minimum duration: {}s", calculatedMinDuration.getSeconds());
+    log.info("  Discount rate: {}%", discountRate * 100);
+    log.info("  Processor enabled: {}", processorEnabled);
+    log.info("  Bootstrap servers: {}", getBootstrapServers());
+    log.info("  Input topic: {}", getInputTopic());
+    log.info("  Output topic: {}", getOutputTopic());
+    log.info("  Group ID: {}", getGroupId());
+    log.info("  Auto offset reset: {}", properties.getProperty("auto.offset.reset"));
+    log.info("  Parallelism: {}", getParallelism());
+    Long checkpointInterval = getCheckpointInterval();
+    log.info("  Checkpoint interval: {}", checkpointInterval != null ? checkpointInterval + "ms" : "disabled");
   }
 
-  private static volatile ConfigurationManager instance;
+  // Getters simplificados
+  public Duration getWindowDuration() { return windowDuration; }
+  public Duration getPingInterval() { return pingInterval; }
+  public int getMinPings() { return minPings; }
+  public Duration getCalculatedMinDuration() { return calculatedMinDuration; }
+  public double getDiscountRate() { return discountRate; }
+  public boolean isProcessorEnabled() { return processorEnabled; }
 
+  // Métodos existentes mantidos
+  public String getBootstrapServers() { return properties.getProperty("bootstrap.servers"); }
+  public String getInputTopic() { return properties.getProperty("input.topic"); }
+  public String getOutputTopic() { return properties.getProperty("output.topic"); }
+  public String getGroupId() { return properties.getProperty("group.id"); }
+  public int getParallelism() { return Integer.parseInt(properties.getProperty("parallelism", "1")); }
+  public Long getCheckpointInterval() {
+    String interval = properties.getProperty("checkpoint.interval.ms");
+    return interval != null && !interval.isEmpty() ? Long.parseLong(interval) : null;
+  }
+  public OffsetsInitializer getAutoOffsetReset() {
+    String offsetReset = properties.getProperty("auto.offset.reset");
+    return switch (offsetReset.toLowerCase()) {
+      case "earliest" -> OffsetsInitializer.earliest();
+      case "latest" -> OffsetsInitializer.latest();
+      default -> throw new IllegalStateException("Invalid auto.offset.reset value: " + offsetReset);
+    };
+  }
+
+  // Singleton pattern
+  private static volatile ConfigurationManager instance;
   public static ConfigurationManager getInstance() {
     if (instance == null) {
       synchronized (ConfigurationManager.class) {
@@ -90,66 +132,5 @@ public class ConfigurationManager implements Serializable {
       }
     }
     return instance;
-  }
-
-  public Properties getProperties() {
-    return new Properties(properties);
-  }
-
-  public Duration getContinuousViewWindowDuration() {
-    return continuousViewWindowDuration;
-  }
-
-  public Duration getMostViewedWindowDuration() {
-    return mostViewedWindowDuration;
-  }
-
-  public int getContinuousViewMinPings() {
-    return continuousViewMinPings;
-  }
-
-  public int getMostViewedMinViews() {
-    return mostViewedMinViews;
-  }
-
-  public double getContinuousViewDiscountRate() {
-    return continuousViewDiscountRate;
-  }
-
-  public double getMostViewedDiscountRate() {
-    return mostViewedDiscountRate;
-  }
-
-  public Duration getDiscountCooldownPeriod() {
-    return discountCooldownPeriod;
-  }
-
-  public int getKafkaTransactionTimeoutMs() {
-    return kafkaTransactionTimeoutMs;
-  }
-
-  public String getBootstrapServers() {
-    return properties.getProperty("bootstrap.servers");
-  }
-
-  public String getInputTopic() {
-    return properties.getProperty("input.topic");
-  }
-
-  public String getOutputTopic() {
-    return properties.getProperty("output.topic");
-  }
-
-  public String getGroupId() {
-    return properties.getProperty("group.id");
-  }
-
-  public int getParallelism() {
-    return Integer.parseInt(properties.getProperty("parallelism", "1"));
-  }
-
-  public Long getCheckpointInterval() {
-    String interval = properties.getProperty("checkpoint.interval.ms");
-    return interval != null && !interval.isEmpty() ? Long.parseLong(interval) : null;
   }
 }
