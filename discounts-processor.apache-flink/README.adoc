@@ -1,0 +1,417 @@
+ifdef::env-github[]
+Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/discounts-processor/README.html[here]
+endif::env-github[]
+ifndef::env-github[]
+= Discounts Processor (Apache Flink version)
+include::common/head.adoc[]
+
+:uri-project-github-connect-yaml: {uri-project-github}/blob/main/redpanda/connect.yaml
+:Kotlin: https://kotlinlang.org/[Kotlin]
+:Kotest: https://kotest.io/[Kotest]
+:BehaviourSpec: https://kotest.io/docs/framework/testing-styles.html#behavior-spec[BehaviourSpec]
+:integration-tests: <<integration-tests,integration tests>>
+:discount-processors: <<discount-processors,discount processors>>
+
+<<<
+== Overview
+
+This project (*{doctitle}*) is a Java/ {ApacheFlink} application that processes event data from {Redpanda} and generates <<output-events,discount events>> based on some <<rules,conditions>>.
+So, based on the <<input-events,input events>>, it analyzes if the user is able to get discounts.
+
+****
+[.lead.text-center]
+*-> PROJECT STATUS: INCOMPLETE AND NOT WORKING PROPERLY<-*
+
+Issues:
+
+. <<continuous-view-discount-processor,Continuous View Discount Processor>>: It has problems regarding watermark management.
+. <<most-viewed-product-discount-processor,Most Viewed Product Discount Processor>>: Incomplete.
+****
+
+[[main-project-relation]]
+This module can be treated almost{empty}footnote:[It only relies on scripts that generate documentation.] entirely independently of {uri-project-github}[the main project] that encompasses it. It is an alternative intended to produce the same result as the {uri-project-github-connect-yaml}[connect.yaml] file configured using {RedpandaConnect}. In other words, it is a discount processor that works under the same <<rules,rules>>.
+
+The tests in this module are <<unit-tests,unit tests>> and {integration-tests}.
+Some of them are written in {Kotlin} following the {BehaviourSpec} provided by {Kotest} framework.
+
+The {integration-tests} developed are executed with the help of {TestContainers}.
+
+<<<
+[[rules]]
+== Discount Conditions
+
+[[continuous-view-discount]]
+=== Continuous View Discount
+
+A single discount of 10% (witin a 5-minute window) is generated when:
+
+* A user views the same product continuously within a 90-second window.
+
+[[most-viewed-product-discount]]
+=== Most Viewed Product Discount
+
+==== Basic Rules
+For each user, a 10% discount is generated for their most viewed product within a fixed 5-minute window.
+
+==== Detailed Specifications
+
+===== Time Window
+* Fixed 5-minute windows (00:00-00:05, 00:05-00:10, etc.)
+* Discount evaluation occurs at the end of each window
+* Events are processed based on their `collector_tstamp`
+
+===== Event Flow
+1. A `product_view` event initiates a viewing session
+2. Subsequent `page_ping` events for that product are counted
+3. Session continues until another `product_view` event occurs
+4. Process repeats for the new product
+
+===== View Counting
+* Minimum threshold: 3 views within the window
+* Only `page_ping` events count towards view totals
+* View duration is calculated using `page_ping` timestamps
+
+===== Discount Generation
+* Scope: Per user
+* Generated at window end
+* One discount per user per window
+* Cooldown: 5-minute period per user after receiving any discount
+
+===== Tiebreaker Rules
+If a user has multiple products with the same number of views:
+1. Product with longest total viewing time wins
+2. If still tied, first product viewed wins
+
+.Example Timeline (for user "U1")
+[%header,cols="1,2,3"]
+|===
+|Time |Event |Effect
+|10:00:00 |Window starts |
+|10:00:10 |`product_view` P1 |Start tracking P1
+|10:00:15-00:45 |4 `page_ping` P1 |P1: 4 views
+|10:01:00 |`product_view` P2 |Start tracking P2
+|10:01:05-01:50 |6 `page_ping` P2 |P2: 6 views
+|10:02:00 |`product_view` P1 |Start tracking P1 again
+|10:02:05-02:30 |3 `page_ping` P1 |P1: total 7 views
+|10:05:00 |Window ends |P1 wins (7 views)
+|===
+
+<<<
+[[event-examples]]
+== Event examples
+
+[[input-events]]
+=== Input (in `snowplow-enriched-good` topic)
+
+[[product_view]] `product_view` event:
+
+[,json]
+----
+{
+  "collector_tstamp": "2025-04-04T07:05:00.119Z",
+  "event_name": "product_view",
+  "user_id": "1",
+  "product_id": "5",
+  "product_name": "SP Flex Runner 2",
+  "product_price": 42.99,
+  "webpage_id": "page_5"
+}
+----
+
+[[page_ping]] `page_ping` event:
+
+[,json]
+----
+{
+  "collector_tstamp": "2025-04-04T07:05:12.130Z",
+  "event_name": "page_ping",
+  "user_id": "1",
+  "webpage_id": "page_5"
+}
+----
+
+[[output-events]]
+=== Output (in `shopper-discounts` topic)
+
+`discount` event examples:
+
+<<continuous-view-discount>>:
+
+[,json]
+----
+{
+  "user_id": "1",
+  "product_id": "5",
+  "discount": {
+    "rate": 0.1,
+    "by_view_time": {
+      "duration_in_seconds": 100
+    }
+  }
+}
+----
+
+<<most-viewed-product-discount>>:
+
+[,json]
+----
+{
+  "user_id": "1",
+  "product_id": "5",
+  "discount": {
+    "rate": 0.1,
+    "by_number_of_views": {
+      "views": 5,
+      "duration_in_seconds": 30
+    }
+  }
+}
+----
+
+<<<
+== Running the application
+
+=== Prerequisites
+
+. Bash
+. Java
+. {Docker}
+
+=== Version Information
+
+These were the versions used during development:
+
+[,console]
+----
+$ echo $BASH_VERSION
+5.2.21(1)-release
+
+$ java --version
+openjdk 21.0.6 2025-01-21 LTS
+OpenJDK Runtime Environment Temurin-21.0.6+7 (build 21.0.6+7-LTS)
+OpenJDK 64-Bit Server VM Temurin-21.0.6+7 (build 21.0.6+7-LTS, mixed mode, sharing)
+
+$ docker --version
+Docker version 27.3.1, build ce12230
+----
+
+[NOTE]
+====
+The first {ApacheFlink} version supporting Java 21 is 1.19.2 (see its https://nightlies.apache.org/flink/flink-docs-release-1.19/release-notes/flink-1.19/[Release Notes]).
+Currently, the Flink's version used by this project can be found by this command:
+
+[,console]
+----
+$ sed -n 's/val flinkVersion = "\(.*\)"/\1/p' build.gradle.kts
+1.20.1
+----
+====
+
+=== Running manually
+
+==== Starting Redpanda
+
+[[redpanda-start]]
+First, you need to start Redpanda using `docker compose`:
+
+----
+$ docker compose -f compose.redpanda.yaml up -d # <- ./redpanda.sh up
+----
+
+[TIP]
+====
+When you're done, use this command to stop Redpanda and remove all data:
+----
+$ docker compose -f compose.redpanda.yaml down -v --remove-orphans # <- ./redpanda.sh down
+----
+====
+
+==== Running the application
+
+The application can be executed using the provided link:run.sh[] script, which handles building and running the application:
+
+Start the application with an existing JAR:
+
+[,console]
+----
+$ ./run.sh
+----
+
+[TIP]
+====
+You can force a rebuild before running the application:
+
+[,console]
+----
+$ ./run.sh --build
+----
+====
+
+The `run.sh` script will:
+
+* Build the application if the JAR doesn't exist or if `--build` is specified
+* Configure appropriate JVM options
+* Handle graceful shutdown on SIGTERM/SIGINT
+* Display colored status messages during execution
+
+NOTE: The script automatically manages the application lifecycle and provides proper cleanup on shutdown.
+
+[[generating-events]]
+==== Generating events
+
+To generate events in order to trigger discounts, use {uri-project-github-simulator}[the Simulator project].
+You can use it to generate events (containing `product_view` and `page_ping` events in JSONL format) and send them to Redpanda.
+
+So, the file link:data-samples/continuous.jsonl[] is an example of such a file.
+You can send the events in this file to the input topic using the following command:
+
+[,console]
+----
+$ docker exec -i redpanda rpk topic produce snowplow-enriched-good < \
+  data-samples/continuous.jsonl # <- ./redpanda.sh produce
+----
+
+[NOTE]
+====
+Using the `tstamp-diff.sh` script (available in main project) you can verify that the time difference between the collector timestamps for the `page_ping` events in this file is greater than 90 seconds as per the rule. Therefore, these `page_ping` events on it should generate a discount event according to <<continuous-view-discount,the rule>>.
+
+[,console]
+----
+$ {
+  f=data-samples/continuous.jsonl
+  start=$(sed -n 2p $f | jq -r .collector_tstamp)
+  end=$(sed -n 11p $f | jq -r .collector_tstamp)
+  ../scripts/tstamp-diff.sh $start $end
+}
+90.075
+----
+====
+
+[[verifying-discounts]]
+==== Verifying discounts
+
+To verify that discounts are being generated correctly, consume from the output topic:
+
+[,console]
+----
+$ docker exec -it redpanda rpk topic consume shopper-discounts # <- ./redpanda.sh consume
+----
+
+You should see discount events in the output that match the expected patterns based on the input events.
+
+TIP: You can also open the Redpanda console at http://localhost:8080 to observe each of the events produced in the shopper-discounts topic.
+
+=== Running via Docker Compose
+
+To run the application, type:
+
+----
+$ docker compose up --build -d
+----
+
+Watch the logs to ensure the application is running correctly:
+
+----
+$ docker compose logs discounts-processor -f
+----
+
+Generate events as described in <<generating-events>>.
+
+Verify discounts as described in <<verifying-discounts>>.
+
+To stop the application and remove the containers, type:
+
+----
+$ docker compose down -v --remove-orphans
+----
+
+<<<
+[[testing-procedures]]
+== Testing procedures
+
+[[unit-tests]]
+=== Unit tests
+
+Unit tests verify the core business logic of the discount processors without external dependencies.
+
+To run all unit and mock tests:
+
+[,console]
+----
+$ ./gradlew test
+----
+
+TIP: Since all tests are mocked, there is no need to start Redpanda.
+
+[[mock-tests]]
+=== Mock Tests
+
+These are the two mock tests created for the {discount-processors}:
+
+* [[continuous-view-discount-mock-test]] link:src/test/kotlin/com/example/processor/ContinuousViewProcessorTest.kt[]::
+* [[most-viewed-product-discount-mock-test]] link:src/test/kotlin/com/example/processor/MostViewedProcessorTest.kt[]::
+
+To run a specific test class (e.g., link:src/test/kotlin/com/example/serialization/DiscountEventSerializationSchemaTest.kt[DiscountEventSerializationSchemaTest]):
+
+[,console]
+----
+$ ./gradlew test --tests "com.example.serialization.DiscountEventSerializationSchemaTest"
+----
+
+To run a mocked test for one of the two {discount-processors}:
+
+[,console]
+----
+$ ./gradlew test --tests "com.example.processor.MostViewedProcessorTest"
+----
+
+[[integration-tests]]
+=== Integration Tests
+
+The integration tests cover tests for the {discount-processors} and is running with {TestContainers}.
+
+[,bash]
+----
+$ ./gradlew test --tests "com.example.DiscountsProcessorIntegrationTest"
+----
+
+To run all integration tests:
+
+[,bash]
+----
+$ ./gradlew integrationTest
+----
+
+<<<
+[[discount-processors]]
+== Discount processors
+
+This project contains two discount processors:
+
+[[continuous-view-discount-processor]]
+link:src/main/java/com/example/processor/ContinuousViewProcessor.java[]::
+Cover all the rules for the <<continuous-view-discount,Continuous View Discount>>. +
+Test code: <<continuous-view-discount-mock-test,ContinuousViewProcessorTest>>
+
+[[most-viewed-product-discount-processor]]
+link:src/main/java/com/example/processor/MostViewedProcessor.java[]::
+Cover all the rules for the <<most-viewed-product-discount,Most Viewed Product Discount>>. +
+Test code: <<most-viewed-product-discount-mock-test,MostViewedProcessorTest>>
+
+<<<
+== Troubleshooting
+
+=== Common Issues
+
+* *Connection issues*: Verify that you <<redpanda-start,started Redpanda>>.
+* *No discounts generated*: Ensure that enough events are being sent to trigger the <<rules,discount conditions>>.
+* *Serialization errors*: Check that the event format matches <<event-examples,the expected schema>>.
+
+=== Logs
+
+Application logs can be configured in two files depending on the environment (main or test):
+
+. link:src/main/resources/logback.xml[logback.xml]
+. link:src/test/resources/logback-test.xml[logback-test.xml]
+
+endif::env-github[]

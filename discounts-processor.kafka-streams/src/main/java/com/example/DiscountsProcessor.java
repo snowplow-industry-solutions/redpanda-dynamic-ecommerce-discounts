@@ -3,7 +3,7 @@ package com.example;
 import com.example.config.ConfigurationManager;
 import com.example.model.PagePingEvent;
 import com.example.processor.ContinuousViewProcessor;
-import com.example.serialization.DiscountEventSerde;
+import com.example.processor.MostViewedProcessor;
 import com.example.serialization.EventSerde;
 import com.example.serialization.EventTimestampExtractor;
 import com.example.serialization.PagePingEventListSerde;
@@ -18,6 +18,9 @@ import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.apache.kafka.streams.state.StoreBuilder;
+import org.apache.kafka.streams.state.Stores;
 import org.apache.kafka.streams.state.WindowStore;
 
 import java.time.Duration;
@@ -29,13 +32,11 @@ public class DiscountsProcessor {
     private final ConfigurationManager config = ConfigurationManager.getInstance();
     private final Properties props;
     private final EventSerde eventSerde;
-    private final DiscountEventSerde discountEventSerde;
     private final PagePingEventListSerde pagePingEventListSerde;
 
     public DiscountsProcessor() {
         this.props = createKafkaProperties();
         this.eventSerde = new EventSerde();
-        this.discountEventSerde = new DiscountEventSerde();
         this.pagePingEventListSerde = new PagePingEventListSerde();
     }
 
@@ -52,20 +53,40 @@ public class DiscountsProcessor {
     public void start() {
         log.info("Initializing Discounts Processor...");
 
-        log.info("Kafka configuration: bootstrap.servers={}, input.topic={}, output.topic={}",
-            config.getBootstrapServers(), config.getInputTopic(), config.getOutputTopic());
+        if (!config.hasAnyProcessorEnabled()) {
+            log.error("No processors are enabled. At least one processor must be enabled.");
+            throw new IllegalStateException("No processors are enabled");
+        }
 
         StreamsBuilder builder = new StreamsBuilder();
-
         Duration windowSize = config.getWindowDuration();
         Duration advanceSize = Duration.ofSeconds(30);
 
-        log.info("Starting stream processing with window duration: {}s, advance interval: {}s, minimum duration: {}s, minimum pings: {}, discount rate: {}",
-            windowSize.getSeconds(),
-            advanceSize.getSeconds(),
-            config.getCalculatedMinDuration().getSeconds(),
-            config.getMinPings(),
-            config.getDiscountRate());
+        if (config.isMostViewedProcessorEnabled()) {
+            StoreBuilder<KeyValueStore<String, Long>> lastDiscountStoreBuilder =
+                Stores.keyValueStoreBuilder(
+                    Stores.persistentKeyValueStore(ConfigurationManager.LAST_DISCOUNT_STORE),
+                    Serdes.String(),
+                    Serdes.Long()
+                );
+            builder.addStateStore(lastDiscountStoreBuilder);
+
+            StoreBuilder<KeyValueStore<String, Integer>> viewsStoreBuilder =
+                Stores.keyValueStoreBuilder(
+                    Stores.persistentKeyValueStore(ConfigurationManager.VIEWS_STORE),
+                    Serdes.String(),
+                    Serdes.Integer()
+                );
+            builder.addStateStore(viewsStoreBuilder);
+
+            StoreBuilder<KeyValueStore<String, Long>> durationStoreBuilder =
+                Stores.keyValueStoreBuilder(
+                    Stores.persistentKeyValueStore(ConfigurationManager.DURATION_STORE),
+                    Serdes.String(),
+                    Serdes.Long()
+                );
+            builder.addStateStore(durationStoreBuilder);
+        }
 
         KStream<String, PagePingEvent> inputStream = builder
             .stream(config.getInputTopic(),
@@ -75,16 +96,26 @@ public class DiscountsProcessor {
                 key, value.getCollectorTimestamp()))
             .selectKey((ignoredKey, event) -> event.getUserId());
 
-        Materialized<String, ArrayList<PagePingEvent>, WindowStore<Bytes, byte[]>> materialized =
-            Materialized.<String, ArrayList<PagePingEvent>, WindowStore<Bytes, byte[]>>as("page-views-store")
-                .withKeySerde(Serdes.String())
-                .withValueSerde(pagePingEventListSerde)
-                .withRetention(Duration.ofDays(1));
+        if (config.isContinuousViewProcessorEnabled()) {
+            log.info("Configuring ContinuousViewProcessor...");
+            Materialized<String, ArrayList<PagePingEvent>, WindowStore<Bytes, byte[]>> materialized =
+                Materialized.<String, ArrayList<PagePingEvent>, WindowStore<Bytes, byte[]>>as(ConfigurationManager.PAGE_VIEWS_STORE)
+                    .withKeySerde(Serdes.String())
+                    .withValueSerde(pagePingEventListSerde)
+                    .withRetention(Duration.ofDays(1));
 
-        ContinuousViewProcessor continuousViewProcessor = new ContinuousViewProcessor();
-        continuousViewProcessor.addProcessing(inputStream, windowSize, advanceSize, materialized);
+            ContinuousViewProcessor continuousViewProcessor = new ContinuousViewProcessor();
+            continuousViewProcessor.addProcessing(inputStream, windowSize, advanceSize, materialized);
+        }
 
-        // TODO: Add MostViewedProcessor here
+        if (config.isMostViewedProcessorEnabled()) {
+            log.info("Configuring MostViewedProcessor...");
+            inputStream
+                .process(() -> new MostViewedProcessor(),
+                    ConfigurationManager.LAST_DISCOUNT_STORE, 
+                    ConfigurationManager.VIEWS_STORE, 
+                    ConfigurationManager.DURATION_STORE);
+        }
 
         final KafkaStreams streams = new KafkaStreams(builder.build(), props);
         

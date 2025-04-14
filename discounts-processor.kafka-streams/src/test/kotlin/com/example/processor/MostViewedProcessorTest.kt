@@ -3,6 +3,7 @@ package com.example.processor
 import com.example.model.PagePingEvent
 import com.example.model.DiscountEvent
 import io.kotest.core.spec.style.BehaviorSpec
+import org.apache.kafka.streams.KeyValue
 import org.apache.kafka.streams.processor.api.ProcessorContext
 import org.apache.kafka.streams.processor.api.Record
 import org.apache.kafka.streams.state.KeyValueStore
@@ -37,7 +38,7 @@ class MostViewedProcessorTest : BehaviorSpec({
             val windowEnd = baseTime + (5 * 60 * 1000)
 
             beforeTest {
-                whenever(lastDiscountStore.get(userId)).thenReturn(null)
+                whenever(lastDiscountStore.get(any<String>())).thenReturn(null)
             }
 
             and("one product has more views than others") {
@@ -52,11 +53,12 @@ class MostViewedProcessorTest : BehaviorSpec({
                 then("should generate discount for most viewed product") {
                     events.forEach { processor.process(it) }
                     
-                    verify(context).forward(argThat { 
-                        value.userId == userId && 
-                        value.productId == product1Id && 
-                        value.discount.rate == 0.1 &&
-                        value.discount.byNumberOfViews?.views == 7
+                    verify(context).forward(argThat { record: Record<String, DiscountEvent> ->
+                        val discountEvent = record.value()
+                        discountEvent.userId == userId && 
+                        discountEvent.productId == product1Id && 
+                        discountEvent.discount.rate == 0.1 &&
+                        discountEvent.discount.byNumberOfViews?.views == 7
                     })
                 }
             }
@@ -73,11 +75,12 @@ class MostViewedProcessorTest : BehaviorSpec({
                 then("should generate discount for product with longer viewing time") {
                     events.forEach { processor.process(it) }
                     
-                    verify(context).forward(argThat { 
-                        value.userId == userId && 
-                        value.productId == product1Id && 
-                        value.discount.rate == 0.1 &&
-                        value.discount.byNumberOfViews?.views == 5
+                    verify(context).forward(argThat { record: Record<String, DiscountEvent> ->
+                        val discountEvent = record.value()
+                        discountEvent.userId == userId && 
+                        discountEvent.productId == product1Id && 
+                        discountEvent.discount.rate == 0.1 &&
+                        discountEvent.discount.byNumberOfViews?.views == 5
                     })
                 }
             }
@@ -93,14 +96,14 @@ class MostViewedProcessorTest : BehaviorSpec({
 
                 then("should not generate discount") {
                     events.forEach { processor.process(it) }
-                    verify(context, never()).forward(any())
+                    verify(context, never()).forward(any<Record<String, DiscountEvent>>())
                 }
             }
 
             and("within the same 5-minute window of last discount") {
                 val windowStart = baseTime
-                val lastDiscountTime = windowStart + (1 * 60 * 1000) // 1 minute into the window
-                val newEventTime = lastDiscountTime + (2 * 60 * 1000) // 2 minutes after last discount
+                val lastDiscountTime = windowStart + (1 * 60 * 1000)
+                val newEventTime = lastDiscountTime + (2 * 60 * 1000)
                 
                 val events = createMixedEvents(
                     newEventTime,
@@ -108,12 +111,12 @@ class MostViewedProcessorTest : BehaviorSpec({
                 ).map { Record(userId, it, newEventTime) }
 
                 beforeTest {
-                    whenever(lastDiscountStore.get(userId)).thenReturn(lastDiscountTime)
+                    whenever(lastDiscountStore.get(any<String>())).thenReturn(lastDiscountTime)
                 }
 
                 then("should not generate new discount until window ends") {
                     events.forEach { processor.process(it) }
-                    verify(context, never()).forward(any())
+                    verify(context, never()).forward(any<Record<String, DiscountEvent>>())
                 }
             }
 
@@ -128,16 +131,17 @@ class MostViewedProcessorTest : BehaviorSpec({
                 ).map { Record(userId, it, newEventTime) }
 
                 beforeTest {
-                    whenever(lastDiscountStore.get(userId)).thenReturn(lastDiscountTime)
+                    whenever(lastDiscountStore.get(any<String>())).thenReturn(lastDiscountTime)
                 }
 
                 then("should allow new discount generation") {
                     events.forEach { processor.process(it) }
-                    verify(context).forward(argThat { 
-                        value.userId == userId && 
-                        value.productId == product1Id && 
-                        value.discount.rate == 0.1 &&
-                        value.discount.byNumberOfViews?.views == 5
+                    verify(context).forward(argThat { record: Record<String, DiscountEvent> ->
+                        val discountEvent = record.value()
+                        discountEvent.userId == userId && 
+                        discountEvent.productId == product1Id && 
+                        discountEvent.discount.rate == 0.1 &&
+                        discountEvent.discount.byNumberOfViews?.views == 5
                     })
                 }
             }

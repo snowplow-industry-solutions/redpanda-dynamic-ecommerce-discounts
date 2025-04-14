@@ -9,6 +9,11 @@ import java.util.Properties;
 
 @Slf4j
 public class ConfigurationManager {
+    public static final String LAST_DISCOUNT_STORE = "last-discount-store";
+    public static final String VIEWS_STORE = "views-store";
+    public static final String DURATION_STORE = "duration-store";
+    public static final String PAGE_VIEWS_STORE = "page-views-store";
+
     private static ConfigurationManager instance;
     private final Properties properties;
 
@@ -45,7 +50,7 @@ public class ConfigurationManager {
 
     private void logConfiguration() {
         log.info("Configuration loaded:");
-        log.info("  Processor enabled: {}", isProcessorEnabled());
+        log.info("  Enabled processors: {}", getEnabledProcessors());
         log.info("  Bootstrap servers: {}", getBootstrapServers());
         log.info("  Input topic: {}", getInputTopic());
         log.info("  Output topic: {}", getOutputTopic());
@@ -57,8 +62,10 @@ public class ConfigurationManager {
         log.info("  Discount rate: {}", getDiscountRate());
     }
 
-    public boolean isProcessorEnabled() {
-        return Boolean.parseBoolean(properties.getProperty("processor.continuous-view.enabled"));
+    private String getEnabledProcessors() {
+        return (isContinuousViewProcessorEnabled() ? "ContinuousView" : "") +
+               (isContinuousViewProcessorEnabled() && isMostViewedProcessorEnabled() ? ", " : "") +
+               (isMostViewedProcessorEnabled() ? "MostViewed" : "");
     }
 
     public String getBootstrapServers() {
@@ -82,22 +89,46 @@ public class ConfigurationManager {
     }
 
     public Duration getWindowDuration() {
-        return Duration.ofSeconds(Integer.parseInt(properties.getProperty("window.continuous-view.duration.seconds")));
+        return Duration.ofSeconds(Integer.parseInt(properties.getProperty("processor.window.duration.seconds")));
+    }
+
+    public long getWindowDurationSeconds() {
+        return getWindowDuration().getSeconds();
+    }
+
+    public Long getWindowDurationMs() {
+        return getWindowDuration().toMillis();
     }
 
     public int getPingIntervalSeconds() {
-        return Integer.parseInt(properties.getProperty("window.continuous-view.ping-interval.seconds"));
+        return Integer.parseInt(properties.getProperty("processor.continuous-view.ping-interval.seconds"));
     }
 
     public int getMinPings() {
-        return Integer.parseInt(properties.getProperty("discount.continuous-view.min-pings"));
+        return Integer.parseInt(properties.getProperty("processor.continuous-view.min-pings-for-discount"));
     }
 
     public double getDiscountRate() {
-        return Double.parseDouble(properties.getProperty("discount.continuous-view.rate"));
+        return Double.parseDouble(properties.getProperty("processor.discount-rate"));
     }
 
     public Duration getCalculatedMinDuration() {
         return Duration.ofSeconds((long) getPingIntervalSeconds() * getMinPings());
+    }
+
+    public boolean isContinuousViewProcessorEnabled() {
+        return Boolean.parseBoolean(properties.getProperty("processor.continuous-view.enabled", "false"));
+    }
+
+    public boolean isMostViewedProcessorEnabled() {
+        return Boolean.parseBoolean(properties.getProperty("processor.most-viewed.enabled", "false"));
+    }
+
+    public boolean hasAnyProcessorEnabled() {
+        return isContinuousViewProcessorEnabled() || isMostViewedProcessorEnabled();
+    }
+
+    public int getMinViewsForDiscount() {
+        return Integer.parseInt(properties.getProperty("processor.most-viewed.min-views-for-discount"));
     }
 }

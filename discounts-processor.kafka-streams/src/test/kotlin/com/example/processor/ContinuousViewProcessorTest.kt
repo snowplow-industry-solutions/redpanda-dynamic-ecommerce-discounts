@@ -28,10 +28,10 @@ class ContinuousViewProcessorTest : BehaviorSpec() {
             beforeTest {
                 val testProperties = Properties().apply {
                     setProperty("processor.continuous-view.enabled", "true")
-                    setProperty("window.continuous-view.duration.seconds", "300")
-                    setProperty("window.continuous-view.ping-interval.seconds", "20")
-                    setProperty("discount.continuous-view.min-pings", "3")
-                    setProperty("discount.continuous-view.rate", "0.1")
+                    setProperty("processor.window.duration.seconds", "300")
+                    setProperty("processor.continuous-view.ping-interval.seconds", "20")
+                    setProperty("processor.continuous-view.min-pings-for-discount", "3")
+                    setProperty("processor.discount-rate", "0.1")
                 }
                 ConfigurationManager.getInstance(testProperties)
             }

@@ -2,7 +2,7 @@ ifdef::env-github[]
 Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/discounts-processor/README.html[here]
 endif::env-github[]
 ifndef::env-github[]
-= Discounts Processor
+= Discounts Processor (Kafka Streams version)
 include::common/head.adoc[]
 
 :uri-project-github-connect-yaml: {uri-project-github}/blob/main/redpanda/connect.yaml
@@ -11,12 +11,23 @@ include::common/head.adoc[]
 :BehaviourSpec: https://kotest.io/docs/framework/testing-styles.html#behavior-spec[BehaviourSpec]
 :integration-tests: <<integration-tests,integration tests>>
 :discount-processors: <<discount-processors,discount processors>>
+:KafkaStreams: https://kafka.apache.org/documentation/streams/[Kafka Streams]
 
 <<<
 == Overview
 
-This project (*{doctitle}*) is a Java/ {ApacheFlink} application that processes event data from {Redpanda} and generates <<output-events,discount events>> based on some <<rules,conditions>>.
+This project (*{doctitle}*) is a Java/ {KafkaStreams} application that processes event data from {Redpanda} and generates <<output-events,discount events>> based on some <<rules,conditions>>.
 So, based on the <<input-events,input events>>, it analyzes if the user is able to get discounts.
+
+****
+[.lead.text-center]
+*-> PROJECT STATUS: UNDER DEVELOPMENT <-*
+
+Status:
+
+. <<continuous-view-discount-processor,Continuous View Discount Processor>>: Working well.
+. <<most-viewed-product-discount-processor,Most Viewed Product Discount Processor>>: Under development/ test.
+****
 
 [[main-project-relation]]
 This module can be treated almost{empty}footnote:[It only relies on scripts that generate documentation.] entirely independently of {uri-project-github}[the main project] that encompasses it. It is an alternative intended to produce the same result as the {uri-project-github-connect-yaml}[connect.yaml] file configured using {RedpandaConnect}. In other words, it is a discount processor that works under the same <<rules,rules>>.
@@ -187,14 +198,7 @@ Docker version 27.3.1, build ce12230
 
 [NOTE]
 ====
-The first {ApacheFlink} version supporting Java 21 is 1.19.2 (see its https://nightlies.apache.org/flink/flink-docs-release-1.19/release-notes/flink-1.19/[Release Notes]).
-Currently, the Flink's version used by this project can be found by this command:
-
-[,console]
-----
-$ sed -n 's/val flinkVersion = "\(.*\)"/\1/p' build.gradle.kts
-1.20.1
-----
+{KafkaStreams} is fully supported by Java 21. See this page: https://kafka.apache.org/documentation/#java
 ====
 
 === Running manually
@@ -258,12 +262,14 @@ You can send the events in this file to the input topic using the following comm
 [,console]
 ----
 $ docker exec -i redpanda rpk topic produce snowplow-enriched-good < \
-  data-samples/continuous.jsonl # <- ./redpanda.sh produce
+  data-samples/long.jsonl # <- ./redpanda.sh produce
 ----
 
 [NOTE]
 ====
-Using the `tstamp-diff.sh` script (available in main project) you can verify that the time difference between the collector timestamps for the `page_ping` events in this file is greater than 90 seconds as per the rule. Therefore, these `page_ping` events on it should generate a discount event according to <<continuous-view-discount,the rule>>.
+. The command above is to produce test events for testing the <<continuous-view-discount-processor,Continuous View Discount Processor>>.
+To test the <<most-viewed-product-discount-processor,Most Viewed Product Discount Processor>>, use the command `data_type=frequent ./redpanda.sh produce`.
+. Using the `tstamp-diff.sh` script (available in main project) you can verify that the time difference between the collector timestamps for the `page_ping` events in this file is greater than 90 seconds as per the rule. Therefore, these `page_ping` events on it should generate a discount event according to <<continuous-view-discount,the rule>>.
 
 [,console]
 ----
@@ -341,11 +347,11 @@ These are the two mock tests created for the {discount-processors}:
 * [[continuous-view-discount-mock-test]] link:src/test/kotlin/com/example/processor/ContinuousViewProcessorTest.kt[]::
 * [[most-viewed-product-discount-mock-test]] link:src/test/kotlin/com/example/processor/MostViewedProcessorTest.kt[]::
 
-To run a specific test class (e.g., link:src/test/kotlin/com/example/serialization/DiscountEventSerializationSchemaTest.kt[DiscountEventSerializationSchemaTest]):
+To run a specific test class (e.g., link:src/test/kotlin/com/example/serialization/DiscountEventSerdeTest.kt[DiscountEventSerdeTest]):
 
 [,console]
 ----
-$ ./gradlew test --tests "com.example.serialization.DiscountEventSerializationSchemaTest"
+$ ./gradlew test --tests "com.example.serialization.DiscountEventSerdeTest"
 ----
 
 To run a mocked test for one of the two {discount-processors}:
@@ -355,33 +361,18 @@ To run a mocked test for one of the two {discount-processors}:
 $ ./gradlew test --tests "com.example.processor.MostViewedProcessorTest"
 ----
 
-[[integration-tests]]
-=== Integration Tests
-
-The integration tests cover tests for the {discount-processors} and is running with {TestContainers}.
-
-[,bash]
-----
-$ ./gradlew test --tests "com.example.DiscountsProcessorIntegrationTest"
-----
-
-To run all integration tests:
-
-[,bash]
-----
-$ ./gradlew integrationTest
-----
-
 <<<
 [[discount-processors]]
 == Discount processors
 
 This project contains two discount processors:
 
+[[continuous-view-discount-processor]]
 link:src/main/java/com/example/processor/ContinuousViewProcessor.java[]::
 Cover all the rules for the <<continuous-view-discount,Continuous View Discount>>. +
 Test code: <<continuous-view-discount-mock-test,ContinuousViewProcessorTest>>
 
+[[most-viewed-product-discount-processor]]
 link:src/main/java/com/example/processor/MostViewedProcessor.java[]::
 Cover all the rules for the <<most-viewed-product-discount,Most Viewed Product Discount>>. +
 Test code: <<most-viewed-product-discount-mock-test,MostViewedProcessorTest>>

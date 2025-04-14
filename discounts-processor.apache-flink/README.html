@@ -79,7 +79,7 @@
 <div class="sectionbody">
 <div class="paragraph text-center">
 <p><strong><a href="README.pdf">PDF version</a></strong><br>
-<strong>Git commit: 4ebacef</strong></p>
+<strong>Git commit: 69dc790</strong></p>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
@@ -90,6 +90,26 @@
 <div class="paragraph">
 <p>This project (<strong>Discounts Processor</strong>) is a Java/ <a href="https://flink.apache.org/">Apache Flink</a> application that processes event data from <a href="https://www.redpanda.com/">Redpanda</a> and generates <a href="#output-events">discount events</a> based on some <a href="#rules">conditions</a>.
 So, based on the <a href="#input-events">input events</a>, it analyzes if the user is able to get discounts.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph lead text-center">
+<p><strong>&#8594; PROJECT STATUS: INCOMPLETE AND NOT WORKING PROPERLY&#8592;</strong></p>
+</div>
+<div class="paragraph">
+<p>Issues:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#continuous-view-discount-processor">Continuous View Discount Processor</a>: It has problems regarding watermark management.</p>
+</li>
+<li>
+<p><a href="#most-viewed-product-discount-processor">Most Viewed Product Discount Processor</a>: Not done.</p>
+</li>
+</ol>
+</div>
+</div>
 </div>
 <div id="main-project-relation" class="paragraph">
 <p>This module can be treated almost<sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnotedef_1" title="View footnote.">1</a>]</sup> entirely independently of <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda">the main project</a> that encompasses it. It is an alternative intended to produce the same result as the <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/redpanda/connect.yaml">connect.yaml</a> file configured using <a href="https://www.redpanda.com/connect">Redpanda Connect</a>. In other words, it is a discount processor that works under the same <a href="#rules">rules</a>.</p>
@@ -699,13 +719,17 @@ Since all tests are mocked, there is no need to start Redpanda.
 <div class="paragraph">
 <p>This project contains two discount processors:</p>
 </div>
-<div class="dlist">
+<div id="continuous-view-discount-processor" class="dlist">
 <dl>
 <dt class="hdlist1"><a href="src/main/java/com/example/processor/ContinuousViewProcessor.java" class="bare">src/main/java/com/example/processor/ContinuousViewProcessor.java</a></dt>
 <dd>
 <p>Cover all the rules for the <a href="#continuous-view-discount">Continuous View Discount</a>.<br>
 Test code: <a href="#continuous-view-discount-mock-test">ContinuousViewProcessorTest</a></p>
 </dd>
+</dl>
+</div>
+<div id="most-viewed-product-discount-processor" class="dlist">
+<dl>
 <dt class="hdlist1"><a href="src/main/java/com/example/processor/MostViewedProcessor.java" class="bare">src/main/java/com/example/processor/MostViewedProcessor.java</a></dt>
 <dd>
 <p>Cover all the rules for the <a href="#most-viewed-product-discount">Most Viewed Product Discount</a>.<br>

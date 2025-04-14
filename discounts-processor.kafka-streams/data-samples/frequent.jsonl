@@ -1,0 +1,53 @@
+{"collector_tstamp":"2025-04-14T10:08:16.606Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:08:21.611Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:08:28.616Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:08:39.620Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_2","product_id":"2","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-04-14T10:08:46.623Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:08:53.631Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_2","product_id":"2","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-04-14T10:09:06.645Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:09:19.651Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:09:27.660Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:09:39.662Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:09:49.666Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:09:54.672Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:10:00.679Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:10:10.681Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:10:21.687Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_5","product_id":"5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-04-14T10:10:31.697Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:10:36.704Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:10:46.706Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:10:49.709Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_5","product_id":"5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-04-14T10:11:01.723Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:11:04.727Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:11:16.728Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:11:24.737Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:11:31.744Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_2","product_id":"2","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-04-14T10:11:34.748Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:11:47.751Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:11:59.764Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:12:10.767Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:12:13.772Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:12:22.779Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_2","product_id":"2","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-04-14T10:12:32.790Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:12:39.799Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:12:45.806Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_5","product_id":"5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-04-14T10:12:50.808Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:13:01.811Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:13:10.821Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:13:22.828Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_2","product_id":"2","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-04-14T10:13:31.838Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_2","product_id":"2","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-04-14T10:13:39.847Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:13:48.851Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:13:52.856Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:14:05.869Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:14:11.876Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_5","product_id":"5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-04-14T10:14:17.878Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_5","product_id":"5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-04-14T10:14:23.885Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_2","product_id":"2","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-04-14T10:14:36.898Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:14:41.904Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:14:47.906Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_1","product_id":"1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-04-14T10:15:00.920Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_4","product_id":"4","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:15:09.930Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_5","product_id":"5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-04-14T10:15:16.932Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_3","product_id":"3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-04-14T10:15:27.943Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_2","product_id":"2","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-04-14T10:15:34.950Z","event_name":"snowplow_ecommerce_action","user_id":"1","webpage_id":"page_5","product_id":"5","product_name":"SP Flex Runner 2","product_price":42.99}
