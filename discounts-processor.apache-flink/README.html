@@ -5,14 +5,14 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
-<title>Discounts Processor</title>
+<title>Discounts Processor (Apache Flink version)</title>
 <link rel="stylesheet" href="./README.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel="stylesheet" href="./rouge-github.css">
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Discounts Processor</h1>
+<h1>Discounts Processor (Apache Flink version)</h1>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -79,7 +79,7 @@
 <div class="sectionbody">
 <div class="paragraph text-center">
 <p><strong><a href="README.pdf">PDF version</a></strong><br>
-<strong>Git commit: 69dc790</strong></p>
+<strong>Git commit: 29a237e</strong></p>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
@@ -88,7 +88,7 @@
 <h2 id="overview"><a class="anchor" href="#overview"></a>1. Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This project (<strong>Discounts Processor</strong>) is a Java/ <a href="https://flink.apache.org/">Apache Flink</a> application that processes event data from <a href="https://www.redpanda.com/">Redpanda</a> and generates <a href="#output-events">discount events</a> based on some <a href="#rules">conditions</a>.
+<p>This project (<strong>Discounts Processor (Apache Flink version)</strong>) is a Java/ <a href="https://flink.apache.org/">Apache Flink</a> application that processes event data from <a href="https://www.redpanda.com/">Redpanda</a> and generates <a href="#output-events">discount events</a> based on some <a href="#rules">conditions</a>.
 So, based on the <a href="#input-events">input events</a>, it analyzes if the user is able to get discounts.</p>
 </div>
 <div class="sidebarblock">
@@ -105,7 +105,7 @@ So, based on the <a href="#input-events">input events</a>, it analyzes if the us
 <p><a href="#continuous-view-discount-processor">Continuous View Discount Processor</a>: It has problems regarding watermark management.</p>
 </li>
 <li>
-<p><a href="#most-viewed-product-discount-processor">Most Viewed Product Discount Processor</a>: Not done.</p>
+<p><a href="#most-viewed-product-discount-processor">Most Viewed Product Discount Processor</a>: Incomplete.</p>
 </li>
 </ol>
 </div>

@@ -1,5 +1,5 @@
 ifdef::env-github[]
-Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/discounts-processor/README.html[here]
+Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/discounts-processor.kafka-streams/README.html[here]
 endif::env-github[]
 ifndef::env-github[]
 = Discounts Processor (Kafka Streams version)
