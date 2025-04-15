@@ -5,6 +5,7 @@ readme-build() {
   local docs_dir=$project_dir/docs
   local readme_dir=$PWD
   local dest_dir=$docs_dir/${readme_dir##*/}
+  local sync_fn=$1
 
   [ -d "$docs_dir" ] || return 1
   [ -f README.adoc ] || return 1
@@ -12,6 +13,7 @@ readme-build() {
   echo Copying ./README.adoc to $dest_dir
   mkdir -p $dest_dir
   cp README.adoc $dest_dir
+  ! [ "$sync_fn" ] || $sync_fn $dest_dir
 
   cd $dest_dir
   ln -sf ../common/build.sh

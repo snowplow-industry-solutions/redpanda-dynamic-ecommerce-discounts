@@ -1,0 +1,84 @@
+ifdef::env-github[]
+Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/discounts-processor.kafka-streams/data-samples/README.html[here]
+endif::env-github[]
+ifndef::env-github[]
+= Product Viewing Analysis Tool
+include::common/head.adoc[]
+
+The `frequent` script (<<technical-details,see technical details>>) analyzes customer product viewing patterns to identify the most engaging products within a 5-minute timeframe.
+
+== Purpose
+
+This tool helps identify which products receive the most attention from customers by analyzing their viewing behavior. It's particularly useful for:
+
+* Understanding which products attract the most customer interest
+* Identifying potential candidates for promotional campaigns
+* Analyzing customer engagement patterns
+
+== How it Works
+
+=== Input
+The script processes a link:frequent.jsonl[JSON Lines file] containing product viewing events, where each line represents a customer interaction with a product page.
+
+=== Output
+The script generates a link:frequent.most-viewed.json[JSON file] that ranks products based on two key metrics:
+
+* `occurrences`: How many times customers viewed the product
+* `total_seconds`: Total time spent viewing the product (in seconds)
+
+Products are sorted by:
+
+1. Number of views (highest to lowest)
+2. Total viewing time (highest to lowest) when number of views is equal
+
+=== Time Window
+The analysis focuses on the first 5 minutes of activity, starting from the timestamp of the first event. This helps identify products that generate immediate interest from customers.
+
+== Latest Analysis Results
+
+[source,json]
+----
+include::frequent.most-viewed.json[]
+----
+
+This output shows the most engaging products in the analyzed timeframe, with "SP Dunk Low Retro" being the most viewed product with 12 views and 1,850 seconds of total viewing time.
+
+[[technical-details]]
+== Technical Details
+
+The link:frequent[] (<- Bash wrapper script) is implemented in three different programming languages to demonstrate language-agnostic processing capabilities. All implementations produce identical results:
+
+=== Available Implementations
+
+* *JavaScript*: link:frequent.js[] - Node.js implementation
+* *Python*: link:frequent.py[] - Python 3 implementation
+* *jq*: link:frequent.jq[] - jq implementation
+
+=== Usage
+
+The script can be executed using any of these implementations:
+
+[source,bash]
+----
+./frequent js  # Run JavaScript version
+./frequent py  # Run Python version
+./frequent jq  # Run jq version
+----
+
+If no implementation is specified, the script defaults to JavaScript:
+
+[source,bash]
+----
+./frequent
+----
+
+All implementations:
+
+* Read JSON Lines from standard input
+* Process the first 5 minutes of events
+* Sort products by views and viewing time
+* Output formatted JSON to standard output
+
+The consistent output across all implementations ensures reliability and provides flexibility in choosing the most suitable technology for your environment.
+
+endif::env-github[]

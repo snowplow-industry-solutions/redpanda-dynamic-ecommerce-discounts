@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<title>Product Viewing Analysis Tool</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Product Viewing Analysis Tool</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#purpose">1. Purpose</a></li>
+<li><a href="#how-it-works">2. How it Works</a>
+<ul class="sectlevel2">
+<li><a href="#input">2.1. Input</a></li>
+<li><a href="#output">2.2. Output</a></li>
+<li><a href="#time-window">2.3. Time Window</a></li>
+</ul>
+</li>
+<li><a href="#latest-analysis-results">3. Latest Analysis Results</a></li>
+<li><a href="#technical-details">4. Technical Details</a>
+<ul class="sectlevel2">
+<li><a href="#available-implementations">4.1. Available Implementations</a></li>
+<li><a href="#usage">4.2. Usage</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Git commit: fcd4d89</strong></p>
+</div>
+<div class="paragraph">
+<p>The <code>frequent</code> script (<a href="#technical-details">see technical details</a>) analyzes customer product viewing patterns to identify the most engaging products within a 5-minute timeframe.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="purpose"><a class="anchor" href="#purpose"></a>1. Purpose</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This tool helps identify which products receive the most attention from customers by analyzing their viewing behavior. It&#8217;s particularly useful for:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Understanding which products attract the most customer interest</p>
+</li>
+<li>
+<p>Identifying potential candidates for promotional campaigns</p>
+</li>
+<li>
+<p>Analyzing customer engagement patterns</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="how-it-works"><a class="anchor" href="#how-it-works"></a>2. How it Works</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="input"><a class="anchor" href="#input"></a>2.1. Input</h3>
+<div class="paragraph">
+<p>The script processes a <a href="frequent.jsonl">JSON Lines file</a> containing product viewing events, where each line represents a customer interaction with a product page.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="output"><a class="anchor" href="#output"></a>2.2. Output</h3>
+<div class="paragraph">
+<p>The script generates a <a href="frequent.most-viewed.json">JSON file</a> that ranks products based on two key metrics:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>occurrences</code>: How many times customers viewed the product</p>
+</li>
+<li>
+<p><code>total_seconds</code>: Total time spent viewing the product (in seconds)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Products are sorted by:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Number of views (highest to lowest)</p>
+</li>
+<li>
+<p>Total viewing time (highest to lowest) when number of views is equal</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="time-window"><a class="anchor" href="#time-window"></a>2.3. Time Window</h3>
+<div class="paragraph">
+<p>The analysis focuses on the first 5 minutes of activity, starting from the timestamp of the first event. This helps identify products that generate immediate interest from customers.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="latest-analysis-results"><a class="anchor" href="#latest-analysis-results"></a>3. Latest Analysis Results</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"SP Dunk Low Retro"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"occurrences"</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"total_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">1850</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"SP Air Force 1 Shadow"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"occurrences"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"total_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">1516</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"Total Orange"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"occurrences"</span><span class="p">:</span><span class="w"> </span><span class="mi">7</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"total_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">958</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"SP Air Max Plus 3"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"occurrences"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"total_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">501</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"SP Flex Runner 2"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"occurrences"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"total_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">547</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This output shows the most engaging products in the analyzed timeframe, with "SP Dunk Low Retro" being the most viewed product with 12 views and 1,850 seconds of total viewing time.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="technical-details"><a class="anchor" href="#technical-details"></a>4. Technical Details</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <a href="frequent" class="bare">frequent</a> (&#8592; Bash wrapper script) is implemented in three different programming languages to demonstrate language-agnostic processing capabilities. All implementations produce identical results:</p>
+</div>
+<div class="sect2">
+<h3 id="available-implementations"><a class="anchor" href="#available-implementations"></a>4.1. Available Implementations</h3>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>JavaScript</strong>: <a href="frequent.js" class="bare">frequent.js</a> - Node.js implementation</p>
+</li>
+<li>
+<p><strong>Python</strong>: <a href="frequent.py" class="bare">frequent.py</a> - Python 3 implementation</p>
+</li>
+<li>
+<p><strong>jq</strong>: <a href="frequent.jq" class="bare">frequent.jq</a> - jq implementation</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="usage"><a class="anchor" href="#usage"></a>4.2. Usage</h3>
+<div class="paragraph">
+<p>The script can be executed using any of these implementations:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash">./frequent js  <span class="c"># Run JavaScript version</span>
+./frequent py  <span class="c"># Run Python version</span>
+./frequent jq  <span class="c"># Run jq version</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If no implementation is specified, the script defaults to JavaScript:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash">./frequent</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All implementations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Read JSON Lines from standard input</p>
+</li>
+<li>
+<p>Process the first 5 minutes of events</p>
+</li>
+<li>
+<p>Sort products by views and viewing time</p>
+</li>
+<li>
+<p>Output formatted JSON to standard output</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The consistent output across all implementations ensures reliability and provides flexibility in choosing the most suitable technology for your environment.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
