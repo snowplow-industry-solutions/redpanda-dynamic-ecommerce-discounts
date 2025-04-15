@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -eou pipefail
+cd $(dirname $0)
+[ "${1:-}" ] || {
+  echo "Usage: $0 [jq|js|py]"
+  exit 1
+}
+$0.$1 <frequent.jsonl
