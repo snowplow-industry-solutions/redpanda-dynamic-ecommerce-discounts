@@ -12,7 +12,7 @@
   </appender>
 
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>logs/main.log</file>
+    <file>private/logs/main.log</file>
     <append>false</append>
     <immediateFlush>true</immediateFlush>
     <encoder>

@@ -2,23 +2,26 @@
 set -eou pipefail
 cd $(dirname $0)
 
-data_type=${data_type:-long}
+produce_topic=${produce_topic:-'snowplow-enriched-good'}
+consume_topic=${consume_topic:-'shopper-discounts'}
+data_file=${data_file:-'long-1'}
 
 case ${1:-} in
 up) docker compose -f compose.redpanda.yaml $1 -d ;;
 down) docker compose -f compose.redpanda.yaml $1 -v --remove-orphans ;;
 produce)
-  data_file=./data-samples/$data_type.jsonl
+  data_file=./data-samples/$data_file.jsonl
   [ -f $data_file ] || {
     echo "Data file $data_file not found"
     exit 1
   }
-  echo "Sending $data_file events to snowplow-enriched-good topic..."
+  echo "Sending $data_file events to $produce_topic topic..."
   sed 's/snowplow_ecommerce_action/product_view/g' $data_file |
-    docker exec -i redpanda rpk topic produce snowplow-enriched-good
+    docker exec -i redpanda rpk topic produce $produce_topic
   ;;
 consume)
-  docker exec -i redpanda rpk topic consume snowplow-enriched-good
+  echo "Loading events from $consume_topic topic..."
+  docker exec -i redpanda rpk topic consume $consume_topic
   ;;
 *) echo "Usage: $0 [up|down|produce|consume]" ;;
 esac

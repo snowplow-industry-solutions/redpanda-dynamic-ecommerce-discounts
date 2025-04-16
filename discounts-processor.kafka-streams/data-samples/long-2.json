@@ -1,0 +1,25 @@
+{
+  "timing_by_user": {
+    "1": {
+      "first_event": "2025-04-12T07:00:00.000Z",
+      "last_event": "2025-04-12T07:05:00.000Z",
+      "duration_seconds": 300
+    }
+  },
+  "user_views": {
+    "1": {
+      "5": {
+        "duration_seconds": 90,
+        "page_ping": 9
+      },
+      "6": {
+        "duration_seconds": 90,
+        "page_ping": 9
+      },
+      "7": {
+        "duration_seconds": 100,
+        "page_ping": 10
+      }
+    }
+  }
+}

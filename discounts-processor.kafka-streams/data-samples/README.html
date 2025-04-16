@@ -16,15 +16,33 @@
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#purpose">1. Purpose</a></li>
-<li><a href="#how-it-works">2. How it Works</a>
+<li><a href="#introduction">1. Introduction</a></li>
+<li><a href="#continuous-view-analysis">2. Continuous View Analysis</a>
 <ul class="sectlevel2">
-<li><a href="#input">2.1. Input</a></li>
-<li><a href="#output">2.2. Output</a></li>
-<li><a href="#time-window">2.3. Time Window</a></li>
+<li><a href="#the-long-js-script">2.1. The <code>long.js</code> Script</a></li>
+<li><a href="#test-data-samples">2.2. Test Data Samples</a>
+<ul class="sectlevel3">
+<li><a href="#long-1-jsonl">2.2.1. long-1.jsonl</a></li>
+<li><a href="#long-2-jsonl">2.2.2. long-2.jsonl</a></li>
+<li><a href="#long-3-jsonl">2.2.3. long-3.jsonl</a></li>
 </ul>
 </li>
-<li><a href="#latest-analysis-results">3. Latest Analysis Results</a></li>
+<li><a href="#testing-scenarios">2.3. Testing Scenarios</a></li>
+</ul>
+</li>
+<li><a href="#most-viewed-analysis">3. Most Viewed Analysis</a>
+<ul class="sectlevel2">
+<li><a href="#purpose">3.1. Purpose</a></li>
+<li><a href="#how-it-works">3.2. How it Works</a>
+<ul class="sectlevel3">
+<li><a href="#input">3.2.1. Input</a></li>
+<li><a href="#output">3.2.2. Output</a></li>
+<li><a href="#time-window">3.2.3. Time Window</a></li>
+</ul>
+</li>
+<li><a href="#latest-most-viewed-analysis-results">3.3. Latest Most Viewed Analysis Results</a></li>
+</ul>
+</li>
 <li><a href="#technical-details">4. Technical Details</a>
 <ul class="sectlevel2">
 <li><a href="#available-implementations">4.1. Available Implementations</a></li>
@@ -39,18 +57,231 @@
 <div class="sectionbody">
 <div class="paragraph text-center">
 <p><strong><a href="README.pdf">PDF version</a></strong><br>
-<strong>Git commit: fcd4d89</strong></p>
-</div>
-<div class="paragraph">
-<p>The <code>frequent</code> script (<a href="#technical-details">see technical details</a>) analyzes customer product viewing patterns to identify the most engaging products within a 5-minute timeframe.</p>
+<strong>Git commit: 604a6a0</strong></p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="purpose"><a class="anchor" href="#purpose"></a>1. Purpose</h2>
+<h2 id="introduction"><a class="anchor" href="#introduction"></a>1. Introduction</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This tool helps identify which products receive the most attention from customers by analyzing their viewing behavior. It&#8217;s particularly useful for:</p>
+<p>This directory contains scripts and files for two distinct types of product viewing analysis:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#continuous-view-analysis">Continuous View Analysis</a> (<code>long</code> script)</p>
+</li>
+<li>
+<p><a href="#most-viewed-analysis">Most Viewed Analysis</a> (<code>frequent</code> script)</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="continuous-view-analysis"><a class="anchor" href="#continuous-view-analysis"></a>2. Continuous View Analysis</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="the-long-js-script"><a class="anchor" href="#the-long-js-script"></a>2.1. The <code>long.js</code> Script</h3>
+<div class="paragraph">
+<p>This script analyzes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Total session duration (up to 5 minutes)</p>
+</li>
+<li>
+<p>Individual product view durations</p>
+</li>
+<li>
+<p>Page ping counts per product view</p>
+</li>
+<li>
+<p>Multiple user sessions tracking</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The script produces a JSON output with two main sections, like in this sample:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"timing_by_user"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"1"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"first_event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-12T07:00:00.000Z"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"last_event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-12T07:01:20.000Z"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">80</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"2"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"first_event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-12T07:00:00.000Z"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"last_event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-12T07:02:20.000Z"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">140</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"3"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"first_event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-12T07:00:00.000Z"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"last_event"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-12T07:04:50.000Z"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">290</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"user_views"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"1"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"5"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"page_ping"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"2"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"10"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">80</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"page_ping"</span><span class="p">:</span><span class="w"> </span><span class="mi">8</span><span class="w">
+      </span><span class="p">},</span><span class="w">
+      </span><span class="nl">"11"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">50</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"page_ping"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"3"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"20"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"duration_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">290</span><span class="p">,</span><span class="w">
+        </span><span class="nl">"page_ping"</span><span class="p">:</span><span class="w"> </span><span class="mi">23</span><span class="w">
+      </span><span class="p">}</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="test-data-samples"><a class="anchor" href="#test-data-samples"></a>2.2. Test Data Samples</h3>
+<div class="paragraph">
+<p>Some JSON Lines files are provided for testing the <code>ContinuousViewProcessor</code>:</p>
+</div>
+<div class="sect3">
+<h4 id="long-1-jsonl"><a class="anchor" href="#long-1-jsonl"></a>2.2.1. long-1.jsonl</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>File: <a href="long-1.jsonl" class="bare">long-1.jsonl</a> &#8592; Single user, Single product</p>
+</li>
+<li>
+<p>Result: <a href="long-1.json" class="bare">long-1.json</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="long-2-jsonl"><a class="anchor" href="#long-2-jsonl"></a>2.2.2. long-2.jsonl</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>File: <a href="long-2.jsonl" class="bare">long-2.jsonl</a> &#8592; Single user, Multiple products</p>
+</li>
+<li>
+<p>Result: <a href="long-2.json" class="bare">long-2.json</a></p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="long-3-jsonl"><a class="anchor" href="#long-3-jsonl"></a>2.2.3. long-3.jsonl</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Input: <a href="long-3.jsonl" class="bare">long-3.jsonl</a> &#8592; Multiple users, Multiple products</p>
+</li>
+<li>
+<p>Result: <a href="long-3.json" class="bare">long-3.json</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="testing-scenarios"><a class="anchor" href="#testing-scenarios"></a>2.3. Testing Scenarios</h3>
+<div class="paragraph">
+<p>The sample files help test various aspects of the <code>ContinuousViewProcessor</code>:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Time Window Management</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>All events within 5-minute window</p>
+</li>
+<li>
+<p>Edge case testing near window boundaries</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">User Behavior Patterns</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>Single user viewing multiple products</p>
+</li>
+<li>
+<p>Multiple users viewing simultaneously</p>
+</li>
+<li>
+<p>Rapid product switching</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">Page Ping Analysis</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>Regular ping intervals (10 seconds)</p>
+</li>
+<li>
+<p>Irregular ping patterns</p>
+</li>
+<li>
+<p>Missing pings handling</p>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1">Product View Duration</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>Long views (90+ seconds)</p>
+</li>
+<li>
+<p>Medium views (30-60 seconds)</p>
+</li>
+<li>
+<p>Short views (&lt; 30 seconds)</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="most-viewed-analysis"><a class="anchor" href="#most-viewed-analysis"></a>3. Most Viewed Analysis</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>frequent</code> script (<a href="#technical-details">see technical details</a>) analyzes customer product viewing patterns to identify the most frequently viewed products within a 5-minute timeframe. This analysis is used by the <code>MostViewedProcessor</code> to generate discounts for products that attract high customer interest.</p>
+</div>
+<div class="sect2">
+<h3 id="purpose"><a class="anchor" href="#purpose"></a>3.1. Purpose</h3>
+<div class="paragraph">
+<p>This tool helps identify which products receive the most views from customers by analyzing their behavior. It&#8217;s particularly useful for:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -61,25 +292,23 @@
 <p>Identifying potential candidates for promotional campaigns</p>
 </li>
 <li>
-<p>Analyzing customer engagement patterns</p>
+<p>Analyzing customer engagement patterns through view frequency</p>
 </li>
 </ul>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="how-it-works"><a class="anchor" href="#how-it-works"></a>2. How it Works</h2>
-<div class="sectionbody">
 <div class="sect2">
-<h3 id="input"><a class="anchor" href="#input"></a>2.1. Input</h3>
+<h3 id="how-it-works"><a class="anchor" href="#how-it-works"></a>3.2. How it Works</h3>
+<div class="sect3">
+<h4 id="input"><a class="anchor" href="#input"></a>3.2.1. Input</h4>
 <div class="paragraph">
-<p>The script processes a <a href="frequent.jsonl">JSON Lines file</a> containing product viewing events, where each line represents a customer interaction with a product page.</p>
+<p>The script processes a JSON Lines file containing product viewing events, where each line represents a customer interaction with a product page.</p>
 </div>
 </div>
-<div class="sect2">
-<h3 id="output"><a class="anchor" href="#output"></a>2.2. Output</h3>
+<div class="sect3">
+<h4 id="output"><a class="anchor" href="#output"></a>3.2.2. Output</h4>
 <div class="paragraph">
-<p>The script generates a <a href="frequent.most-viewed.json">JSON file</a> that ranks products based on two key metrics:</p>
+<p>The script generates a JSON file that ranks products based on two key metrics:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -105,17 +334,15 @@
 </ol>
 </div>
 </div>
-<div class="sect2">
-<h3 id="time-window"><a class="anchor" href="#time-window"></a>2.3. Time Window</h3>
+<div class="sect3">
+<h4 id="time-window"><a class="anchor" href="#time-window"></a>3.2.3. Time Window</h4>
 <div class="paragraph">
 <p>The analysis focuses on the first 5 minutes of activity, starting from the timestamp of the first event. This helps identify products that generate immediate interest from customers.</p>
 </div>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="latest-analysis-results"><a class="anchor" href="#latest-analysis-results"></a>3. Latest Analysis Results</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="latest-most-viewed-analysis-results"><a class="anchor" href="#latest-most-viewed-analysis-results"></a>3.3. Latest Most Viewed Analysis Results</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
@@ -143,7 +370,8 @@
 </div>
 </div>
 <div class="paragraph">
-<p>This output shows the most engaging products in the analyzed timeframe, with "SP Dunk Low Retro" being the most viewed product with 12 views and 1,850 seconds of total viewing time.</p>
+<p>This output shows the most frequently viewed products in the analyzed timeframe, with "SP Dunk Low Retro" being the most viewed product with 12 views and 1,850 seconds of total viewing time.</p>
+</div>
 </div>
 </div>
 </div>
@@ -207,9 +435,6 @@
 <p>Output formatted JSON to standard output</p>
 </li>
 </ul>
-</div>
-<div class="paragraph">
-<p>The consistent output across all implementations ensures reliability and provides flexibility in choosing the most suitable technology for your environment.</p>
 </div>
 </div>
 </div>

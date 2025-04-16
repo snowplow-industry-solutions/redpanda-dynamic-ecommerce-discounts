@@ -21,13 +21,13 @@ endif::[]
 include::attributes.adoc[]
 
 ifdef::backend-pdf[]
+****
 [.text-center]
 *Git commit with doc: {git-commit}* +
 *link:README.html[HTML version]*
+****
 
-****
 toc::[]
-****
 endif::[]
 ifdef::backend-html5[]
 [.text-center]

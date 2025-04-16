@@ -209,14 +209,14 @@ Docker version 27.3.1, build ce12230
 First, you need to start Redpanda using `docker compose`:
 
 ----
-$ docker compose -f compose.redpanda.yaml up -d # <- ./redpanda.sh up
+$ docker compose -f compose.redpanda.yaml up -d # <- same effect as ./redpanda.sh up
 ----
 
 [TIP]
 ====
 When you're done, use this command to stop Redpanda and remove all data:
 ----
-$ docker compose -f compose.redpanda.yaml down -v --remove-orphans # <- ./redpanda.sh down
+$ docker compose -f compose.redpanda.yaml down -v --remove-orphans # <- same effect as ./redpanda.sh down
 ----
 ====
 
@@ -256,13 +256,13 @@ NOTE: The script automatically manages the application lifecycle and provides pr
 To generate events in order to trigger discounts, use {uri-project-github-simulator}[the Simulator project].
 You can use it to generate events (containing `product_view` and `page_ping` events in JSONL format) and send them to Redpanda.
 
-So, the file link:data-samples/continuous.jsonl[] is an example of such a file.
+So, the file link:data-samples/long.jsonl[] is an example of such a file.
 You can send the events in this file to the input topic using the following command:
 
 [,console]
 ----
 $ docker exec -i redpanda rpk topic produce snowplow-enriched-good < \
-  data-samples/long.jsonl # <- ./redpanda.sh produce
+  data-samples/long.jsonl # <- same effect as ./redpanda.sh produce
 ----
 
 [NOTE]
@@ -274,7 +274,7 @@ To test the <<most-viewed-product-discount-processor,Most Viewed Product Discoun
 [,console]
 ----
 $ {
-  f=data-samples/continuous.jsonl
+  f=data-samples/long.jsonl
   start=$(sed -n 2p $f | jq -r .collector_tstamp)
   end=$(sed -n 11p $f | jq -r .collector_tstamp)
   ../scripts/tstamp-diff.sh $start $end
@@ -290,7 +290,7 @@ To verify that discounts are being generated correctly, consume from the output 
 
 [,console]
 ----
-$ docker exec -it redpanda rpk topic consume shopper-discounts # <- ./redpanda.sh consume
+$ docker exec -it redpanda rpk topic consume shopper-discounts # <- same effect as ./redpanda.sh consume
 ----
 
 You should see discount events in the output that match the expected patterns based on the input events.
@@ -392,5 +392,8 @@ Application logs can be configured in two files depending on the environment (ma
 
 . link:src/main/resources/logback.xml[logback.xml]
 . link:src/test/resources/logback-test.xml[logback-test.xml]
+
+<<<
+include::DEV-GUIDE.adoc[leveloffset=+1]
 
 endif::env-github[]

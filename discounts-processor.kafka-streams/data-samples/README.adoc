@@ -5,23 +5,97 @@ ifndef::env-github[]
 = Product Viewing Analysis Tool
 include::common/head.adoc[]
 
-The `frequent` script (<<technical-details,see technical details>>) analyzes customer product viewing patterns to identify the most engaging products within a 5-minute timeframe.
+== Introduction
 
-== Purpose
+This directory contains scripts and files for two distinct types of product viewing analysis:
 
-This tool helps identify which products receive the most attention from customers by analyzing their viewing behavior. It's particularly useful for:
+. <<continuous-view-analysis>> (`long` script)
+. <<most-viewed-analysis>> (`frequent` script)
+
+[[continuous-view-analysis]]
+== Continuous View Analysis
+
+=== The `long.js` Script
+
+This script analyzes:
+
+* Total session duration (up to 5 minutes)
+* Individual product view durations
+* Page ping counts per product view
+* Multiple user sessions tracking
+
+The script produces a JSON output with two main sections, like in this sample:
+
+[source,json]
+----
+include::long-3.json[]
+----
+
+=== Test Data Samples
+
+Some JSON Lines files are provided for testing the `ContinuousViewProcessor`:
+
+==== long-1.jsonl
+
+* File: link:long-1.jsonl[] <- Single user, Single product
+* Result: link:long-1.json[]
+
+==== long-2.jsonl
+
+* File: link:long-2.jsonl[] <- Single user, Multiple products
+* Result: link:long-2.json[]
+
+==== long-3.jsonl
+
+* Input: link:long-3.jsonl[] <- Multiple users, Multiple products
+* Result: link:long-3.json[]
+
+=== Testing Scenarios
+
+The sample files help test various aspects of the `ContinuousViewProcessor`:
+
+Time Window Management::
+* All events within 5-minute window
+* Edge case testing near window boundaries
+
+User Behavior Patterns::
+* Single user viewing multiple products
+* Multiple users viewing simultaneously
+* Rapid product switching
+
+Page Ping Analysis::
+* Regular ping intervals (10 seconds)
+* Irregular ping patterns
+* Missing pings handling
+
+Product View Duration::
+* Long views (90+ seconds)
+* Medium views (30-60 seconds)
+* Short views (< 30 seconds)
+
+
+[[most-viewed-analysis]]
+== Most Viewed Analysis
+
+The `frequent` script (<<technical-details,see technical details>>) analyzes customer product viewing patterns to identify the most frequently viewed products within a 5-minute timeframe. This analysis is used by the `MostViewedProcessor` to generate discounts for products that attract high customer interest.
+
+=== Purpose
+
+This tool helps identify which products receive the most views from customers by analyzing their behavior. It's particularly useful for:
 
 * Understanding which products attract the most customer interest
 * Identifying potential candidates for promotional campaigns
-* Analyzing customer engagement patterns
+* Analyzing customer engagement patterns through view frequency
 
-== How it Works
+=== How it Works
 
-=== Input
-The script processes a link:frequent.jsonl[JSON Lines file] containing product viewing events, where each line represents a customer interaction with a product page.
+==== Input
 
-=== Output
-The script generates a link:frequent.most-viewed.json[JSON file] that ranks products based on two key metrics:
+The script processes a JSON Lines file containing product viewing events, where each line represents a customer interaction with a product page.
+
+==== Output
+
+The script generates a JSON file that ranks products based on two key metrics:
 
 * `occurrences`: How many times customers viewed the product
 * `total_seconds`: Total time spent viewing the product (in seconds)
@@ -31,17 +105,18 @@ Products are sorted by:
 1. Number of views (highest to lowest)
 2. Total viewing time (highest to lowest) when number of views is equal
 
-=== Time Window
+==== Time Window
+
 The analysis focuses on the first 5 minutes of activity, starting from the timestamp of the first event. This helps identify products that generate immediate interest from customers.
 
-== Latest Analysis Results
+=== Latest Most Viewed Analysis Results
 
 [source,json]
 ----
-include::frequent.most-viewed.json[]
+include::frequent.json[]
 ----
 
-This output shows the most engaging products in the analyzed timeframe, with "SP Dunk Low Retro" being the most viewed product with 12 views and 1,850 seconds of total viewing time.
+This output shows the most frequently viewed products in the analyzed timeframe, with "SP Dunk Low Retro" being the most viewed product with 12 views and 1,850 seconds of total viewing time.
 
 [[technical-details]]
 == Technical Details
@@ -78,7 +153,5 @@ All implementations:
 * Process the first 5 minutes of events
 * Sort products by views and viewing time
 * Output formatted JSON to standard output
-
-The consistent output across all implementations ensures reliability and provides flexibility in choosing the most suitable technology for your environment.
 
 endif::env-github[]

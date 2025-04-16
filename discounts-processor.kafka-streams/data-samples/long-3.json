@@ -1,0 +1,43 @@
+{
+  "timing_by_user": {
+    "1": {
+      "first_event": "2025-04-12T07:00:00.000Z",
+      "last_event": "2025-04-12T07:01:20.000Z",
+      "duration_seconds": 80
+    },
+    "2": {
+      "first_event": "2025-04-12T07:00:00.000Z",
+      "last_event": "2025-04-12T07:02:20.000Z",
+      "duration_seconds": 140
+    },
+    "3": {
+      "first_event": "2025-04-12T07:00:00.000Z",
+      "last_event": "2025-04-12T07:04:50.000Z",
+      "duration_seconds": 290
+    }
+  },
+  "user_views": {
+    "1": {
+      "5": {
+        "duration_seconds": 80,
+        "page_ping": 8
+      }
+    },
+    "2": {
+      "10": {
+        "duration_seconds": 80,
+        "page_ping": 8
+      },
+      "11": {
+        "duration_seconds": 50,
+        "page_ping": 5
+      }
+    },
+    "3": {
+      "20": {
+        "duration_seconds": 290,
+        "page_ping": 23
+      }
+    }
+  }
+}

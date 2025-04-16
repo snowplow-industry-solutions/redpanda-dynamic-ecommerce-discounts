@@ -70,6 +70,38 @@
 <li><a href="#logs">7.2. Logs</a></li>
 </ul>
 </li>
+<li><a href="#developer-guide">8. Developer Guide</a>
+<ul class="sectlevel2">
+<li><a href="#developer-tips">8.1. Developer Tips</a>
+<ul class="sectlevel3">
+<li><a href="#gradle-commands">8.1.1. Gradle Commands</a>
+<ul class="sectlevel4">
+<li><a href="#skipping-tests">Skipping Tests</a></li>
+<li><a href="#code-formatting">Code Formatting</a></li>
+<li><a href="#running-specific-tests">Running Specific Tests</a></li>
+</ul>
+</li>
+<li><a href="#ide-configuration">8.1.2. IDE Configuration</a>
+<ul class="sectlevel4">
+<li><a href="#intellij-idea">IntelliJ IDEA</a></li>
+<li><a href="#vs-code">VS Code</a></li>
+</ul>
+</li>
+<li><a href="#documentation">8.1.3. Documentation</a>
+<ul class="sectlevel4">
+<li><a href="#readme-generation">README Generation</a></li>
+</ul>
+</li>
+<li><a href="#docker-tips">8.1.4. Docker Tips</a>
+<ul class="sectlevel4">
+<li><a href="#clean-environment">Clean Environment</a></li>
+<li><a href="#quick-redpanda-access">Quick Redpanda Access</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -78,7 +110,7 @@
 <div class="sectionbody">
 <div class="paragraph text-center">
 <p><strong><a href="README.pdf">PDF version</a></strong><br>
-<strong>Git commit: 29a237e</strong></p>
+<strong>Git commit: bd403b8</strong></p>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
@@ -430,7 +462,7 @@ OpenJDK 64-Bit Server VM Temurin-21.0.6+7 (build 21.0.6+7-LTS, mixed mode, shari
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ docker compose -f compose.redpanda.yaml up -d # &lt;- ./redpanda.sh up</pre>
+<pre>$ docker compose -f compose.redpanda.yaml up -d # &lt;- same effect as ./redpanda.sh up</pre>
 </div>
 </div>
 <div class="admonitionblock tip">
@@ -445,7 +477,7 @@ OpenJDK 64-Bit Server VM Temurin-21.0.6+7 (build 21.0.6+7-LTS, mixed mode, shari
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>$ docker compose -f compose.redpanda.yaml down -v --remove-orphans # &lt;- ./redpanda.sh down</pre>
+<pre>$ docker compose -f compose.redpanda.yaml down -v --remove-orphans # &lt;- same effect as ./redpanda.sh down</pre>
 </div>
 </div>
 </td>
@@ -524,13 +556,13 @@ The script automatically manages the application lifecycle and provides proper c
 You can use it to generate events (containing <code>product_view</code> and <code>page_ping</code> events in JSONL format) and send them to Redpanda.</p>
 </div>
 <div class="paragraph">
-<p>So, the file <a href="data-samples/continuous.jsonl" class="bare">data-samples/continuous.jsonl</a> is an example of such a file.
+<p>So, the file <a href="data-samples/long.jsonl" class="bare">data-samples/long.jsonl</a> is an example of such a file.
 You can send the events in this file to the input topic using the following command:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-i</span> redpanda rpk topic produce snowplow-enriched-good &lt; <span class="se">\</span>
-<span class="gp">  data-samples/long.jsonl #</span><span class="w"> </span>&lt;- ./redpanda.sh produce</code></pre>
+<span class="gp">  data-samples/long.jsonl #</span><span class="w"> </span>&lt;- same effect as ./redpanda.sh produce</code></pre>
 </div>
 </div>
 <div class="admonitionblock note">
@@ -554,7 +586,7 @@ To test the <a href="#most-viewed-product-discount-processor">Most Viewed Produc
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="o">{</span>
-<span class="go">  f=data-samples/continuous.jsonl
+<span class="go">  f=data-samples/long.jsonl
 </span><span class="gp">  start=$</span><span class="o">(</span><span class="nb">sed</span> <span class="nt">-n</span> 2p <span class="nv">$f</span> | jq <span class="nt">-r</span> .collector_tstamp<span class="o">)</span>
 <span class="gp">  end=$</span><span class="o">(</span><span class="nb">sed</span> <span class="nt">-n</span> 11p <span class="nv">$f</span> | jq <span class="nt">-r</span> .collector_tstamp<span class="o">)</span>
 <span class="gp">  ../scripts/tstamp-diff.sh $</span>start <span class="nv">$end</span>
@@ -574,7 +606,7 @@ To test the <a href="#most-viewed-product-discount-processor">Most Viewed Produc
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-it</span> redpanda rpk topic consume shopper-discounts <span class="c"># &lt;- ./redpanda.sh consume</span></code></pre>
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker <span class="nb">exec</span> <span class="nt">-it</span> redpanda rpk topic consume shopper-discounts <span class="c"># &lt;- same effect as ./redpanda.sh consume</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -754,6 +786,158 @@ Test code: <a href="#most-viewed-product-discount-mock-test">MostViewedProcessor
 <p><a href="src/test/resources/logback-test.xml">logback-test.xml</a></p>
 </li>
 </ol>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="developer-guide"><a class="anchor" href="#developer-guide"></a>8. Developer Guide</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="developer-tips"><a class="anchor" href="#developer-tips"></a>8.1. Developer Tips</h3>
+<div class="sect3">
+<h4 id="gradle-commands"><a class="anchor" href="#gradle-commands"></a>8.1.1. Gradle Commands</h4>
+<div class="sect4">
+<h5 id="skipping-tests"><a class="anchor" href="#skipping-tests"></a>Skipping Tests</h5>
+<div class="paragraph">
+<p>To skip test execution during build:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./gradlew build <span class="nt">-x</span> <span class="nb">test</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="code-formatting"><a class="anchor" href="#code-formatting"></a>Code Formatting</h5>
+<div class="paragraph">
+<p>The project uses Spotless for code formatting. Common commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./gradlew spotlessCheck    <span class="c"># Check code formatting</span>
+<span class="gp">$</span><span class="w"> </span>./gradlew spotlessApply    <span class="c"># Apply code formatting</span></code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+To automatically format code before each build, the project already includes <code>spotlessApply</code> as a build dependency.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect4">
+<h5 id="running-specific-tests"><a class="anchor" href="#running-specific-tests"></a>Running Specific Tests</h5>
+<div class="paragraph">
+<p>To run a specific test class:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./gradlew <span class="nb">test</span> <span class="nt">--tests</span> <span class="s2">"com.example.processor.MostViewedProcessorTest"</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To run only integration tests:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./gradlew integrationTest</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="ide-configuration"><a class="anchor" href="#ide-configuration"></a>8.1.2. IDE Configuration</h4>
+<div class="sect4">
+<h5 id="intellij-idea"><a class="anchor" href="#intellij-idea"></a>IntelliJ IDEA</h5>
+<div class="paragraph">
+<p>TODO</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="vs-code"><a class="anchor" href="#vs-code"></a>VS Code</h5>
+<div class="ulist">
+<ul>
+<li>
+<p>Install <a href="https://marketplace.visualstudio.com/items/?itemName=EditorConfig.EditorConfig">"EditorConfig"</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Configure "Editor: Format On Save" setting</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Install <a href="https://code.visualstudio.com/docs/java/extensions">"Java extensions for Visual Studio Code"</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Install <a href="https://marketplace.visualstudio.com/items/?itemName=SonarSource.sonarlint-vscode">"SonarQubei for IDE"</a></p>
+</li>
+<li>
+<p>Install <a href="https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-gradle">"Gradle for Java"</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Install <a href="https://marketplace.visualstudio.com/items/?itemName=mathiasfrohlich.Kotlin">"Kotlin Language"</a></p>
+</li>
+<li>
+<p>Install <a href="https://marketplace.visualstudio.com/items/?itemName=asciidoctor.asciidoctor-vscode">"AsciiDoc"</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="documentation"><a class="anchor" href="#documentation"></a>8.1.3. Documentation</h4>
+<div class="sect4">
+<h5 id="readme-generation"><a class="anchor" href="#readme-generation"></a>README Generation</h5>
+<div class="paragraph">
+<p>To rebuild the documentation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./README.sh    <span class="c"># Generates README.html and updates other formats</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="docker-tips"><a class="anchor" href="#docker-tips"></a>8.1.4. Docker Tips</h4>
+<div class="sect4">
+<h5 id="clean-environment"><a class="anchor" href="#clean-environment"></a>Clean Environment</h5>
+<div class="paragraph">
+<p>To completely clean up Docker resources:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker compose down <span class="nt">-v</span> <span class="nt">--remove-orphans</span>
+<span class="gp">$</span><span class="w"> </span>docker system prune <span class="nt">-f</span>    <span class="c"># Remove unused containers/images</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="quick-redpanda-access"><a class="anchor" href="#quick-redpanda-access"></a>Quick Redpanda Access</h5>
+<div class="paragraph">
+<p>The project includes convenient scripts for Redpanda operations:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./redpanda.sh up      <span class="c"># Start Redpanda</span>
+<span class="gp">$</span><span class="w"> </span>./redpanda.sh down    <span class="c"># Stop Redpanda</span></code></pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
