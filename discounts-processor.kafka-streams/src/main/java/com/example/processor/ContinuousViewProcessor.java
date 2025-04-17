@@ -5,7 +5,6 @@ import com.example.model.DiscountEvent;
 import com.example.model.PagePingEvent;
 import com.example.model.ProductViewEvent;
 import com.example.serialization.DiscountEventSerde;
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -14,130 +13,189 @@ import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.SessionWindows;
-import org.apache.kafka.streams.kstream.Suppressed;
+import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.streams.kstream.Windowed;
-import org.apache.kafka.streams.kstream.WindowedSerdes;
-import org.apache.kafka.streams.state.SessionStore;
+import org.apache.kafka.streams.kstream.internals.TimeWindow;
+import org.apache.kafka.streams.state.WindowStore;
 
 @Slf4j
 public class ContinuousViewProcessor {
   private final ConfigurationManager config = ConfigurationManager.getInstance();
 
-  public KStream<Windowed<String>, DiscountEvent> addProcessing(
-      KStream<String, PagePingEvent> inputStream,
-      Materialized<String, ArrayList<PagePingEvent>, SessionStore<Bytes, byte[]>> materialized) {
+  public static class WindowState {
+    private final ArrayList<PagePingEvent> events = new ArrayList<>();
+    private boolean discountGenerated = false;
 
-    KStream<Windowed<String>, DiscountEvent> outputStream =
-        inputStream
-            .groupByKey()
-            .windowedBy(SessionWindows.ofInactivityGapWithNoGrace(Duration.ofSeconds(30)))
-            .aggregate(
-                ArrayList::new,
-                (userId, event, accumulator) -> {
-                  accumulator.add(event);
-                  return accumulator;
-                },
-                (aggKey, aggOne, aggTwo) -> {
-                  aggOne.addAll(aggTwo);
-                  return aggOne;
-                },
-                materialized)
-            .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
-            .toStream()
-            .peek(
-                (key, events) ->
-                    log.info(
-                        "Session closed for user {}: {} events collected in window {} to {}, first event: {}, last event: {}",
-                        key.key(),
-                        events.size(),
-                        key.window().startTime(),
-                        key.window().endTime(),
-                        events.isEmpty() ? "none" : events.get(0).getCollectorTimestamp(),
-                        events.isEmpty()
-                            ? "none"
-                            : events.get(events.size() - 1).getCollectorTimestamp()))
-            .flatMapValues((key, windowEvents) -> processEvents(key.key(), windowEvents));
+    public void addEvent(PagePingEvent event) {
+      events.add(event);
+    }
+
+    public List<PagePingEvent> getEvents() {
+      return events;
+    }
+
+    public boolean isDiscountGenerated() {
+      return discountGenerated;
+    }
+
+    public void setDiscountGenerated(boolean generated) {
+      discountGenerated = generated;
+    }
+  }
+
+  public KStream<String, DiscountEvent> addProcessing(
+      KStream<String, PagePingEvent> inputStream,
+      Materialized<String, WindowState, WindowStore<Bytes, byte[]>> materialized) {
+
+    KStream<String, DiscountEvent> outputStream = inputStream
+        .peek(
+            (key, value) -> log.info(
+                "Received event for user_id/web_page = {}/{}", key, value.getWebpageId()))
+        .groupByKey()
+        .windowedBy(TimeWindows.ofSizeWithNoGrace(config.getWindowDuration())
+            .advanceBy(config.getWindowDuration()))
+        .aggregate(
+            WindowState::new,
+            (key, value, aggregate) -> {
+              long eventTimeMs = value.getCollectorTimestamp().toEpochMilli();
+              long windowStartMs = eventTimeMs - (eventTimeMs % config.getWindowDuration().toMillis());
+              long windowEndMs = windowStartMs + config.getWindowDuration().toMillis();
+
+              Windowed<String> windowedKey = new Windowed<>(
+                  key,
+                  new TimeWindow(windowStartMs, windowEndMs));
+
+              log.info("Processing window for key={}, window=[{} to {}], current state.discountGenerated={}",
+                  key,
+                  new Date(windowedKey.window().start()),
+                  new Date(windowedKey.window().end()),
+                  aggregate.isDiscountGenerated());
+
+              if (aggregate.isDiscountGenerated()) {
+                log.debug("Discount already generated for user {} in window [{} to {}], ignoring new events",
+                    key,
+                    new Date(windowedKey.window().start()),
+                    new Date(windowedKey.window().end()));
+                return aggregate;
+              }
+              aggregate.addEvent(value);
+              log.info(
+                  "Aggregating event for user_id {} in window [{} to {}], total events: {}",
+                  key,
+                  new Date(windowedKey.window().start()),
+                  new Date(windowedKey.window().end()),
+                  aggregate.getEvents().size());
+              return aggregate;
+            },
+            materialized)
+        .toStream()
+        .selectKey((windowed, state) -> {
+          log.info("Processing final window state for key={}, window=[{} to {}], events={}, discountGenerated={}",
+              windowed.key(),
+              new Date(windowed.window().start()),
+              new Date(windowed.window().end()),
+              state.getEvents().size(),
+              state.isDiscountGenerated());
+          return windowed.key();
+        })
+        .flatMapValues(
+            (key, windowState) -> {
+              if (windowState.isDiscountGenerated()) {
+                log.debug("Discount already generated for user {} in this window", key);
+                return Collections.emptySet();
+              }
+
+              Optional<DiscountEvent> discount = processEvents(key, windowState.getEvents());
+              if (discount.isPresent()) {
+                windowState.setDiscountGenerated(true);
+                return Collections.singleton(discount.get());
+              }
+              return Collections.emptySet();
+            });
+
+    outputStream.peek(
+        (key, discount) -> log.info(
+            "Generated discount event: user_id={}, product_id={}, discount.rate={}",
+            key,
+            discount.getProductId(),
+            discount.getDiscount().getRate()));
 
     outputStream.to(
-        config.getOutputTopic(),
-        Produced.<Windowed<String>, DiscountEvent>with(
-            new WindowedSerdes.SessionWindowedSerde<>(Serdes.String()), new DiscountEventSerde()));
+        config.getOutputTopic(), Produced.with(Serdes.String(), new DiscountEventSerde()));
 
     return outputStream;
   }
 
-  private List<DiscountEvent> processEvents(String userId, List<PagePingEvent> events) {
-    List<DiscountEvent> discounts = new ArrayList<>();
-
+  protected Optional<DiscountEvent> processEvents(String userId, List<PagePingEvent> events) {
     log.debug("Processing {} events for user {}", events.size(), userId);
 
-    Map<String, List<PagePingEvent>> eventsByProduct =
-        events.stream()
-            .sorted(Comparator.comparing(PagePingEvent::getCollectorTimestamp))
-            .collect(Collectors.groupingBy(PagePingEvent::getWebpageId));
+    Map<String, List<PagePingEvent>> eventsByProduct = events.stream()
+        .sorted(Comparator.comparing(PagePingEvent::getCollectorTimestamp))
+        .collect(Collectors.groupingBy(PagePingEvent::getWebpageId));
 
     log.debug("User {} viewed {} distinct products", userId, eventsByProduct.size());
 
-    Optional<Map.Entry<String, List<PagePingEvent>>> productWithMostPings =
-        eventsByProduct.entrySet().stream()
-            .filter(
-                entry -> {
-                  List<PagePingEvent> productEvents = entry.getValue();
-                  int pingCount = productEvents.size();
+    Optional<Map.Entry<String, List<PagePingEvent>>> productWithMostPings = eventsByProduct.entrySet().stream()
+        .filter(
+            entry -> {
+              List<PagePingEvent> productEvents = entry.getValue();
+              long pingCount = countPagePings(productEvents);
+              int minPings = config.getMinPings();
 
-                  if (pingCount < config.getMinPings()) {
-                    return false;
-                  }
+              log.debug(
+                  "Checking product {}: pingCount={}, minPings={}",
+                  entry.getKey(),
+                  pingCount,
+                  minPings);
 
-                  Optional<PagePingEvent> productView =
-                      productEvents.stream().filter(e -> e instanceof ProductViewEvent).findFirst();
+              if (pingCount < minPings) {
+                log.debug(
+                    "Product {} has {} pings, less than minimum required ({})",
+                    entry.getKey(),
+                    pingCount,
+                    minPings);
+                return false;
+              }
 
-                  Optional<PagePingEvent> lastPing =
-                      productEvents.stream()
-                          .max(Comparator.comparing(PagePingEvent::getCollectorTimestamp));
+              Optional<PagePingEvent> productView = productEvents.stream().filter(ProductViewEvent.class::isInstance)
+                  .findFirst();
 
-                  if (productView.isPresent() && lastPing.isPresent()) {
-                    Duration viewDuration =
-                        Duration.between(
-                            productView.get().getCollectorTimestamp(),
-                            lastPing.get().getCollectorTimestamp());
-                    return viewDuration.compareTo(config.getCalculatedMinDuration()) >= 0;
-                  }
-                  return false;
-                })
-            .max(Comparator.comparing(entry -> entry.getValue().size()));
+              log.debug(
+                  "Product {} has product view event: {}",
+                  entry.getKey(),
+                  productView.isPresent());
+              return productView.isPresent();
+            })
+        .max(Comparator.comparing(entry -> countPagePings(entry.getValue())));
 
-    if (productWithMostPings.isPresent()) {
-      String webpageId = productWithMostPings.get().getKey();
-      List<PagePingEvent> productEvents = productWithMostPings.get().getValue();
+    return productWithMostPings.flatMap(
+        entry -> {
+          List<PagePingEvent> productEvents = entry.getValue();
+          return productEvents.stream()
+              .filter(ProductViewEvent.class::isInstance)
+              .findFirst()
+              .map(
+                  productView -> {
+                    ProductViewEvent event = (ProductViewEvent) productView;
+                    long pingCount = countPagePings(productEvents);
+                    long durationInSeconds = pingCount * config.getPingIntervalSeconds();
 
-      Optional<PagePingEvent> productView =
-          productEvents.stream().filter(e -> e instanceof ProductViewEvent).findFirst();
+                    log.info(
+                        "Generating discount for user {} on product {} (pings: {}, duration: {}s)",
+                        userId,
+                        event.getProductId(),
+                        pingCount,
+                        durationInSeconds);
 
-      Optional<PagePingEvent> lastPing =
-          productEvents.stream().max(Comparator.comparing(PagePingEvent::getCollectorTimestamp));
+                    return DiscountEvent.createContinuousViewDiscount(
+                        userId, event.getProductId(), durationInSeconds, config.getDiscountRate());
+                  });
+        });
+  }
 
-      if (productView.isPresent() && lastPing.isPresent()) {
-        ProductViewEvent event = (ProductViewEvent) productView.get();
-        Duration viewDuration =
-            Duration.between(
-                productView.get().getCollectorTimestamp(), lastPing.get().getCollectorTimestamp());
-
-        log.info(
-            "Generating discount for user {} on product {} (duration: {}s, pings: {})",
-            userId,
-            event.getProductId(),
-            viewDuration.getSeconds(),
-            productEvents.size());
-
-        discounts.add(
-            DiscountEvent.createContinuousViewDiscount(
-                userId, event.getProductId(), viewDuration.toSeconds(), config.getDiscountRate()));
-      }
-    }
-
-    log.debug("Generated {} discounts for user {}", discounts.size(), userId);
-    return discounts;
+  private long countPagePings(List<PagePingEvent> events) {
+    long count = events.stream().filter(event -> "page_ping".equals(event.getEventName())).count();
+    log.debug("Counted {} page_ping events out of {} total events", count, events.size());
+    return count;
   }
 }

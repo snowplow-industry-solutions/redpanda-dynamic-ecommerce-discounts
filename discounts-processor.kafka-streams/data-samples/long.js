@@ -27,7 +27,6 @@ async function analyzeContinuousViews() {
     user_views: {}
   };
 
-  // Calcular timing para cada usuário separadamente
   for (const [userId, userEvents] of Object.entries(eventsByUser)) {
     const sortedUserEvents = [...userEvents].sort((a, b) =>
       new Date(a.collector_tstamp) - new Date(b.collector_tstamp)

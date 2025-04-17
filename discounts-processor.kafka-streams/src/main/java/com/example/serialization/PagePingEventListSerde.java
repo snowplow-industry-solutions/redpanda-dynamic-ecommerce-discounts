@@ -1,7 +1,6 @@
 package com.example.serialization;
 
 import com.example.model.PagePingEvent;
-import com.example.model.ProductViewEvent;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -67,12 +66,7 @@ public class PagePingEventListSerde implements Serde<ArrayList<PagePingEvent>> {
         ArrayList<PagePingEvent> result = new ArrayList<>();
 
         for (JsonNode node : arrayNode) {
-          String eventName = node.path("event_name").asText();
-          if ("product_view".equals(eventName)) {
-            result.add(objectMapper.treeToValue(node, ProductViewEvent.class));
-          } else {
-            result.add(objectMapper.treeToValue(node, PagePingEvent.class));
-          }
+          result.add(EventDeserializationHelper.deserializeEvent(objectMapper, node));
         }
 
         return result;

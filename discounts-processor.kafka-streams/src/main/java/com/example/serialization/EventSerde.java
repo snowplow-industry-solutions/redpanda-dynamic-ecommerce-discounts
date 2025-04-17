@@ -85,29 +85,30 @@ public class EventSerde implements Serde<PagePingEvent> {
         throw e;
       } catch (Exception e) {
         log.error("Failed to deserialize event: {}", e.getMessage(), e);
-        throw new RuntimeException("Failed to deserialize event", e);
+        throw new EventDeserializationException("Failed to deserialize event", e);
       }
     }
 
     private void validateRequiredFields(JsonNode node) {
       if (!node.has("user_id") || node.get("user_id").isNull()) {
         log.error("Missing required field: user_id");
-        throw new RuntimeException("Missing required field: user_id");
+        throw new EventDeserializationException("Missing required field: user_id", null);
       }
       if (!node.has("webpage_id") || node.get("webpage_id").isNull()) {
         log.error("Missing required field: webpage_id");
-        throw new RuntimeException("Missing required field: webpage_id");
+        throw new EventDeserializationException("Missing required field: webpage_id", null);
       }
       if (!node.has("collector_tstamp") || node.get("collector_tstamp").isNull()) {
         log.error("Missing required field: collector_tstamp");
-        throw new RuntimeException("Missing required field: collector_tstamp");
+        throw new EventDeserializationException("Missing required field: collector_tstamp", null);
       }
 
       String eventName = node.path("event_name").asText();
       if ("product_view".equals(eventName)) {
         if (!node.has("product_id") || node.get("product_id").isNull()) {
           log.error("Missing required field for product_view: product_id");
-          throw new RuntimeException("Missing required field for product_view: product_id");
+          throw new EventDeserializationException(
+              "Missing required field for product_view: product_id", null);
         }
       }
     }

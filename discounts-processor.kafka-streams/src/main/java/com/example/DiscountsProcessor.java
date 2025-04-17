@@ -4,12 +4,10 @@ import com.example.config.ConfigurationManager;
 import com.example.model.PagePingEvent;
 import com.example.processor.ContinuousViewProcessor;
 import com.example.processor.MostViewedProcessor;
-import com.example.serialization.ArrayListSerde;
 import com.example.serialization.EventSerde;
 import com.example.serialization.EventTimestampExtractor;
-import com.example.serialization.PagePingEventListSerde;
+import com.example.serialization.WindowStateSerde;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -23,24 +21,15 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.apache.kafka.streams.state.SessionStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
+import org.apache.kafka.streams.state.WindowStore;
 
 @Slf4j
 public class DiscountsProcessor {
   private static final String CLASS_NAME = DiscountsProcessor.class.getSimpleName();
   private final ConfigurationManager config = ConfigurationManager.getInstance();
-  private final Properties props;
-  private final EventSerde eventSerde;
-  private final PagePingEventListSerde pagePingEventListSerde;
   private KafkaStreams streams;
-
-  public DiscountsProcessor() {
-    this.props = createKafkaProperties();
-    this.eventSerde = new EventSerde();
-    this.pagePingEventListSerde = new PagePingEventListSerde();
-  }
 
   private Properties createKafkaProperties() {
     Properties props = new Properties();
@@ -61,9 +50,6 @@ public class DiscountsProcessor {
     }
 
     StreamsBuilder builder = new StreamsBuilder();
-    Duration windowSize = config.getWindowDuration();
-    Duration advanceSize = Duration.ofSeconds(30);
-
     if (config.isMostViewedProcessorEnabled()) {
       StoreBuilder<KeyValueStore<String, Long>> lastDiscountStoreBuilder =
           Stores.keyValueStoreBuilder(
@@ -90,7 +76,7 @@ public class DiscountsProcessor {
     KStream<String, PagePingEvent> inputStream =
         builder.stream(
                 config.getInputTopic(),
-                Consumed.with(Serdes.String(), eventSerde)
+                Consumed.with(Serdes.String(), new EventSerde())
                     .withTimestampExtractor(new EventTimestampExtractor()))
             .peek(
                 (key, value) ->
@@ -100,26 +86,27 @@ public class DiscountsProcessor {
 
     if (config.isContinuousViewProcessorEnabled()) {
       log.info("Configuring ContinuousViewProcessor...");
-      Materialized<String, ArrayList<PagePingEvent>, SessionStore<Bytes, byte[]>> materialized =
-          Materialized.<String, ArrayList<PagePingEvent>, SessionStore<Bytes, byte[]>>as(
-                  "continuous-view-store")
-              .withKeySerde(Serdes.String())
-              .withValueSerde(new ArrayListSerde<>(PagePingEvent.class));
+      Materialized<String, ContinuousViewProcessor.WindowState, WindowStore<Bytes, byte[]>>
+          materialized =
+              Materialized
+                  .<String, ContinuousViewProcessor.WindowState, WindowStore<Bytes, byte[]>>as(
+                      "continuous-view-store")
+                  .withKeySerde(Serdes.String())
+                  .withValueSerde(new WindowStateSerde());
 
-      ContinuousViewProcessor continuousViewProcessor = new ContinuousViewProcessor();
-      continuousViewProcessor.addProcessing(inputStream, materialized);
+      new ContinuousViewProcessor().addProcessing(inputStream, materialized);
     }
 
     if (config.isMostViewedProcessorEnabled()) {
       log.info("Configuring MostViewedProcessor...");
       inputStream.process(
-          () -> new MostViewedProcessor(),
+          MostViewedProcessor::new,
           ConfigurationManager.LAST_DISCOUNT_STORE,
           ConfigurationManager.VIEWS_STORE,
           ConfigurationManager.DURATION_STORE);
     }
 
-    streams = new KafkaStreams(builder.build(), props);
+    streams = new KafkaStreams(builder.build(), createKafkaProperties());
 
     Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
 

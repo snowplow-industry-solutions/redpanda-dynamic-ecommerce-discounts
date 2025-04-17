@@ -17,7 +17,10 @@ produce)
   }
   echo "Sending $data_file events to $produce_topic topic..."
   sed 's/snowplow_ecommerce_action/product_view/g' $data_file |
-    docker exec -i redpanda rpk topic produce $produce_topic
+    while read -r line; do
+      echo "$line" | jq -r --arg line "$line" '.user_id + " " + $line'
+    done |
+    docker exec -i redpanda rpk topic produce $produce_topic -f '%k %v\n'
   ;;
 consume)
   echo "Loading events from $consume_topic topic..."

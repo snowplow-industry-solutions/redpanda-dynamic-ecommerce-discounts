@@ -17,7 +17,7 @@ This directory contains scripts and files for two distinct types of product view
 
 === The `long.js` Script
 
-This script analyzes:
+This link:long.js[] script analyzes:
 
 * Total session duration (up to 5 minutes)
 * Individual product view durations

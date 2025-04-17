@@ -6,8 +6,8 @@ import org.apache.kafka.streams.processor.TimestampExtractor;
 
 public class EventTimestampExtractor implements TimestampExtractor {
   @Override
-  public long extract(ConsumerRecord<Object, Object> record, long partitionTime) {
-    PagePingEvent event = (PagePingEvent) record.value();
+  public long extract(ConsumerRecord<Object, Object> consumerRecord, long partitionTime) {
+    PagePingEvent event = (PagePingEvent) consumerRecord.value();
     return event.getCollectorTimestamp().toEpochMilli();
   }
 }
