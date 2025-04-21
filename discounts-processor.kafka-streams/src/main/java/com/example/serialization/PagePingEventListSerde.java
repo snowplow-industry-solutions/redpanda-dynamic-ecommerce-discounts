@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.ArrayList;
 import java.util.Map;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -37,13 +38,9 @@ public class PagePingEventListSerde implements Serde<ArrayList<PagePingEvent>> {
     public void configure(Map<String, ?> configs, boolean isKey) {}
 
     @Override
+    @SneakyThrows
     public byte[] serialize(String topic, ArrayList<PagePingEvent> data) {
-      try {
-        return objectMapper.writeValueAsBytes(data);
-      } catch (Exception e) {
-        log.error("Failed to serialize PagePingEvent list", e);
-        throw new RuntimeException("Failed to serialize PagePingEvent list", e);
-      }
+      return objectMapper.writeValueAsBytes(data);
     }
 
     @Override
@@ -56,24 +53,16 @@ public class PagePingEventListSerde implements Serde<ArrayList<PagePingEvent>> {
     public void configure(Map<String, ?> configs, boolean isKey) {}
 
     @Override
+    @SneakyThrows
     public ArrayList<PagePingEvent> deserialize(String topic, byte[] data) {
-      if (data == null) {
-        return null;
+      JsonNode arrayNode = objectMapper.readTree(data);
+      ArrayList<PagePingEvent> result = new ArrayList<>();
+
+      for (JsonNode node : arrayNode) {
+        result.add(EventDeserializationHelper.deserializeEvent(objectMapper, node));
       }
 
-      try {
-        JsonNode arrayNode = objectMapper.readTree(data);
-        ArrayList<PagePingEvent> result = new ArrayList<>();
-
-        for (JsonNode node : arrayNode) {
-          result.add(EventDeserializationHelper.deserializeEvent(objectMapper, node));
-        }
-
-        return result;
-      } catch (Exception e) {
-        log.error("Failed to deserialize PagePingEvent list", e);
-        throw new RuntimeException("Failed to deserialize PagePingEvent list", e);
-      }
+      return result;
     }
 
     @Override

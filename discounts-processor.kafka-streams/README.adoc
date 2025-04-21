@@ -44,9 +44,32 @@ The {integration-tests} developed are executed with the help of {TestContainers}
 [[continuous-view-discount]]
 === Continuous View Discount
 
-A single discount of 10% (witin a 5-minute window) is generated when:
+A single discount of 10% (within a 5-minute window) is generated when:
 
 * A user views the same product continuously within a 90-second window.
+
+==== Viewing Time Calculation
+
+The total viewing time includes:
+
+1. Initial viewing time: When a `product_view` event occurs, it starts the viewing session
+2. Delay to first ping: A configured time (default: 10 seconds) between the `product_view` and the first `page_ping`
+3. Subsequent pings: Regular intervals between `page_ping` events (default: 10 seconds)
+
+For example, to achieve a 90-second continuous view:
+
+* Initial `product_view` event
+* 10 seconds delay to first ping
+* 8 subsequent `page_ping` events at 10-second intervals
+* Total time = 10 (delay) + (8 × 10) = 90 seconds
+
+This means that with default settings (10-second ping interval and 10-second initial delay), only 8 `page_ping` events are needed to achieve a 90-second continuous view, instead of 9 pings that would be needed without considering the initial viewing time.
+
+[TIP]
+====
+The formula to calculate the total viewing time is:
+`total_time = delay_to_first_ping + (number_of_pings × ping_interval)`
+====
 
 [[most-viewed-product-discount]]
 === Most Viewed Product Discount

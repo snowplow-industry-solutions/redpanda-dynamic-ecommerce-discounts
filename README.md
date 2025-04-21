@@ -8,7 +8,9 @@ A [Snowplow solution accelerator][solution-accelerators] showing how dynamic dis
 
 ## Quickstart
 
-To get started, head to our [Dynamic Ecommerce Discounts with Redpanda][docs-main].
+To easily get started with this accelerator, you only need a browser because **this project can be running entirely in the cloud 🙂 using a devcontainer inside GitHub (a codespace)**.
+
+So, go ahead and see the instructions for this in the doc [Dynamic Ecommerce Discounts with Redpanda][docs-main].
 
 ## Special thanks
 

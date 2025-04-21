@@ -2,6 +2,7 @@ package com.example.serialization;
 
 import com.example.model.PagePingEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
@@ -13,12 +14,9 @@ public class PagePingEventSerde implements Serde<PagePingEvent> {
   public Serializer<PagePingEvent> serializer() {
     return new Serializer<>() {
       @Override
+      @SneakyThrows
       public byte[] serialize(String topic, PagePingEvent data) {
-        try {
-          return mapper.writeValueAsBytes(data);
-        } catch (Exception e) {
-          throw new RuntimeException("Error serializing PagePingEvent", e);
-        }
+        return mapper.writeValueAsBytes(data);
       }
     };
   }
@@ -27,12 +25,9 @@ public class PagePingEventSerde implements Serde<PagePingEvent> {
   public Deserializer<PagePingEvent> deserializer() {
     return new Deserializer<>() {
       @Override
+      @SneakyThrows
       public PagePingEvent deserialize(String topic, byte[] data) {
-        try {
-          return mapper.readValue(data, PagePingEvent.class);
-        } catch (Exception e) {
-          throw new RuntimeException("Error deserializing PagePingEvent", e);
-        }
+        return mapper.readValue(data, PagePingEvent.class);
       }
     };
   }

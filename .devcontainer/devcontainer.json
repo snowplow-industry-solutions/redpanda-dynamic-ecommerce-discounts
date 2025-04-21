@@ -1,0 +1,12 @@
+{
+	"name": "accel2",
+	"image": "mcr.microsoft.com/devcontainers/universal:2-linux",
+	"features": {
+		"ghcr.io/devcontainers/features/java:1": {
+			"installGradle": true,
+			"version": "21",
+			"jdkDistro": "tem",
+			"gradleVersion": "latest"
+		}
+	}
+}

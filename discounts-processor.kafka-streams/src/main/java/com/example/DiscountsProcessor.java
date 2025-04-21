@@ -3,11 +3,17 @@ package com.example;
 import com.example.config.ConfigurationManager;
 import com.example.model.PagePingEvent;
 import com.example.processor.ContinuousViewProcessor;
+import com.example.processor.ContinuousViewProcessor2;
 import com.example.processor.MostViewedProcessor;
+import com.example.processor.ProcessorHelper;
+import com.example.processor.WindowState;
+import com.example.serialization.DiscountEventSerde;
 import com.example.serialization.EventSerde;
 import com.example.serialization.EventTimestampExtractor;
+import com.example.serialization.PagePingEventListSerde;
 import com.example.serialization.WindowStateSerde;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -20,6 +26,7 @@ import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.Materialized;
+import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
@@ -42,6 +49,7 @@ public class DiscountsProcessor {
   }
 
   public void start() {
+    config.logConfiguration();
     log.info("Initializing Discounts Processor...");
 
     if (!config.hasAnyProcessorEnabled()) {
@@ -50,24 +58,25 @@ public class DiscountsProcessor {
     }
 
     StreamsBuilder builder = new StreamsBuilder();
+
     if (config.isMostViewedProcessorEnabled()) {
       StoreBuilder<KeyValueStore<String, Long>> lastDiscountStoreBuilder =
           Stores.keyValueStoreBuilder(
-              Stores.persistentKeyValueStore(ConfigurationManager.LAST_DISCOUNT_STORE),
+              Stores.persistentKeyValueStore(ConfigurationManager.MOST_VIEWED_LAST_DISCOUNT_STORE),
               Serdes.String(),
               Serdes.Long());
       builder.addStateStore(lastDiscountStoreBuilder);
 
       StoreBuilder<KeyValueStore<String, Integer>> viewsStoreBuilder =
           Stores.keyValueStoreBuilder(
-              Stores.persistentKeyValueStore(ConfigurationManager.VIEWS_STORE),
+              Stores.persistentKeyValueStore(ConfigurationManager.MOST_VIEWED_VIEWS_STORE),
               Serdes.String(),
               Serdes.Integer());
       builder.addStateStore(viewsStoreBuilder);
 
       StoreBuilder<KeyValueStore<String, Long>> durationStoreBuilder =
           Stores.keyValueStoreBuilder(
-              Stores.persistentKeyValueStore(ConfigurationManager.DURATION_STORE),
+              Stores.persistentKeyValueStore(ConfigurationManager.MOST_VIEWED_DURATION_STORE),
               Serdes.String(),
               Serdes.Long());
       builder.addStateStore(durationStoreBuilder);
@@ -84,26 +93,65 @@ public class DiscountsProcessor {
                         "Received event: key={}, timestamp={}", key, value.getCollectorTimestamp()))
             .selectKey((ignoredKey, event) -> event.getUserId());
 
-    if (config.isContinuousViewProcessorEnabled()) {
-      log.info("Configuring ContinuousViewProcessor...");
-      Materialized<String, ContinuousViewProcessor.WindowState, WindowStore<Bytes, byte[]>>
-          materialized =
-              Materialized
-                  .<String, ContinuousViewProcessor.WindowState, WindowStore<Bytes, byte[]>>as(
-                      "continuous-view-store")
-                  .withKeySerde(Serdes.String())
-                  .withValueSerde(new WindowStateSerde());
+    ProcessorHelper helper = new ProcessorHelper();
 
-      new ContinuousViewProcessor().addProcessing(inputStream, materialized);
+    if (config.isContinuousViewProcessorEnabled()) {
+      log.info(
+          "Configuring ContinuousViewProcessor (implementation {})...",
+          config.getContinuousViewImplementation());
+
+      if (config.getContinuousViewImplementation() == 1) {
+
+        Materialized<String, WindowState, WindowStore<Bytes, byte[]>> materializedWithSerdes =
+            Materialized.<String, WindowState, WindowStore<Bytes, byte[]>>as(
+                    "continuous-view-store")
+                .withKeySerde(Serdes.String())
+                .withValueSerde(new WindowStateSerde());
+
+        new ContinuousViewProcessor(helper)
+            .addProcessing(builder, inputStream, materializedWithSerdes)
+            .to(config.getOutputTopic(), Produced.with(Serdes.String(), new DiscountEventSerde()));
+      } else {
+        StoreBuilder<KeyValueStore<String, Long>> continuousViewLastDiscountStore =
+            Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(
+                    ConfigurationManager.CONTINUOUS_VIEW_LAST_DISCOUNT_STORE),
+                Serdes.String(),
+                Serdes.Long());
+        builder.addStateStore(continuousViewLastDiscountStore);
+
+        StoreBuilder<KeyValueStore<String, ArrayList<PagePingEvent>>> continuousViewEventsStore =
+            Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(ConfigurationManager.CONTINUOUS_VIEW_EVENTS_STORE),
+                Serdes.String(),
+                new PagePingEventListSerde());
+        builder.addStateStore(continuousViewEventsStore);
+
+        StoreBuilder<KeyValueStore<String, Long>> continuousViewStartTimeStore =
+            Stores.keyValueStoreBuilder(
+                Stores.persistentKeyValueStore(
+                    ConfigurationManager.CONTINUOUS_VIEW_START_TIME_STORE),
+                Serdes.String(),
+                Serdes.Long());
+        builder.addStateStore(continuousViewStartTimeStore);
+
+        inputStream
+            .process(
+                ContinuousViewProcessor2::new,
+                ConfigurationManager.CONTINUOUS_VIEW_LAST_DISCOUNT_STORE,
+                ConfigurationManager.CONTINUOUS_VIEW_EVENTS_STORE,
+                ConfigurationManager.CONTINUOUS_VIEW_START_TIME_STORE)
+            .to(config.getOutputTopic(), Produced.with(Serdes.String(), new DiscountEventSerde()));
+      }
     }
 
     if (config.isMostViewedProcessorEnabled()) {
       log.info("Configuring MostViewedProcessor...");
       inputStream.process(
           MostViewedProcessor::new,
-          ConfigurationManager.LAST_DISCOUNT_STORE,
-          ConfigurationManager.VIEWS_STORE,
-          ConfigurationManager.DURATION_STORE);
+          ConfigurationManager.MOST_VIEWED_LAST_DISCOUNT_STORE,
+          ConfigurationManager.MOST_VIEWED_VIEWS_STORE,
+          ConfigurationManager.MOST_VIEWED_DURATION_STORE);
     }
 
     streams = new KafkaStreams(builder.build(), createKafkaProperties());

@@ -68,6 +68,8 @@ dependencies {
     testImplementation("io.kotest:kotest-framework-api:$kotestVersion")
     testImplementation("io.kotest:kotest-property:$kotestVersion")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+
+    testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3")
 }
 
 sourceSets {

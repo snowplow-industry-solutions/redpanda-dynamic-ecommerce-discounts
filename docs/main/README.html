@@ -18,7 +18,12 @@
 <ul class="sectlevel1">
 <li><a href="#introduction">1. Introduction</a></li>
 <li><a href="#architecture">2. Architecture</a></li>
-<li><a href="#prerequisites">3. Prerequisites</a></li>
+<li><a href="#prerequisites">3. Prerequisites</a>
+<ul class="sectlevel2">
+<li><a href="#without-development-containers">3.1. Without Development Containers</a></li>
+<li><a href="#with-development-containers">3.2. With Development Containers</a></li>
+</ul>
+</li>
 <li><a href="#steps">4. Steps (to run this application as is)</a>
 <ul class="sectlevel2">
 <li><a href="#step1">Step 1 &#8594; Start the containers</a></li>
@@ -44,7 +49,7 @@
 <div class="sectionbody">
 <div class="paragraph text-center">
 <p><strong><a href="README.pdf">PDF version</a></strong><br>
-<strong>Git commit: 71f1bc4</strong></p>
+<strong>Git commit: 3166024</strong></p>
 </div>
 </div>
 </div>
@@ -55,7 +60,17 @@
 <p>This project is a companion to the <a href="https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store">Example Next.js Ecommerce Store for Snowplow</a>.</p>
 </div>
 <div class="paragraph">
-<p>It allows you to test this demo locally, using <a href="https://www.localstack.cloud/">LocalStack</a>, and in the <a href="https://aws.amazon.com">AWS</a> cloud.</p>
+<p>It allows you to test this demo locally, using <a href="https://www.localstack.cloud/">LocalStack</a>, and in the cloud (AWS (via Terraform) or <a href="https://containers.dev">Development Containers</a> (read <a href="#localstack-devcontainers">[localstack-devcontainers]</a>)).</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph lead text-center">
+<p>Even the development of this project can be done entirely in the cloud because it uses <a href="https://containers.dev">Development Containers</a> in <a href="https://github.com/features/codespaces">GitHub Codespaces</a>.
+This way, you only need a browser to get started!<br>
+<br>
+<strong>Watch the <a href="#introduction-video">[introduction-video]</a> for details.</strong></p>
+</div>
+</div>
 </div>
 <div class="paragraph">
 <p>Its <a href="#architecture">Architecture</a> is designed so a developer can quickly and easily set up these two environments and test the project.</p>
@@ -99,8 +114,8 @@
 <div class="paragraph">
 <p><strong>Sequence Diagram</strong> for the <a href="#architecture">Architecture</a>:</p>
 </div>
-<div class="paragraph">
-<p>TODO</p>
+<div class="paragraph text-center">
+<p><strong>TODO</strong></p>
 </div>
 <div class="paragraph">
 <p>All components in this <a href="#architecture">Architecture</a> run as Docker containers via <code>docker compose</code>:</p>
@@ -144,10 +159,12 @@
 <div class="sect1">
 <h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>3. Prerequisites</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="without-development-containers"><a class="anchor" href="#without-development-containers"></a>3.1. Without <a href="https://containers.dev">Development Containers</a></h3>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Start a Ubuntu Linux (it can be running on a WSL2 environment) terminal.</p>
+<p>Start a new Ubuntu Linux terminal (it can be running on a WSL2 environment, or <a href="#introduction-video">even in the cloud</a>).</p>
 </li>
 <li>
 <p>Make sure you have docker (and docker compose) installed.</p>
@@ -173,7 +190,14 @@ You don&#8217;t need Java or Node.js configured on your machine to follow the st
 </tr>
 </table>
 </div>
+</div>
+<div class="sect2">
+<h3 id="with-development-containers"><a class="anchor" href="#with-development-containers"></a>3.2. With <a href="https://containers.dev">Development Containers</a></h3>
+<div class="paragraph">
+<p><strong>TODO</strong></p>
+</div>
 <div style="page-break-after: always;"></div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -412,6 +436,18 @@ Note: <em>these are not the events final format of the events sent from <a href=
 <div class="dlist">
 <dl>
 <dt class="hdlist1"><a href="https://www.localstack.cloud/">LocalStack</a></dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.localstack.cloud/" class="bare">https://docs.localstack.cloud/</a></p>
+</li>
+<li>
+<p><a id="localstack-devcontainers"></a> <a href="https://docs.localstack.cloud/user-guide/integrations/devcontainers/" class="bare">https://docs.localstack.cloud/user-guide/integrations/devcontainers/</a> <strong>&#8592; localstack-devcontainers</strong></p>
+</li>
+</ul>
+</div>
+</dd>
 <dt class="hdlist1"><a href="https://www.redpanda.com/">Redpanda</a></dt>
 <dd>
 <div class="ulist">
@@ -469,7 +505,13 @@ Note: <em>these are not the events final format of the events sent from <a href=
 <div class="sect1">
 <h2 id="demo-videos"><a class="anchor" href="#demo-videos"></a>7. Demo videos</h2>
 <div class="sectionbody">
-
+<div class="ulist">
+<ul>
+<li>
+<p><a id="introduction-video"></a> Getting started by creating a development environment on GitHub Codespaces <strong>&#8592; introduction-video</strong></p>
+</li>
+</ul>
+</div>
 </div>
 </div>
 </div>

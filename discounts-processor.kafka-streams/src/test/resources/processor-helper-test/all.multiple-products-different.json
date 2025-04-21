@@ -1,0 +1,59 @@
+[ {
+  "collector_tstamp" : "2024-01-01T10:00:00.000Z",
+  "event_name" : "product_view",
+  "webpage_id" : "page1",
+  "product_id" : "prod1"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:00.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page1"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:10.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page1"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:20.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page1"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:30.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page1"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:40.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page1"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:00.000Z",
+  "event_name" : "product_view",
+  "webpage_id" : "page2",
+  "product_id" : "prod2"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:00.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page2"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:10.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page2"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:20.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page2"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:00.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page3"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:10.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page3"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:20.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page3"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:30.000Z",
+  "event_name" : "page_ping",
+  "webpage_id" : "page3"
+} ]

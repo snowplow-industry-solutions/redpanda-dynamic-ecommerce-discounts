@@ -6,9 +6,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @NoArgsConstructor
+@ToString(includeFieldNames = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PagePingEvent {
   @JsonProperty("collector_tstamp")

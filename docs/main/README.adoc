@@ -9,7 +9,15 @@ include::common/head.adoc[]
 
 This project is a companion to the {ecommerce-nextjs-example-store}.
 
-It allows you to test this demo locally, using {LocalStack}, and in the {AWS} cloud.
+It allows you to test this demo locally, using {LocalStack}, and in the cloud (AWS (via Terraform) or {DevContainers} (read <<localstack-devcontainers>>)).
+
+****
+[.lead.text-center]
+Even the development of this project can be done entirely in the cloud because it uses {DevContainers} in {GitHubCodeSpaces}.
+This way, you only need a browser to get started! +
+{empty} +
+*Watch the <<introduction-video>> for details.*
+****
 
 Its <<architecture>> is designed so a developer can quickly and easily set up these two environments and test the project.
 
@@ -28,7 +36,8 @@ Its <<architecture>> is designed so a developer can quickly and easily set up th
 <<<
 *Sequence Diagram* for the <<architecture>>:
 
-TODO
+[.text-center]
+*TODO*
 //image:architecture.png[]
 
 All components in this <<architecture>> run as Docker containers via `docker compose`:
@@ -44,13 +53,19 @@ All components in this <<architecture>> run as Docker containers via `docker com
 <<<
 == Prerequisites
 
-. Start a Ubuntu Linux (it can be running on a WSL2 environment) terminal.
+=== Without {DevContainers}
+
+. Start a new Ubuntu Linux terminal (it can be running on a WSL2 environment, or <<introduction-video,even in the cloud>>).
 . Make sure you have docker (and docker compose) installed.
 . Clone this project with Git and cd to it.
 . Create a file `docker/.env` (from `docker/.env.sample`) and configure the AWS variables on it.
 
 NOTE: You don't need Java or Node.js configured on your machine to follow the steps below.
 *You only need a Bash terminal and a Docker installation.*
+
+=== With {DevContainers}
+
+*TODO*
 
 <<<
 [[steps]]
@@ -198,6 +213,8 @@ $ ./docker/clean.sh
 == References
 
 {LocalStack}::
+* https://docs.localstack.cloud/
+* [[localstack-devcontainers]] https://docs.localstack.cloud/user-guide/integrations/devcontainers/ *<- localstack-devcontainers*
 
 {Redpanda}::
 * https://docs.redpanda.com/current/get-started/docker-compose-labs/[Docker Compose Labs]
@@ -213,5 +230,7 @@ Redpanda Connect::
 
 <<<
 == Demo videos
+
+* [[introduction-video]] Getting started by creating a development environment on GitHub Codespaces *<- introduction-video*
 
 endif::env-github[]

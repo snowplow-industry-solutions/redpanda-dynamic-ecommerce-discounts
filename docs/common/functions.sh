@@ -28,11 +28,3 @@ readme-build() {
   echo Removing $dest_dir
   rm -rf $dest_dir
 }
-
-open-readme-html() {
-  ! [ -f README.html ] || open README.html &>/dev/null
-}
-
-open-readme-pdf() {
-  ! [ -f README.pdf ] || open README.pdf &>/dev/null
-}

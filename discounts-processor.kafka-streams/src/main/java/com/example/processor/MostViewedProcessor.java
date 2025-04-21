@@ -30,9 +30,10 @@ public class MostViewedProcessor
   @Override
   public void init(ProcessorContext<String, DiscountEvent> context) {
     this.context = context;
-    this.lastDiscountStore = context.getStateStore(ConfigurationManager.LAST_DISCOUNT_STORE);
-    this.viewsStore = context.getStateStore(ConfigurationManager.VIEWS_STORE);
-    this.durationStore = context.getStateStore(ConfigurationManager.DURATION_STORE);
+    this.lastDiscountStore =
+        context.getStateStore(ConfigurationManager.MOST_VIEWED_LAST_DISCOUNT_STORE);
+    this.viewsStore = context.getStateStore(ConfigurationManager.MOST_VIEWED_VIEWS_STORE);
+    this.durationStore = context.getStateStore(ConfigurationManager.MOST_VIEWED_DURATION_STORE);
 
     log.info("MostViewedProcessor initialized");
     context.schedule(
@@ -140,7 +141,7 @@ public class MostViewedProcessor
         }
       }
 
-      if (mostViewedProduct != null && maxViews >= config.getMinViewsForDiscount()) {
+      if (mostViewedProduct != null && maxViews >= config.getMinViewsForMostViewedDiscount()) {
         DiscountEvent discount =
             DiscountEvent.createMostViewedDiscount(
                 userId,
@@ -170,7 +171,7 @@ public class MostViewedProcessor
             "No discount generated. User={}, maxViews={}, minRequired={}",
             userId,
             maxViews,
-            config.getMinViewsForDiscount());
+            config.getMinViewsForMostViewedDiscount());
       }
     }
   }

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
@@ -38,17 +39,9 @@ public class EventSerde implements Serde<PagePingEvent> {
     public void configure(Map<String, ?> configs, boolean isKey) {}
 
     @Override
+    @SneakyThrows
     public byte[] serialize(String topic, PagePingEvent data) {
-      if (data == null) {
-        return null;
-      }
-
-      try {
-        return objectMapper.writeValueAsBytes(data);
-      } catch (Exception e) {
-        log.error("Failed to serialize event", e);
-        throw new RuntimeException("Failed to serialize event", e);
-      }
+      return objectMapper.writeValueAsBytes(data);
     }
 
     @Override

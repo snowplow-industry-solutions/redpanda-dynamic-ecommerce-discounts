@@ -9,6 +9,10 @@ data_file=${data_file:-'long-1'}
 case ${1:-} in
 up) docker compose -f compose.redpanda.yaml $1 -d ;;
 down) docker compose -f compose.redpanda.yaml $1 -v --remove-orphans ;;
+restart)
+  $0 down
+  $0 up
+  ;;
 produce)
   data_file=./data-samples/$data_file.jsonl
   [ -f $data_file ] || {

@@ -5,10 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DiscountEvent {
   @JsonProperty("user_id")
@@ -22,6 +24,7 @@ public class DiscountEvent {
   @Data
   @NoArgsConstructor
   @AllArgsConstructor
+  @ToString
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public static class Discount {
     private double rate;
@@ -36,6 +39,7 @@ public class DiscountEvent {
   @Data
   @NoArgsConstructor
   @AllArgsConstructor
+  @ToString
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public static class ViewTime {
     @JsonProperty("duration_in_seconds")
@@ -45,6 +49,7 @@ public class DiscountEvent {
   @Data
   @NoArgsConstructor
   @AllArgsConstructor
+  @ToString
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public static class NumberOfViews {
     private int views;

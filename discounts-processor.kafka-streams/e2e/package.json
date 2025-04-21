@@ -1,0 +1,14 @@
+{
+  "name": "discounts-processor-e2e",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "End-to-end tests for discounts processor",
+  "main": "continuous-view-test.js",
+  "scripts": {
+    "test": "node continuous-view-test.js",
+    "test:jsonl": "node continuous-view-test.js --jsonl-only"
+  },
+  "dependencies": {
+    "yargs": "^17.7.2"
+  }
+}
