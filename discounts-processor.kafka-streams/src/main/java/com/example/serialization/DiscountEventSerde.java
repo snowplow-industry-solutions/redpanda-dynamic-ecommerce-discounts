@@ -2,6 +2,7 @@ package com.example.serialization;
 
 import com.example.model.DiscountEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -13,7 +14,9 @@ import org.apache.kafka.common.serialization.Serializer;
 @Slf4j
 public class DiscountEventSerde implements Serde<DiscountEvent> {
   private static final ObjectMapper objectMapper =
-      new ObjectMapper().registerModule(new JavaTimeModule());
+      new ObjectMapper()
+          .registerModule(new JavaTimeModule())
+          .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
   @Override
   public void configure(Map<String, ?> configs, boolean isKey) {}

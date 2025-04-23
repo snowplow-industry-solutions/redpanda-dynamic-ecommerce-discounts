@@ -33,7 +33,7 @@ check_npm_install() {
 
 main() {
   check_npm_install
-  log "$GREEN" "Running test script with arguments: $*"
+  log "$GREEN" "Running: node index.js $*"
   node index.js "$@"
 }
 

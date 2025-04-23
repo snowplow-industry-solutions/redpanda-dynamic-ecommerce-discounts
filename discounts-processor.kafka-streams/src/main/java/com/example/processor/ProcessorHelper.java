@@ -4,18 +4,95 @@ import com.example.config.ConfigurationManager;
 import com.example.model.DiscountEvent;
 import com.example.model.PagePingEvent;
 import com.example.model.ProductViewEvent;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @AllArgsConstructor
 public class ProcessorHelper {
   private final ConfigurationManager config = ConfigurationManager.getInstance();
+
+  @Data
+  public static class ProductSummary {
+    private final String productId;
+    private final String productName;
+    private final int occurrences;
+    private final long totalSeconds;
+    private final int pingCount;
+  }
+
+  @Data
+  public static class ViewSummary {
+    private final List<ProductSummary> products;
+    private final Instant windowStart;
+    private final Instant windowEnd;
+  }
+
+  public ViewSummary summarizeViews(List<PagePingEvent> events) {
+    Map<String, List<PagePingEvent>> eventsByProduct =
+        events.stream()
+            .collect(
+                Collectors.groupingBy(
+                    event -> {
+                      if (event instanceof ProductViewEvent) {
+                        return ((ProductViewEvent) event).getProductId();
+                      }
+                      return event.getWebpageId().replaceFirst("page_", "");
+                    }));
+
+    List<ProductSummary> productSummaries =
+        eventsByProduct.entrySet().stream()
+            .map(
+                entry -> {
+                  String productId = entry.getKey();
+                  List<PagePingEvent> productEvents = entry.getValue();
+
+                  Optional<ProductViewEvent> productView =
+                      productEvents.stream()
+                          .filter(ProductViewEvent.class::isInstance)
+                          .map(ProductViewEvent.class::cast)
+                          .findFirst();
+
+                  if (productView.isEmpty()) {
+                    log.warn("No product view event found for product {}", productId);
+                    return null;
+                  }
+
+                  long pingCount = countPagePings(productEvents);
+                  long totalSeconds = pingCount * config.getPingIntervalSeconds();
+
+                  return new ProductSummary(
+                      productId,
+                      productView.get().getProductName(),
+                      1,
+                      totalSeconds,
+                      (int) pingCount);
+                })
+            .filter(summary -> summary != null)
+            .sorted(Comparator.comparing(ProductSummary::getPingCount).reversed())
+            .collect(Collectors.toList());
+
+    Instant windowStart =
+        events.stream()
+            .map(PagePingEvent::getCollectorTimestamp)
+            .min(Instant::compareTo)
+            .orElse(Instant.now());
+
+    Instant windowEnd =
+        events.stream()
+            .map(PagePingEvent::getCollectorTimestamp)
+            .max(Instant::compareTo)
+            .orElse(Instant.now());
+
+    return new ViewSummary(productSummaries, windowStart, windowEnd);
+  }
 
   public Map<String, ProductViewSummary> calculateProductViewSummaries(List<PagePingEvent> events) {
     Map<String, List<PagePingEvent>> eventsByWebpageId =
@@ -96,7 +173,7 @@ public class ProcessorHelper {
               .map(
                   productView -> {
                     long durationInSeconds =
-                        summary.getPingCount() * config.getPingIntervalSeconds();
+                        config.calculateTotalViewingSeconds(summary.getPingCount());
 
                     log.info(
                         "Creating discount for user {} on product {} (pings: {}, duration: {}s)",
@@ -110,7 +187,8 @@ public class ProcessorHelper {
                             userId,
                             productView.getProductId(),
                             durationInSeconds,
-                            config.getDiscountRate());
+                            config.getDiscountRate(),
+                            System.currentTimeMillis());
 
                     log.info("Generated discount event: {}", discount);
                     return discount;

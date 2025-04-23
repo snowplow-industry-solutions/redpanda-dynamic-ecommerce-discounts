@@ -3,6 +3,7 @@ plugins {
     application
     kotlin("jvm") version "1.9.22"
     id("com.diffplug.spotless") version "6.25.0"
+    id("io.freefair.lombok") version "8.4"
 }
 
 group = "com.example"
@@ -70,6 +71,8 @@ dependencies {
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
 
     testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.2")
 }
 
 sourceSets {
@@ -212,4 +215,23 @@ spotless {
 
 tasks.named("build") {
     dependsOn("spotlessApply")
+}
+
+application {
+    mainClass.set("com.example.processor.SummarizeViewsKt")
+}
+
+tasks.register<JavaExec>("summarizeViews") {
+    group = "application"
+    description = "Executa o SummarizeViews.kt"
+
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("com.example.processor.SummarizeViewsKt")
+
+    standardInput = System.`in`
+
+    // Corrige a forma de passar argumentos
+    if (project.hasProperty("args")) {
+        args(project.property("args").toString().split("\\s+".toRegex()))
+    }
 }

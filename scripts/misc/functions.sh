@@ -24,7 +24,9 @@ readme() {
   esac
 }
 
-cmd="source ~${ACCEL2_SCRIPTS_MISC_DIR#$HOME}/functions.sh"
+cmd="source $ACCEL2_SCRIPTS_MISC_DIR/functions.sh"
+! [[ "$ACCEL2_SCRIPTS_MISC_DIR" =~ ^$HOME ]] || \
+  cmd="source ~${ACCEL2_SCRIPTS_MISC_DIR#$HOME}/functions.sh"
 grep -q "^$cmd$" ~/.bashrc || {
   echo Adding \'$cmd\' to ~/.bashrc
   echo "$cmd" >>~/.bashrc

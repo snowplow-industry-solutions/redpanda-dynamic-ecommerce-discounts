@@ -1,0 +1,9 @@
+{"collector_tstamp":"2025-04-23T11:39:52.387Z","event_name":"product_view","user_id":"user1","webpage_id":"page1","product_id":"page1","product_name":"Test Product","product_price":99.99}
+{"collector_tstamp":"2025-04-23T11:40:02.387Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-04-23T11:40:12.387Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-04-23T11:40:22.387Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-04-23T11:40:32.387Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-04-23T11:40:42.387Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-04-23T11:40:52.387Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-04-23T11:41:02.387Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-04-23T11:41:12.387Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}

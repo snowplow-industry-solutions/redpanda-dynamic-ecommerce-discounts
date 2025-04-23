@@ -24,6 +24,7 @@ ifdef::backend-pdf[]
 ****
 [.text-center]
 *Git commit with doc: {git-commit}* +
+*Author(s): {author}* +
 *link:README.html[HTML version]*
 ****
 

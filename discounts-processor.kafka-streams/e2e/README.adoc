@@ -1,0 +1,146 @@
+= E2E Tests Documentation
+:toc:
+:icons: font
+:source-highlighter: highlight.js
+
+This document describes how to use the end-to-end testing script for the Discounts Processor.
+
+== Overview
+
+The E2E testing script (`index.js`) allows you to:
+
+* Generate test event files in JSONL format
+* Run single-product view tests
+* Run multi-product view tests
+* Reuse existing test files or force new file generation
+
+== Prerequisites
+
+* Node.js installed
+* Docker running with Redpanda container
+* The Discounts Processor application running
+
+== Usage
+
+=== Basic Command Structure
+
+[source,bash]
+----
+node index.js -t <test-name> [options]
+----
+
+=== Available Options
+
+[cols="1,1,2"]
+|===
+|Option |Alias |Description
+
+|`--test`
+|`-t`
+|Test name (required). Used for the test file name.
+
+|`--timeOffset`
+|`-o`
+|Time offset in HH:MM:SS format (default: "00:00:00")
+
+|`--force`
+|`-f`
+|Force creation of new test file
+
+|`--jsonlOnly`
+|`-j`
+|Only generate JSONL file, don't run the test
+
+|`--multiProduct`
+|`-m`
+|Run multi-product test instead of single-product
+
+|`--help`
+|`-h`
+|Show help information
+|===
+
+== Common Use Cases
+
+=== 1. Generate Test Files Only
+
+==== Single Product Test File
+[source,bash]
+----
+node index.js -t test1 -j
+----
+This will create `test1.jsonl` with single product view events.
+
+==== Multi-Product Test File
+[source,bash]
+----
+node index.js -t test1 -j -m
+----
+This will create `test1.jsonl` with multiple product view events.
+
+=== 2. Run Tests Using Existing Files
+
+==== Single Product Test
+[source,bash]
+----
+node index.js -t test1
+----
+This will use existing `test1.jsonl` if available, or create new one if not.
+
+==== Multi-Product Test
+[source,bash]
+----
+node index.js -t test1 -m
+----
+This will use existing `test1.jsonl` if available, or create new one if not.
+
+=== 3. Force New Test File Generation
+
+==== Single Product Test
+[source,bash]
+----
+node index.js -t test1 -f
+----
+This will create new `test1.jsonl` even if it exists, then run the test.
+
+==== Multi-Product Test
+[source,bash]
+----
+node index.js -t test1 -m -f
+----
+This will create new `test1.jsonl` even if it exists, then run the multi-product test.
+
+=== 4. Use Time Offset
+
+[source,bash]
+----
+node index.js -t test1 -o "00:05:00"
+----
+This will offset all event timestamps by 5 minutes.
+
+== File Structure
+
+When you run the script, it creates/uses JSONL files in the following structure:
+
+[source]
+----
+e2e/
+├── index.js
+├── README.adoc
+└── <test-name>.jsonl
+----
+
+== Test File Reuse
+
+The script is designed to reuse test files by default:
+
+* If a test file exists and `-f` is not used, the existing file will be used
+* This saves time by not regenerating test data unnecessarily
+* Use `-f` when you need fresh test data
+
+== Best Practices
+
+* Use meaningful test names that describe the test case
+* Use `-j` to prepare test files before running actual tests
+* Use `-f` only when you need to regenerate test data
+* Keep test files in version control if they represent important test cases

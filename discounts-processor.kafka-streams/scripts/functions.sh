@@ -40,5 +40,6 @@ red() {
 
 run() {
   check-current-dir || return 1
+  [ "$1" ] || set -- --build
   ./run.sh "$@"
 }

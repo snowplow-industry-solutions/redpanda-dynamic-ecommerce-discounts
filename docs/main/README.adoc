@@ -3,8 +3,10 @@ Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecom
 endif::env-github[]
 ifndef::env-github[]
 = Dynamic Ecommerce Discounts with Redpanda
+Paulo Jerônimo
 include::common/head.adoc[]
 
+<<<
 == Introduction
 
 This project is a companion to the {ecommerce-nextjs-example-store}.
@@ -53,19 +55,66 @@ All components in this <<architecture>> run as Docker containers via `docker com
 <<<
 == Prerequisites
 
-=== Without {DevContainers}
+=== Running without {DevContainers}
 
 . Start a new Ubuntu Linux terminal (it can be running on a WSL2 environment, or <<introduction-video,even in the cloud>>).
 . Make sure you have docker (and docker compose) installed.
+.. To create a development environment, you will also need this tools installed:
+... Java 21
+... Node.js 18
+... Pytthon 3.12
+... jq
+... ...
 . Clone this project with Git and cd to it.
+. [[misc-functions]] Execute this command (*<- misc-functions*):
++
+[,console]
+----
+$ source scripts/misc/functions.sh
+----
++
 . Create a file `docker/.env` (from `docker/.env.sample`) and configure the AWS variables on it.
 
 NOTE: You don't need Java or Node.js configured on your machine to follow the steps below.
 *You only need a Bash terminal and a Docker installation.*
 
-=== With {DevContainers}
+=== Running with {DevContainers}
 
-*TODO*
+Watch the video <<introduction-video>>.
+
+==== Inside {GitHubCodeSpaces}
+
+Watch the video <<introduction-video>>.
+
+==== Locally, inside {VSCode}
+
+Watch the video <<introduction-video>>.
+
+==== Locally, With {DevContainerCLI}
+
+*Step 1 ->* Install the `devcontainer` command:
+
+[,console]
+----
+$ npm install -g @devcontainers/cli
+----
+
+*Step 2 ->* Start the dev container:
+
+[,console]
+----
+$ # cd TO_THE_PROJECT_FOLDER (the directory where you clone this project)
+$ devcontainer up --workspace-folder .
+----
+
+*Step 3 ->* Open a Bash terminal in the container:
+
+[,console]
+----
+$ devcontainer exec --workspace-folder . bash
+----
+
+Please, see more details about how {DevContainers} is configured in this project by viewing its README.
 
 <<<
 [[steps]]

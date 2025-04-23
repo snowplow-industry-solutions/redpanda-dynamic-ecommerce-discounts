@@ -3,6 +3,7 @@ Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecom
 endif::env-github[]
 ifndef::env-github[]
 = User Behavior Simulator
+Paulo Jerônimo
 include::common/head.adoc[]
 
 :uri-tracker: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/node-js-tracker/

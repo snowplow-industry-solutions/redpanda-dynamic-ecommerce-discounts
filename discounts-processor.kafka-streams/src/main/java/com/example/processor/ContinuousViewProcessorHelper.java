@@ -70,14 +70,15 @@ public class ContinuousViewProcessorHelper {
 
     DiscountEvent discount =
         DiscountEvent.createContinuousViewDiscount(
-            userId, webpageId, durationInSeconds, config.getDiscountRate());
+            userId, webpageId, durationInSeconds, config.getDiscountRate(), currentTimestamp);
 
     log.info(
-        "Generated continuous view discount: user={}, webpage={}, duration={}s, rate={}",
+        "Generated continuous view discount: user={}, webpage={}, duration={}s, rate={}, timestamp={}",
         userId,
         webpageId,
         durationInSeconds,
-        config.getDiscountRate());
+        config.getDiscountRate(),
+        currentTimestamp);
 
     var discountRecord = new Record<>(userId, discount, currentTimestamp);
     if (discountRecord != null) {

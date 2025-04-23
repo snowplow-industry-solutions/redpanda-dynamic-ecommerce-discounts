@@ -2,20 +2,18 @@ package com.example.serialization
 
 import com.example.model.DiscountEvent
 import com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
-import java.nio.charset.StandardCharsets
 
 class DiscountEventSerdeTest :
   BehaviorSpec({
-    val objectMapper = ObjectMapper()
-    val serde = DiscountEventSerde()
-    val serializer = serde.serializer()
-    val deserializer = serde.deserializer()
-
     given("a DiscountEventSerde") {
+      val serde = DiscountEventSerde()
+      val serializer = serde.serializer()
+      val deserializer = serde.deserializer()
+      val fixedTimestamp = 1234567L
+
       `when`("handling a continuous view discount") {
         val discountEvent =
           DiscountEvent.createContinuousViewDiscount(
@@ -23,40 +21,36 @@ class DiscountEventSerdeTest :
             "webpage456",
             90,
             0.1,
+            fixedTimestamp,
           )
 
         then("should maintain data integrity through serialization and deserialization") {
           val serialized = serializer.serialize("test-topic", discountEvent)
           val deserialized = deserializer.deserialize("test-topic", serialized)
-
           deserialized shouldBe discountEvent
         }
 
         then("should produce the expected JSON format") {
-          val actualJson =
-            String(
-              serializer.serialize("test-topic", discountEvent),
-              StandardCharsets.UTF_8,
-            )
-
+          val serialized = serializer.serialize("test-topic", discountEvent)
+          val jsonString = String(serialized)
           val expectedJson =
             """
-                    {
-                      "user_id": "user123",
-                      "product_id": "webpage456",
-                      "discount": {
-                        "rate": 0.1,
-                        "by_view_time": {
-                          "duration_in_seconds": 90
-                        }
-                      }
-                    }
-            """.trimIndent()
+            {
+              "discount": {
+                "rate": 0.1,
+                "by_view_time": {
+                  "duration_in_seconds": 90
+                }
+              },
+              "user_id": "user123",
+              "product_id": "webpage456",
+              "generated_at": "1970-01-01T00:20:34.567Z"
+            }
+            """
+              .trimIndent()
+              .replace("\\s".toRegex(), "")
 
-          val expectedNode = objectMapper.readTree(expectedJson)
-          val actualNode = objectMapper.readTree(actualJson)
-
-          actualNode shouldBe expectedNode
+          jsonString shouldBe expectedJson
         }
       }
 
@@ -68,41 +62,37 @@ class DiscountEventSerdeTest :
             5,
             300,
             0.1,
+            fixedTimestamp,
           )
 
         then("should maintain data integrity through serialization and deserialization") {
           val serialized = serializer.serialize("test-topic", discountEvent)
           val deserialized = deserializer.deserialize("test-topic", serialized)
-
           deserialized shouldBe discountEvent
         }
 
         then("should produce the expected JSON format") {
-          val actualJson =
-            String(
-              serializer.serialize("test-topic", discountEvent),
-              StandardCharsets.UTF_8,
-            )
-
+          val serialized = serializer.serialize("test-topic", discountEvent)
+          val jsonString = String(serialized)
           val expectedJson =
             """
-                    {
-                      "user_id": "user123",
-                      "product_id": "webpage456",
-                      "discount": {
-                        "rate": 0.1,
-                        "by_number_of_views": {
-                          "views": 5,
-                          "duration_in_seconds": 300
-                        }
-                      }
-                    }
-            """.trimIndent()
+            {
+              "discount": {
+                "rate": 0.1,
+                "by_number_of_views": {
+                  "views": 5,
+                  "duration_in_seconds": 300
+                }
+              },
+              "user_id": "user123",
+              "product_id": "webpage456",
+              "generated_at": "1970-01-01T00:20:34.567Z"
+            }
+            """
+              .trimIndent()
+              .replace("\\s".toRegex(), "")
 
-          val expectedNode = objectMapper.readTree(expectedJson)
-          val actualNode = objectMapper.readTree(actualJson)
-
-          actualNode shouldBe expectedNode
+          jsonString shouldBe expectedJson
         }
       }
 
@@ -115,14 +105,9 @@ class DiscountEventSerdeTest :
       }
 
       `when`("deserializing invalid JSON") {
-        val invalidJson = "{ invalid json }"
-
         then("should throw JsonParseException") {
           shouldThrow<JsonParseException> {
-            deserializer.deserialize(
-              "test-topic",
-              invalidJson.toByteArray(StandardCharsets.UTF_8),
-            )
+            deserializer.deserialize("test-topic", "invalid json".toByteArray())
           }
         }
       }

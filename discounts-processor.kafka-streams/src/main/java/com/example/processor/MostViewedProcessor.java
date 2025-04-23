@@ -148,7 +148,8 @@ public class MostViewedProcessor
                 mostViewedProduct,
                 maxViews,
                 config.getWindowDurationSeconds(),
-                config.getDiscountRate());
+                config.getDiscountRate(),
+                currentTimestamp);
 
         Record<String, DiscountEvent> discountRecord =
             new Record<>(userId, discount, currentTimestamp);

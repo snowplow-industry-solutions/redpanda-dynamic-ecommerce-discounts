@@ -17,4 +17,6 @@
 :RedpandaConnect: https://www.redpanda.com/connect[Redpanda Connect]
 :TestContainers: https://www.testcontainers.org/[TestContainers]
 :DevContainers: https://containers.dev[Development Containers]
+:DevContainerCLI: https://github.com/devcontainers/cli[DevContainer CLI]
 :GitHubCodespaces: https://github.com/features/codespaces[GitHub Codespaces]
+:VSCode: https://code.visualstudio.com/[VSCode]

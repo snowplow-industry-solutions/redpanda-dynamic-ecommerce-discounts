@@ -1,4 +1,5 @@
 = Redpanda Connect Tester
+Paulo Jerônimo
 include::common/head.adoc[]
 
 == Running a simple test and through rpk

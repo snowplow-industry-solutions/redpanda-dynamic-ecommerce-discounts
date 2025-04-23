@@ -3,6 +3,7 @@ Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecom
 endif::env-github[]
 ifndef::env-github[]
 = Discounts Processor (Kafka Streams version)
+Paulo Jerônimo
 include::common/head.adoc[]
 
 :uri-project-github-connect-yaml: {uri-project-github}/blob/main/redpanda/connect.yaml

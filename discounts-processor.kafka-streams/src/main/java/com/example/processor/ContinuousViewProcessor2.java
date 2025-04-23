@@ -3,9 +3,12 @@ package com.example.processor;
 import com.example.config.ConfigurationManager;
 import com.example.model.DiscountEvent;
 import com.example.model.PagePingEvent;
+import com.example.model.ProductViewEvent;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.PunctuationType;
@@ -19,7 +22,8 @@ import org.apache.kafka.streams.state.KeyValueStore;
 public class ContinuousViewProcessor2
     implements Processor<String, PagePingEvent, String, DiscountEvent> {
   private final ConfigurationManager config;
-  private final ContinuousViewProcessorHelper helper;
+  private final ProcessorHelper processorHelper;
+  private final ContinuousViewProcessorHelper continuousViewHelper;
 
   private ProcessorContext<String, DiscountEvent> context;
   private KeyValueStore<String, Long> lastDiscountStore;
@@ -28,7 +32,8 @@ public class ContinuousViewProcessor2
 
   public ContinuousViewProcessor2() {
     this.config = ConfigurationManager.getInstance();
-    this.helper = new ContinuousViewProcessorHelper(config);
+    this.processorHelper = new ProcessorHelper();
+    this.continuousViewHelper = new ContinuousViewProcessorHelper(config);
   }
 
   @Override
@@ -44,36 +49,23 @@ public class ContinuousViewProcessor2
         Duration.ofSeconds(10), PunctuationType.WALL_CLOCK_TIME, this::checkAllWindows);
   }
 
-  private void cleanupExpiredWindows(long timestamp) {
-    try (KeyValueIterator<String, Long> it = startTimeStore.all()) {
-      while (it.hasNext()) {
-        KeyValue<String, Long> entry = it.next();
-        String windowKey = entry.key;
-        Long startTime = entry.value;
-
-        if (startTime != null && (timestamp - startTime) >= config.getWindowDurationMs()) {
-          clearWindowState(windowKey);
-        }
-      }
-    }
-  }
-
   @Override
   public void process(Record<String, PagePingEvent> record) {
     try {
       String userId = record.key();
       PagePingEvent event = record.value();
       long currentTimestamp = record.timestamp();
-      String windowKey = helper.createWindowKey(userId, event.getWebpageId());
+      String windowKey = continuousViewHelper.createWindowKey(userId, event.getWebpageId());
 
       log.debug("Processing key(userId)={}, value(event)={}", userId, event);
 
       Long lastDiscountTime = lastDiscountStore.get(windowKey);
-      if (!helper.shouldProcessEvent(currentTimestamp, lastDiscountTime, windowKey)) {
+      if (!continuousViewHelper.shouldProcessEvent(currentTimestamp, lastDiscountTime, windowKey)) {
         return;
       }
 
-      if (lastDiscountTime != null && helper.isInSameWindow(lastDiscountTime, currentTimestamp)) {
+      if (lastDiscountTime != null
+          && continuousViewHelper.isInSameWindow(lastDiscountTime, currentTimestamp)) {
         log.debug(
             "Skipping processing - still in same window. Key={}, lastDiscount={}, current={}",
             windowKey,
@@ -96,17 +88,60 @@ public class ContinuousViewProcessor2
       processWindowIfReady(windowKey, currentTimestamp);
 
     } catch (Exception e) {
-      log.error("Error processing record: {}", e.getMessage(), e);
-      throw e;
+      log.error("Error processing record: {}", record, e);
     }
   }
 
   private void checkAllWindows(long timestamp) {
+    Map<String, List<PagePingEvent>> userEvents = new HashMap<>();
+
     try (KeyValueIterator<String, List<PagePingEvent>> it = eventsStore.all()) {
       while (it.hasNext()) {
         KeyValue<String, List<PagePingEvent>> entry = it.next();
-        processWindowIfReady(entry.key, timestamp);
+        String windowKey = entry.key;
+        String userId = windowKey.split(":")[0];
+        List<PagePingEvent> events = entry.value;
+
+        if (events != null && !events.isEmpty()) {
+          Long lastDiscountTime = lastDiscountStore.get(windowKey);
+          long eventTimestamp =
+              events.get(events.size() - 1).getCollectorTimestamp().toEpochMilli();
+
+          if (lastDiscountTime == null) {
+            userEvents.computeIfAbsent(userId, k -> new ArrayList<>()).addAll(events);
+            continue;
+          }
+
+          if (continuousViewHelper.shouldProcessEvent(eventTimestamp, lastDiscountTime, windowKey)
+              && !continuousViewHelper.isInSameWindow(lastDiscountTime, eventTimestamp)) {
+            userEvents.computeIfAbsent(userId, k -> new ArrayList<>()).addAll(events);
+          }
+        }
       }
+    }
+
+    for (Map.Entry<String, List<PagePingEvent>> entry : userEvents.entrySet()) {
+      String userId = entry.getKey();
+      List<PagePingEvent> events = entry.getValue();
+
+      processorHelper
+          .processEvents(userId, events)
+          .ifPresent(
+              discountEvent -> {
+                Record<String, DiscountEvent> discountRecord =
+                    new Record<>(userId, discountEvent, timestamp);
+                context.forward(discountRecord);
+
+                try (KeyValueIterator<String, List<PagePingEvent>> it = eventsStore.all()) {
+                  while (it.hasNext()) {
+                    String windowKey = it.next().key;
+                    if (windowKey.startsWith(userId + ":")) {
+                      clearWindowState(windowKey);
+                      lastDiscountStore.put(windowKey, timestamp);
+                    }
+                  }
+                }
+              });
     }
   }
 
@@ -122,12 +157,15 @@ public class ContinuousViewProcessor2
     }
 
     long windowDuration = currentTimestamp - startTime;
-    if (windowDuration >= config.getWindowDurationMs()
-        && events.size() >= config.getMinPingsForContinuousViewDiscount()) {
 
-      helper.processEventsAndCreateDiscount(
+    long pingCount = events.stream().filter(e -> !(e instanceof ProductViewEvent)).count();
+
+    if (windowDuration >= config.getWindowDurationMs()
+        && pingCount >= config.getMinPingsForContinuousViewDiscount()) {
+
+      continuousViewHelper.processEventsAndCreateDiscount(
           windowKey,
-          events.size() - 1L,
+          pingCount,
           currentTimestamp,
           discountRecord -> {
             context.forward(discountRecord);
@@ -140,6 +178,7 @@ public class ContinuousViewProcessor2
   private void clearWindowState(String windowKey) {
     eventsStore.delete(windowKey);
     startTimeStore.delete(windowKey);
+    lastDiscountStore.delete(windowKey);
   }
 
   @Override

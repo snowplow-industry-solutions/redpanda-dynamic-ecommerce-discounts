@@ -5,6 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
+<meta name="author" content="Paulo Jerônimo">
 <title>Dynamic Ecommerce Discounts with Redpanda</title>
 <link rel="stylesheet" href="./README.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -13,6 +14,9 @@
 <body class="article toc2 toc-left">
 <div id="header">
 <h1>Dynamic Ecommerce Discounts with Redpanda</h1>
+<div class="details">
+<span id="author" class="author">Paulo Jerônimo</span><br>
+</div>
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
@@ -20,8 +24,14 @@
 <li><a href="#architecture">2. Architecture</a></li>
 <li><a href="#prerequisites">3. Prerequisites</a>
 <ul class="sectlevel2">
-<li><a href="#without-development-containers">3.1. Without Development Containers</a></li>
-<li><a href="#with-development-containers">3.2. With Development Containers</a></li>
+<li><a href="#running-without-development-containers">3.1. Running without Development Containers</a></li>
+<li><a href="#running-with-development-containers">3.2. Running with Development Containers</a>
+<ul class="sectlevel3">
+<li><a href="#inside-github-codespaces">3.2.1. Inside GitHub Codespaces</a></li>
+<li><a href="#locally-inside-vscode">3.2.2. Locally, inside VSCode</a></li>
+<li><a href="#locally-with-devcontainer-cli">3.2.3. Locally, With DevContainer CLI</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><a href="#steps">4. Steps (to run this application as is)</a>
@@ -49,8 +59,9 @@
 <div class="sectionbody">
 <div class="paragraph text-center">
 <p><strong><a href="README.pdf">PDF version</a></strong><br>
-<strong>Git commit: 3166024</strong></p>
+<strong>Git commit: d8c1f51</strong></p>
 </div>
+<div style="page-break-after: always;"></div>
 </div>
 </div>
 <div class="sect1">
@@ -160,7 +171,7 @@ This way, you only need a browser to get started!<br>
 <h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>3. Prerequisites</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="without-development-containers"><a class="anchor" href="#without-development-containers"></a>3.1. Without <a href="https://containers.dev">Development Containers</a></h3>
+<h3 id="running-without-development-containers"><a class="anchor" href="#running-without-development-containers"></a>3.1. Running without <a href="https://containers.dev">Development Containers</a></h3>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
@@ -168,9 +179,43 @@ This way, you only need a browser to get started!<br>
 </li>
 <li>
 <p>Make sure you have docker (and docker compose) installed.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>To create a development environment, you will also need this tools installed:</p>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>Java 21</p>
+</li>
+<li>
+<p>Node.js 18</p>
+</li>
+<li>
+<p>Pytthon 3.12</p>
+</li>
+<li>
+<p>jq</p>
+</li>
+<li>
+<p>&#8230;&#8203;</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
 </li>
 <li>
 <p>Clone this project with Git and cd to it.</p>
+</li>
+<li>
+<p><a id="misc-functions"></a> Execute this command (<strong>&#8592; misc-functions</strong>):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="nb">source </span>scripts/misc/functions.sh</code></pre>
+</div>
+</div>
 </li>
 <li>
 <p>Create a file <code>docker/.env</code> (from <code>docker/.env.sample</code>) and configure the AWS variables on it.</p>
@@ -192,11 +237,54 @@ You don&#8217;t need Java or Node.js configured on your machine to follow the st
 </div>
 </div>
 <div class="sect2">
-<h3 id="with-development-containers"><a class="anchor" href="#with-development-containers"></a>3.2. With <a href="https://containers.dev">Development Containers</a></h3>
+<h3 id="running-with-development-containers"><a class="anchor" href="#running-with-development-containers"></a>3.2. Running with <a href="https://containers.dev">Development Containers</a></h3>
 <div class="paragraph">
-<p><strong>TODO</strong></p>
+<p>Watch the video <a href="#introduction-video">[introduction-video]</a>.</p>
+</div>
+<div class="sect3">
+<h4 id="inside-github-codespaces"><a class="anchor" href="#inside-github-codespaces"></a>3.2.1. Inside <a href="https://github.com/features/codespaces">GitHub Codespaces</a></h4>
+<div class="paragraph">
+<p>Watch the video <a href="#introduction-video">[introduction-video]</a>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="locally-inside-vscode"><a class="anchor" href="#locally-inside-vscode"></a>3.2.2. Locally, inside <a href="https://code.visualstudio.com/">VSCode</a></h4>
+<div class="paragraph">
+<p>Watch the video <a href="#introduction-video">[introduction-video]</a>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="locally-with-devcontainer-cli"><a class="anchor" href="#locally-with-devcontainer-cli"></a>3.2.3. Locally, With <a href="https://github.com/devcontainers/cli">DevContainer CLI</a></h4>
+<div class="paragraph">
+<p><strong>Step 1 &#8594;</strong> Install the <code>devcontainer</code> command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>npm <span class="nb">install</span> <span class="nt">-g</span> @devcontainers/cli</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Step 2 &#8594;</strong> Start the dev container:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="c"># cd TO_THE_PROJECT_FOLDER (the directory where you clone this project)</span>
+<span class="gp">$</span><span class="w"> </span>devcontainer up <span class="nt">--workspace-folder</span> .</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Step 3 &#8594;</strong> Open a Bash terminal in the container:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>devcontainer <span class="nb">exec</span> <span class="nt">--workspace-folder</span> <span class="nb">.</span> bash</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Step 4 &#8594;</strong> Execute the <a href="#misc-functions">[misc-functions]</a> command.</p>
 </div>
 <div style="page-break-after: always;"></div>
+</div>
 </div>
 </div>
 </div>

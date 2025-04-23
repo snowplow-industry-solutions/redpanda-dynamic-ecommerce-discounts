@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<meta name="author" content="Paulo Jerônimo">
+<title>DevContainers Configuration</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>DevContainers Configuration</h1>
+<div class="details">
+<span id="author" class="author">Paulo Jerônimo</span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#introduction">1. Introduction</a></li>
+<li><a href="#configuration-details">2. Configuration Details</a>
+<ul class="sectlevel2">
+<li><a href="#base-image">2.1. Base Image</a></li>
+<li><a href="#vs-code-extensions">2.2. VS Code Extensions</a></li>
+<li><a href="#port-forwarding">2.3. Port Forwarding</a></li>
+<li><a href="#post-creation-setup">2.4. Post-Creation Setup</a></li>
+</ul>
+</li>
+<li><a href="#usage">3. Usage</a>
+<ul class="sectlevel2">
+<li><a href="#starting-the-devcontainer">3.1. Starting the DevContainer</a></li>
+<li><a href="#verifying-the-setup">3.2. Verifying the Setup</a></li>
+</ul>
+</li>
+<li><a href="#customization">4. Customization</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Git commit: 3ea4da5</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="introduction"><a class="anchor" href="#introduction"></a>1. Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This project uses Development Containers (devcontainers) to provide a consistent development environment across different machines and platforms. The configuration ensures that all developers have the same tools and dependencies installed, reducing "it works on my machine" issues.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="configuration-details"><a class="anchor" href="#configuration-details"></a>2. Configuration Details</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="base-image"><a class="anchor" href="#base-image"></a>2.1. Base Image</h3>
+<div class="paragraph">
+<p>The project uses Microsoft&#8217;s Universal DevContainer image as its base:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="w">  </span><span class="nl">"image"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mcr.microsoft.com/devcontainers/universal:2-linux"</span><span class="err">,</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This image comes with many development tools pre-installed, including:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Git</p>
+</li>
+<li>
+<p>nvm (Node Version Manager)</p>
+</li>
+<li>
+<p>Basic build tools</p>
+</li>
+<li>
+<p>Common Unix utilities</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="vs-code-extensions"><a class="anchor" href="#vs-code-extensions"></a>2.2. VS Code Extensions</h3>
+<div class="paragraph">
+<p>The following VS Code extensions are automatically installed:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="w">  </span><span class="nl">"customizations"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"vscode"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"extensions"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="s2">"vscjava.vscode-java-pack"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"redhat.java"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"vscjava.vscode-gradle"</span><span class="p">,</span><span class="w">
+        </span><span class="s2">"ms-azuretools.vscode-docker"</span><span class="w">
+      </span><span class="p">]</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="port-forwarding"><a class="anchor" href="#port-forwarding"></a>2.3. Port Forwarding</h3>
+<div class="paragraph">
+<p>The container automatically forwards port 8080, which is used by the Redpanda Console:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="w">  </span><span class="p">}</span><span class="err">,</span><span class="w">
+  </span><span class="nl">"forwardPorts"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="mi">8080</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="post-creation-setup"><a class="anchor" href="#post-creation-setup"></a>2.4. Post-Creation Setup</h3>
+<div class="paragraph">
+<p>After the container is created, the <code>postCreate.sh</code> script runs automatically to set up the development environment. This script:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Updates the system packages and installs tmux:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash"><span class="nb">echo </span>Installing system packages...
+<span class="nb">sudo </span>apt-get update <span class="nt">-y</span>
+
+<span class="nb">echo </span>Installing/ configuring tmux...
+<span class="nb">sudo </span>apt-get <span class="nb">install</span> <span class="nt">-y</span> tmux
+<span class="nb">cp</span> .devcontainer/.tmux.conf ~/</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Installs Java 21 (Temurin) using SDKMAN:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash"><span class="nb">echo </span>Installing Java 21 via SDKMAN...
+curl <span class="nt">-s</span> <span class="s2">"https://get.sdkman.io"</span> | bash
+<span class="nb">source</span> <span class="s2">"/usr/local/sdkman/bin/sdkman-init.sh"</span>
+<span class="nb">yes</span> | sdk <span class="nb">install </span>java 21.0.7-tem</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Installs the LTS version of Node.js and sets it as default:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash"><span class="nb">echo </span>Installing Node.js LTS...
+<span class="nb">export </span><span class="nv">NVM_DIR</span><span class="o">=</span>/usr/local/share/nvm
+<span class="nb">source</span> <span class="nv">$NVM_DIR</span>/nvm.sh
+nvm <span class="nb">install</span> <span class="nt">--lts</span>
+nvm <span class="nb">alias </span>default <span class="s1">'lts/*'</span>
+nvm use default</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="usage"><a class="anchor" href="#usage"></a>3. Usage</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="starting-the-devcontainer"><a class="anchor" href="#starting-the-devcontainer"></a>3.1. Starting the DevContainer</h3>
+<div class="paragraph">
+<p>There are three ways to use this devcontainer:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>In GitHub Codespaces:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Click the green "Code" button on the GitHub repository</p>
+</li>
+<li>
+<p>Select "Create codespace on main"</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>In VS Code:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Install the "Remote Development" extension</p>
+</li>
+<li>
+<p>Clone the repository</p>
+</li>
+<li>
+<p>Press F1 and select "Dev Containers: Reopen in Container"</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Using DevContainer CLI:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash"><span class="c"># Install the CLI</span>
+npm <span class="nb">install</span> <span class="nt">-g</span> @devcontainers/cli
+
+<span class="c"># Start the container</span>
+devcontainer up <span class="nt">--workspace-folder</span> <span class="nb">.</span>
+
+<span class="c"># Open a shell in the container</span>
+devcontainer <span class="nb">exec</span> <span class="nt">--workspace-folder</span> <span class="nb">.</span> bash</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="verifying-the-setup"><a class="anchor" href="#verifying-the-setup"></a>3.2. Verifying the Setup</h3>
+<div class="paragraph">
+<p>After the container starts and the setup completes, you can verify the installation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="bash"><span class="c"># Check Java version</span>
+java <span class="nt">-version</span>
+
+<span class="c"># Check Node.js version</span>
+node <span class="nt">--version</span>
+
+<span class="c"># Check if tmux is installed</span>
+tmux <span class="nt">-V</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="customization"><a class="anchor" href="#customization"></a>4. Customization</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you need to modify the development environment:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Edit <code>.devcontainer/devcontainer.json</code> for container configuration</p>
+</li>
+<li>
+<p>Modify <code>.devcontainer/postCreate.sh</code> for setup changes</p>
+</li>
+<li>
+<p>Update VS Code extensions in the <code>customizations.vscode.extensions</code> section of <code>devcontainer.json</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

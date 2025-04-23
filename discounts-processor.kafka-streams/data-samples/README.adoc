@@ -3,6 +3,7 @@ Read it https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecom
 endif::env-github[]
 ifndef::env-github[]
 = Product Viewing Analysis Tool
+Paulo Jerônimo
 include::common/head.adoc[]
 
 == Introduction
