@@ -230,7 +230,6 @@ tasks.register<JavaExec>("summarizeViews") {
 
     standardInput = System.`in`
 
-    // Corrige a forma de passar argumentos
     if (project.hasProperty("args")) {
         args(project.property("args").toString().split("\\s+".toRegex()))
     }

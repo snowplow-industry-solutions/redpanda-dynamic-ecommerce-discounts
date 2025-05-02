@@ -1,0 +1,76 @@
+{
+  "products": [
+    {
+      "productId": "product1",
+      "productName": "SP Dunk Low Retro",
+      "views": 5,
+      "durationInSeconds": 130,
+      "pingCount": [
+        3,
+        1,
+        0,
+        4,
+        4
+      ],
+      "lastView": "2025-05-01T18:33:48.575Z",
+      "delayToNextProduct": [
+        2,
+        4,
+        5,
+        3,
+        4
+      ]
+    },
+    {
+      "productId": "product7",
+      "productName": "SP Zoom Pegasus",
+      "views": 1,
+      "durationInSeconds": 30,
+      "pingCount": [
+        2
+      ],
+      "lastView": "2025-05-01T18:34:12.575Z",
+      "delayToNextProduct": [
+        0
+      ]
+    },
+    {
+      "productId": "product5",
+      "productName": "SP Flex Runner 2",
+      "views": 1,
+      "durationInSeconds": 20,
+      "pingCount": [
+        1
+      ],
+      "lastView": "2025-05-01T18:33:04.575Z",
+      "delayToNextProduct": [
+        4
+      ]
+    },
+    {
+      "productId": "product10",
+      "productName": "SP Air Zoom Structure",
+      "views": 4,
+      "durationInSeconds": 20,
+      "pingCount": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "lastView": "2025-05-01T18:32:51.575Z",
+      "delayToNextProduct": [
+        4,
+        4,
+        5,
+        3
+      ]
+    }
+  ],
+  "windowStart": "2025-05-01T18:30:54.575Z",
+  "windowEnd": "2025-05-01T18:34:12.575Z",
+  "duration": "00:03:58",
+  "totalViewingTime": 200,
+  "totalRandomDelays": 38,
+  "totalTimeWithDelays": 238
+}

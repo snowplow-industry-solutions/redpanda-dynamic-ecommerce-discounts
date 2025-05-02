@@ -31,7 +31,7 @@ services:
       timeout: 5s
       retries: 10
 
-  topics-creator:
+  redpanda-topics-creator:
     entrypoint: /bin/sh
     command: -c 'for topic in snowplow-enriched-good shopper-discounts; do rpk topic create $$topic --brokers=redpanda:9092; done'
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
@@ -40,17 +40,7 @@ services:
       redpanda:
         condition: service_healthy
 
-  topics-remover:
-    entrypoint: /bin/sh
-    command: -c 'for topic in snowplow-enriched-good shopper-discounts; do rpk topic delete $$topic --brokers=redpanda:9092; done'
-    image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
-    container_name: redpanda-topics-remover
-    profiles: ["tools"]
-    depends_on:
-      redpanda:
-        condition: service_healthy
-
-  console:
+  redpanda-console:
     container_name: redpanda-console
     image: docker.redpanda.com/redpandadata/console:v2.8.3
     entrypoint: /bin/sh
@@ -71,22 +61,4 @@ services:
       - 8080:8080
     depends_on:
       - redpanda
-
-  memcached:
-    container_name: redpanda-memcached
-    image: memcached:1.6.38
-    ports:
-      - 11211:11211
-
-  discounts-processor:
-    container_name: redpanda-discounts-processor
-    image: docker.redpanda.com/redpandadata/connect
-    depends_on:
-      - console
-      - topics-creator
-      - memcached
-    entrypoint: /bin/sh
-    command: -c '/redpanda-connect --chilled -c /etc/redpanda/connect.yaml'
-    restart: unless-stopped
-    volumes:
-      - ../redpanda/connect.yaml:/etc/redpanda/connect.yaml
+      - redpanda-topics-creator

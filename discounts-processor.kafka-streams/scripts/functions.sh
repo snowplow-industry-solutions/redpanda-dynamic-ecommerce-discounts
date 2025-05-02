@@ -25,7 +25,9 @@ src() {
 
 e2e() {
   check-current-dir || return 1
-  f=e2e x ./e2e/run.sh "$@"
+  t=$(sed 's/-t \(.*\)/\1/' <<<"$@" | cut -f1 -d' ')
+  [ "$t" ] && f=e2e.$t || f=e2e
+  f=$f x ./e2e/run.sh "$@"
 }
 
 log() {

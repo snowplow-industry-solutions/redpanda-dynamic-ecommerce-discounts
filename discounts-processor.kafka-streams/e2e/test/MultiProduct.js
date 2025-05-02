@@ -1,84 +1,89 @@
-import { createBaseTime, runTestScenario, validateTestOutput } from '../common.js';
-import { USER_ID, DELAY_SECONDS_TO_FIRST_PING, DELAY_SECONDS_BETWEEN_PINGS, durationInSeconds } from './config.js';
+import config from '../config.js'
+import {
+  createProductViewEvent,
+  createPagePingEvents,
+  Validator,
+  ValidationRules
+} from '../common.js'
 
-export async function createEvents(testName, timeOffset) {
-  const baseTime = createBaseTime(timeOffset);
-  const events = [];
+export async function createEvents(baseTime) {
+  const DISCOUNT_PRODUCT_ID = 'product3'
+  const DISCOUNT_PING_COUNT = 12
 
-  const createProductEvents = (webpageId, productId, productName, price, pingCount, previousEvents) => {
-    let startTime;
+  const createProductEvents = (
+    webpageId,
+    productId,
+    productName,
+    price,
+    pingCount,
+    previousEvents
+  ) => {
+    let startTime
     if (previousEvents.length === 0) {
-      startTime = new Date(baseTime);
+      startTime = new Date(baseTime)
     } else {
-      const lastEvent = previousEvents[previousEvents.length - 1];
-      startTime = new Date(lastEvent.collector_tstamp);
-      startTime.setSeconds(startTime.getSeconds() + DELAY_SECONDS_BETWEEN_PINGS);
+      const lastEvent = previousEvents[previousEvents.length - 1]
+      startTime = new Date(lastEvent.collector_tstamp)
+      startTime.setSeconds(startTime.getSeconds() + config.DELAY_SECONDS_BETWEEN_PINGS)
     }
 
-    const productEvents = [{
-      collector_tstamp: startTime.toISOString(),
-      event_name: 'product_view',
-      user_id: USER_ID,
-      webpage_id: webpageId,
-      product_id: productId,
-      product_name: productName,
-      product_price: price
-    }];
+    const productView = createProductViewEvent({
+      timestamp: startTime,
+      userId: config.USER_ID,
+      webpageId,
+      productId,
+      productName,
+      productPrice: price
+    })
 
-    for (let i = 1; i <= pingCount; i++) {
-      const timestamp = new Date(startTime);
-      timestamp.setSeconds(timestamp.getSeconds() + (i * DELAY_SECONDS_BETWEEN_PINGS));
+    const shouldHavePings = Math.random() > config.NO_PINGS_PROBABILITY
+    const actualPingCount =
+      productId === DISCOUNT_PRODUCT_ID ? DISCOUNT_PING_COUNT : shouldHavePings ? pingCount : 0
 
-      productEvents.push({
-        collector_tstamp: timestamp.toISOString(),
-        event_name: 'page_ping',
-        user_id: USER_ID,
-        webpage_id: webpageId
-      });
-    }
+    const pings =
+      actualPingCount > 0
+        ? createPagePingEvents(startTime, config.USER_ID, webpageId, actualPingCount).events
+        : []
 
-    events.push(...productEvents);
-    return productEvents;
-  };
+    return [productView, ...pings]
+  }
 
-  const product1Events = createProductEvents('page1', 'product1', 'Product 1', 99.99, 9, []);
-  const product2Events = createProductEvents('page2', 'product2', 'Product 2', 149.99, 10, product1Events);
-  const product3Events = createProductEvents('page3', 'product3', 'Product 3', 199.99, 12, product2Events);
+  const productConfigs = [
+    ['page1', 'product1', 'Product 1', 99.99, 9],
+    ['page2', 'product2', 'Product 2', 149.99, 10],
+    ['page3', DISCOUNT_PRODUCT_ID, 'Product 3', 199.99, DISCOUNT_PING_COUNT]
+  ]
+
+  const events = productConfigs.reduce(
+    (acc, [webpageId, productId, productName, price, pingCount]) => [
+      ...acc,
+      ...createProductEvents(webpageId, productId, productName, price, pingCount, acc)
+    ],
+    []
+  )
 
   const expectedOutput = {
     discount: {
       rate: 0.1,
       by_view_time: {
-        duration_in_seconds: durationInSeconds(12)
+        duration_in_seconds: config.durationInSeconds(DISCOUNT_PING_COUNT)
       }
     },
-    user_id: USER_ID,
-    product_id: 'product3',
+    user_id: config.USER_ID,
+    product_id: DISCOUNT_PRODUCT_ID,
     generated_at: baseTime.toISOString()
-  };
+  }
 
-  return { events, expectedOutput };
+  return { events, expectedOutput }
 }
 
-export async function runTest(timeOffset, force, options) {
-  const { outputJson, outputValue, expectedOutput } = await runTestScenario({
-    testName: 'MultiProduct',
-    testDescription: 'Check multi-product test with different viewing durations',
-    createEvents: (testName) => createEvents(testName, timeOffset),
-    timeOffset,
-    force,
-    userId: USER_ID
-  });
-
-  return validateTestOutput(
-    outputJson,
-    expectedOutput,
-    () =>
-      outputValue.user_id === expectedOutput.user_id &&
-      outputValue.product_id === expectedOutput.product_id &&
-      outputValue.discount.rate === expectedOutput.discount.rate &&
-      outputValue.discount.by_view_time.duration_in_seconds === expectedOutput.discount.by_view_time.duration_in_seconds &&
-      typeof outputValue.generated_at === 'string' &&
-      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(outputValue.generated_at)
-  );
+export function validateTestOutput(outputValue, expectedOutput) {
+  const { ISOString } = ValidationRules
+  return new Validator(outputValue, expectedOutput)
+    .validate('user_id')
+    .validate('product_id')
+    .validate('discount.rate')
+    .validate('discount.by_view_time.duration_in_seconds')
+    .validate(ISOString('generated_at'))
+    .result()
 }

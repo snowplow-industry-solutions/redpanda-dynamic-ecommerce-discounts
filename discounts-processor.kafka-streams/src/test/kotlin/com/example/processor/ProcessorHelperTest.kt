@@ -16,6 +16,7 @@ import java.time.Instant
 import java.util.Properties
 
 private const val WINDOW_DURATION_SECONDS = 300
+private const val DELAY_TO_FIRST_PING_SECONDS = 10L
 private const val PING_INTERVAL_SECONDS = 10L
 private const val MIN_PINGS_FOR_DISCOUNT = 3
 private const val DISCOUNT_RATE = 0.1
@@ -63,7 +64,7 @@ class ProcessorHelperTest :
       }
     }
 
-    given("a continuous view processor") {
+    given("a processor helper") {
       lateinit var processor: ProcessorHelper
 
       beforeTest {
@@ -235,7 +236,7 @@ class ProcessorHelperTest :
           discount.productId shouldBe productId
           discount.discount.rate shouldBe DISCOUNT_RATE
           discount.discount.byViewTime?.durationInSeconds shouldBe
-            (SUFFICIENT_PINGS * PING_INTERVAL_SECONDS)
+            (DELAY_TO_FIRST_PING_SECONDS + SUFFICIENT_PINGS * PING_INTERVAL_SECONDS)
         }
       }
 

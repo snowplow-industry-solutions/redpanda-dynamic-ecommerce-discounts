@@ -3,11 +3,15 @@ package com.example.processor;
 import com.example.config.ConfigurationManager;
 import com.example.model.DiscountEvent;
 import com.example.model.PagePingEvent;
+import com.example.model.ProductViewEvent;
+import com.example.processor.ProcessorHelper.ProductSummary;
+import com.example.processor.ProcessorHelper.ViewSummary;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.PunctuationType;
@@ -21,11 +25,14 @@ import org.apache.kafka.streams.state.KeyValueStore;
 public class MostViewedProcessor
     implements Processor<String, PagePingEvent, String, DiscountEvent> {
   private final ConfigurationManager config = ConfigurationManager.getInstance();
+  private final ProcessorHelper processorHelper = new ProcessorHelper();
 
   private ProcessorContext<String, DiscountEvent> context;
   private KeyValueStore<String, Long> lastDiscountStore;
   private KeyValueStore<String, Integer> viewsStore;
   private KeyValueStore<String, Long> durationStore;
+
+  private final Map<String, List<PagePingEvent>> tempEventCache = new HashMap<>();
 
   @Override
   public void init(ProcessorContext<String, DiscountEvent> context) {
@@ -35,24 +42,10 @@ public class MostViewedProcessor
     this.viewsStore = context.getStateStore(ConfigurationManager.MOST_VIEWED_VIEWS_STORE);
     this.durationStore = context.getStateStore(ConfigurationManager.MOST_VIEWED_DURATION_STORE);
 
-    log.info("MostViewedProcessor initialized");
     context.schedule(
-        Duration.ofSeconds(10),
+        Duration.ofSeconds(config.getMostViewedWindowCheckIntervalSeconds()),
         PunctuationType.WALL_CLOCK_TIME,
-        timestamp -> {
-          log.debug("Running scheduled window check at {}", timestamp);
-          checkAllWindows(timestamp);
-        });
-  }
-
-  private void checkAllWindows(long timestamp) {
-    try (KeyValueIterator<String, Long> it = lastDiscountStore.all()) {
-      while (it.hasNext()) {
-        KeyValue<String, Long> entry = it.next();
-        String userId = entry.key;
-        processWindowIfEnded(userId, timestamp);
-      }
-    }
+        this::checkAllWindows);
   }
 
   @Override
@@ -63,7 +56,7 @@ public class MostViewedProcessor
       long currentTimestamp = record.timestamp();
 
       log.debug(
-          "Processing PagePingEvent: user={}, webpage={}, timestamp={}",
+          "Processing event: user={}, webpage={}, timestamp={}",
           userId,
           event.getWebpageId(),
           currentTimestamp);
@@ -71,160 +64,252 @@ public class MostViewedProcessor
       Long lastDiscountTime = lastDiscountStore.get(userId);
       if (lastDiscountTime != null && isInSameWindow(lastDiscountTime, currentTimestamp)) {
         log.debug(
-            "Skipping processing - still in same window as last discount. User={}, lastDiscount={}, current={}",
+            "Skipping - still in same window as last discount. User={}, lastDiscount={}, current={}",
             userId,
             lastDiscountTime,
             currentTimestamp);
         return;
       }
 
-      String viewKey = createKey(userId, event.getWebpageId());
-      Integer currentViews = viewsStore.get(viewKey);
-      viewsStore.put(viewKey, currentViews == null ? 1 : currentViews + 1);
+      tempEventCache.computeIfAbsent(userId, k -> new ArrayList<>()).add(event);
 
-      String durationKey = createKey(userId, event.getWebpageId());
-      Long startTime = durationStore.get(durationKey);
-      if (startTime == null) {
-        durationStore.put(durationKey, currentTimestamp);
+      String viewKey = createKey(userId, event.getWebpageId());
+
+      if (event instanceof ProductViewEvent) {
+        ProductViewEvent pve = (ProductViewEvent) event;
+        log.info(
+            "Added ProductViewEvent to cache: user={}, product={}, webpage={}",
+            userId,
+            pve.getProductId(),
+            pve.getWebpageId());
+
+        Integer currentViews = viewsStore.get(viewKey);
+        int newViews = currentViews == null ? 1 : currentViews + 1;
+        viewsStore.put(viewKey, newViews);
+        log.debug("Updated view count for key {}: {} -> {}", viewKey, currentViews, newViews);
+
+        Long startTime = durationStore.get(viewKey);
+        if (startTime == null) {
+          durationStore.put(viewKey, currentTimestamp);
+          log.debug("Registered first timestamp for key {}: {}", viewKey, currentTimestamp);
+        }
+      } else {
+        log.info("Added PagePingEvent to cache: user={}, webpage={}", userId, event.getWebpageId());
       }
 
-      processWindowIfEnded(userId, currentTimestamp);
     } catch (Exception e) {
       log.error("Error processing record: {}", e.getMessage(), e);
-      throw e;
     }
   }
 
-  private void processWindowIfEnded(String userId, long currentTimestamp) {
-    Long lastDiscountTime = lastDiscountStore.get(userId);
-    if (lastDiscountTime == null
-        || currentTimestamp >= lastDiscountTime + config.getWindowDurationMs()) {
+  private void checkAllWindows(long timestamp) {
+    if (config.showCheckingWindows()) {
+      log.info("Running scheduled window check at timestamp {}", timestamp);
+    }
 
-      log.debug(
-          "Processing window end. User={}, lastDiscount={}, current={}",
+    if (tempEventCache.isEmpty()) {
+      if (config.showCheckingWindows()) {
+        log.info("Event cache is empty, nothing to process");
+      }
+      return;
+    }
+
+    log.info("Cache contains data for {} users", tempEventCache.size());
+
+    for (Map.Entry<String, List<PagePingEvent>> entry : tempEventCache.entrySet()) {
+      String userId = entry.getKey();
+      List<PagePingEvent> events = entry.getValue();
+
+      log.info("Processing {} events for user {}", events.size(), userId);
+
+      Long lastDiscountTime = lastDiscountStore.get(userId);
+      if (lastDiscountTime != null && isInSameWindow(lastDiscountTime, timestamp)) {
+        log.info("User {} still in discount window, skipping", userId);
+        continue;
+      }
+
+      List<PagePingEvent> currentEvents = new ArrayList<>(events);
+      if (!currentEvents.isEmpty()) {
+        log.info("Processing {} events for user {}", currentEvents.size(), userId);
+        processUserEvents(userId, currentEvents, timestamp);
+      }
+    }
+  }
+
+  private void processUserEvents(String userId, List<PagePingEvent> events, long timestamp) {
+    if (events.isEmpty()) {
+      log.info("No events to process for user {}", userId);
+      return;
+    }
+
+    long productViewCount = events.stream().filter(e -> e instanceof ProductViewEvent).count();
+
+    log.info(
+        "Processing {} events for user {} ({} are ProductViewEvents)",
+        events.size(),
+        userId,
+        productViewCount);
+
+    if (productViewCount == 0) {
+      log.info("No ProductViewEvents found for user {}, skipping", userId);
+      return;
+    }
+
+    ViewSummary viewSummary = processorHelper.summarizeViews(events);
+    List<ProductSummary> products = viewSummary.getProducts();
+
+    log.info(
+        "ViewSummary for user {}: {} products, total viewing time: {}s",
+        userId,
+        products.size(),
+        viewSummary.getTotalViewingTime());
+
+    if (products.isEmpty()) {
+      log.info("No products found in summary for user {}", userId);
+      return;
+    }
+
+    List<ProductSummary> eligibleProducts =
+        products.stream()
+            .filter(
+                p -> {
+                  if (p.getViews() < config.getMinViewsForMostViewedDiscount()) {
+                    return false;
+                  }
+
+                  boolean hasContinuousView =
+                      p.getPingCount().stream()
+                          .anyMatch(
+                              pings -> pings >= config.getMinPingsForContinuousViewDiscount());
+                  return !hasContinuousView;
+                })
+            .collect(Collectors.toList());
+
+    if (eligibleProducts.isEmpty()) {
+      log.info(
+          "No products meet the criteria for user {}: min views={}, max pings for continuous view={}",
           userId,
-          lastDiscountTime,
-          currentTimestamp);
-
-      Map<String, Integer> productViews = new HashMap<>();
-      Map<String, Long> productDurations = new HashMap<>();
-      Set<String> userProducts = getUserProducts(userId);
-
-      for (String productId : userProducts) {
-        String viewKey = createKey(userId, productId);
-        Integer views = viewsStore.get(viewKey);
-        if (views != null) {
-          productViews.put(productId, views);
-        }
-
-        String durationKey = createKey(userId, productId);
-        Long startTime = durationStore.get(durationKey);
-        if (startTime != null) {
-          long duration = currentTimestamp - startTime;
-          productDurations.put(productId, duration);
-        }
-      }
-
-      String mostViewedProduct = null;
-      int maxViews = 0;
-      long maxDuration = 0;
-
-      for (Map.Entry<String, Integer> entry : productViews.entrySet()) {
-        String productId = entry.getKey();
-        int views = entry.getValue();
-        long duration = productDurations.getOrDefault(productId, 0L);
-
-        if (views > maxViews || (views == maxViews && duration > maxDuration)) {
-          mostViewedProduct = productId;
-          maxViews = views;
-          maxDuration = duration;
-        }
-      }
-
-      if (mostViewedProduct != null && maxViews >= config.getMinViewsForMostViewedDiscount()) {
-        DiscountEvent discount =
-            DiscountEvent.createMostViewedDiscount(
-                userId,
-                mostViewedProduct,
-                maxViews,
-                config.getWindowDurationSeconds(),
-                config.getDiscountRate(),
-                currentTimestamp);
-
-        Record<String, DiscountEvent> discountRecord =
-            new Record<>(userId, discount, currentTimestamp);
-
-        log.debug("Forwarding discount event to topic. Record={}", discountRecord);
-        context.forward(discountRecord);
-
-        log.info(
-            "Generated discount: user={}, product={}, views={}, duration={}s, rate={}",
-            userId,
-            mostViewedProduct,
-            maxViews,
-            config.getWindowDurationSeconds(),
-            config.getDiscountRate());
-
-        lastDiscountStore.put(userId, currentTimestamp);
-        clearUserState(userId);
-      } else {
-        log.debug(
-            "No discount generated. User={}, maxViews={}, minRequired={}",
-            userId,
-            maxViews,
-            config.getMinViewsForMostViewedDiscount());
-      }
-    }
-  }
-
-  private Set<String> getUserProducts(String userId) {
-    Set<String> products = new HashSet<>();
-    String prefix = userId + ":";
-
-    try (KeyValueIterator<String, Integer> it = viewsStore.all()) {
-      while (it.hasNext()) {
-        KeyValue<String, Integer> next = it.next();
-        String key = next.key;
-        if (key.startsWith(prefix)) {
-          String productId = key.substring(prefix.length());
-          products.add(productId);
-        }
-      }
+          config.getMinViewsForMostViewedDiscount(),
+          config.getMinPingsForContinuousViewDiscount());
+      clearUserState(userId);
+      return;
     }
 
-    return products;
+    for (ProductSummary product : products) {
+      log.info(
+          "Product summary: id={}, name={}, views={}, seconds={}, pings={}",
+          product.getProductId(),
+          product.getProductName(),
+          product.getViews(),
+          product.getDurationInSeconds(),
+          product.getPingCount());
+    }
+
+    ProductSummary mostViewedProduct =
+        eligibleProducts.stream()
+            .max((p1, p2) -> Long.compare(p1.getDurationInSeconds(), p2.getDurationInSeconds()))
+            .orElse(null);
+
+    if (mostViewedProduct == null) {
+      log.info("Could not determine most viewed product for user {}", userId);
+      return;
+    }
+
+    log.info(
+        "Most viewed product for user {}: {} ({}) with {} views, {}s duration and {} pings",
+        userId,
+        mostViewedProduct.getProductId(),
+        mostViewedProduct.getProductName(),
+        mostViewedProduct.getViews(),
+        mostViewedProduct.getDurationInSeconds(),
+        mostViewedProduct.getPingCount());
+
+    DiscountEvent discount =
+        DiscountEvent.createMostViewedDiscount(
+            userId,
+            mostViewedProduct.getProductId(),
+            mostViewedProduct.getViews(),
+            mostViewedProduct.getDurationInSeconds(),
+            config.getDiscountRate(),
+            timestamp);
+
+    Record<String, DiscountEvent> discountRecord = new Record<>(userId, discount, timestamp);
+    context.forward(discountRecord);
+
+    log.info(
+        "Generated and forwarded most-viewed discount for user {} on product {}",
+        userId,
+        mostViewedProduct.getProductId());
+
+    lastDiscountStore.put(userId, timestamp);
+
+    clearUserState(userId);
   }
 
   private void clearUserState(String userId) {
+    log.info("Clearing state for user {}", userId);
+
     String prefix = userId + ":";
+    int keysRemoved = 0;
 
     try (KeyValueIterator<String, Integer> it = viewsStore.all()) {
+      List<String> keysToRemove = new ArrayList<>();
       while (it.hasNext()) {
-        KeyValue<String, Integer> next = it.next();
-        String key = next.key;
-        if (key.startsWith(prefix)) {
-          viewsStore.delete(key);
+        KeyValue<String, Integer> entry = it.next();
+        if (entry.key.startsWith(prefix)) {
+          keysToRemove.add(entry.key);
         }
+      }
+
+      for (String key : keysToRemove) {
+        viewsStore.delete(key);
+        keysRemoved++;
       }
     }
 
+    int durationKeysRemoved = 0;
     try (KeyValueIterator<String, Long> it = durationStore.all()) {
+      List<String> keysToRemove = new ArrayList<>();
       while (it.hasNext()) {
-        KeyValue<String, Long> next = it.next();
-        String key = next.key;
-        if (key.startsWith(prefix)) {
-          durationStore.delete(key);
+        KeyValue<String, Long> entry = it.next();
+        if (entry.key.startsWith(prefix)) {
+          keysToRemove.add(entry.key);
         }
       }
+
+      for (String key : keysToRemove) {
+        durationStore.delete(key);
+        durationKeysRemoved++;
+      }
     }
+
+    log.info(
+        "Removed {} view keys and {} duration keys for user {}",
+        keysRemoved,
+        durationKeysRemoved,
+        userId);
+
+    List<PagePingEvent> removedEvents = tempEventCache.remove(userId);
+    log.info(
+        "Removed {} events from cache for user {}",
+        removedEvents != null ? removedEvents.size() : 0,
+        userId);
   }
 
   private boolean isInSameWindow(long lastDiscountTime, long currentTime) {
-    return currentTime < lastDiscountTime + config.getWindowDurationMs();
+    boolean result = currentTime < lastDiscountTime + config.getWindowDurationMs();
+    if (result) {
+      log.debug(
+          "Current time {} is within window of last discount {} + {}ms",
+          currentTime,
+          lastDiscountTime,
+          config.getWindowDurationMs());
+    }
+    return result;
   }
 
-  private String createKey(String userId, String productId) {
-    return userId + ":" + productId;
+  private String createKey(String userId, String webpageId) {
+    return userId + ":" + webpageId;
   }
 
   @Override

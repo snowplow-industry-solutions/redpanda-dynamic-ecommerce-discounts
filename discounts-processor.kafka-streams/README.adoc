@@ -17,7 +17,7 @@ include::common/head.adoc[]
 <<<
 == Overview
 
-This project (*{doctitle}*) is a Java/ {KafkaStreams} application that processes event data from {Redpanda} and generates <<output-events,discount events>> based on some <<rules,conditions>>.
+This project (*{doctitle}*) is a Java/ {KafkaStreams} application that processes event data from {Redpanda} and generates <<output-events,discount events>> based on some <<discount-conditions,conditions>>.
 So, based on the <<input-events,input events>>, it analyzes if the user is able to get discounts.
 
 ****
@@ -31,7 +31,7 @@ Status:
 ****
 
 [[main-project-relation]]
-This module can be treated almost{empty}footnote:[It only relies on scripts that generate documentation.] entirely independently of {uri-project-github}[the main project] that encompasses it. It is an alternative intended to produce the same result as the {uri-project-github-connect-yaml}[connect.yaml] file configured using {RedpandaConnect}. In other words, it is a discount processor that works under the same <<rules,rules>>.
+This module can be treated almost{empty}footnote:[It only relies on scripts that generate documentation.] entirely independently of {uri-project-github}[the main project] that encompasses it. It is an alternative intended to produce the same result as the {uri-project-github-connect-yaml}[connect.yaml] file configured using {RedpandaConnect}. In other words, it is a discount processor that works under the same <<discount-conditions,rules>>.
 
 The tests in this module are <<unit-tests,unit tests>> and {integration-tests}.
 Some of them are written in {Kotlin} following the {BehaviourSpec} provided by {Kotest} framework.
@@ -39,7 +39,10 @@ Some of them are written in {Kotlin} following the {BehaviourSpec} provided by {
 The {integration-tests} developed are executed with the help of {TestContainers}.
 
 <<<
-[[rules]]
+include::PROCESSORS_RULES.adoc[leveloffset=+1]
+
+<<<
+[[discount-conditions]]
 == Discount Conditions
 
 [[continuous-view-discount]]
@@ -402,12 +405,28 @@ Cover all the rules for the <<most-viewed-product-discount,Most Viewed Product D
 Test code: <<most-viewed-product-discount-mock-test,MostViewedProcessorTest>>
 
 <<<
+== MostViewed Processor Testing Results Comparator
+
+----
+$ ./scripts/MostViewed.summary.compare.sh # <- it will compare the results where testName=MostViewedSingleViewPerProduct
+
+$ testName=MostViewedMultipleViewsPerProduct ./scripts/MostViewed.summary.compare.sh
+----
+
+<<<
+== Parameters used in generating test events
+
+----
+$ ./e2e/run.sh -t MostViewedMultipleViewsPerProduct -j --maxProducts 5 --maxPings 4
+----
+
+<<<
 == Troubleshooting
 
 === Common Issues
 
 * *Connection issues*: Verify that you <<redpanda-start,started Redpanda>>.
-* *No discounts generated*: Ensure that enough events are being sent to trigger the <<rules,discount conditions>>.
+* *No discounts generated*: Ensure that enough events are being sent to trigger the <<discount-conditions,discount conditions>>.
 * *Serialization errors*: Check that the event format matches <<event-examples,the expected schema>>.
 
 === Logs

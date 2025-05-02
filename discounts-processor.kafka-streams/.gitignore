@@ -6,3 +6,6 @@ build/
 .factorypath
 .project
 .settings/
+# SpecStory explanation file
+.specstory/.what-is-this.md
+*.pid

@@ -1,0 +1,23 @@
+= Developer Guide
+
+[[developer-tips]]
+== Developer Tips
+
+=== npm commands
+
+==== Code Formatting
+
+The project uses Prettier for code formatting. Common commands:
+
+[,console]
+----
+$ npm run format
+$ npm run format:check
+----
+
+==== Testing (with Jest)
+
+[,console]
+----
+$ npm test
+----

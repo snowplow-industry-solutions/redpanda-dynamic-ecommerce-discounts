@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
 set -eou pipefail
 cd $(dirname $0)
+! [ "${f:-}" ] || {
+	$0.${1:-js} <$f
+	exit 0
+}
 $0.${1:-js} <$0.jsonl | tee $0.json

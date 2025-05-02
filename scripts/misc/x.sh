@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-tmp_dir=${tmp_dir:-./private/tmp}
-mkdir -p $tmp_dir
+log_dir=${log_dir:-private/logs}
+mkdir -p $log_dir
 
-if [[ "${1:-}" =~ ^[0-9]+$ ]] && [ -f "$tmp_dir/$1.txt" ]; then
-  output_file="$tmp_dir/$1.txt"
+if [[ "${1:-}" =~ ^[0-9]+$ ]] && [ -f "$log_dir/$1.log" ]; then
+  output_file="$log_dir/$1.log"
   shift
 elif ! [ "${f:-}" ]; then
   last_num=0
-  if ls $tmp_dir/*.txt >/dev/null 2>&1; then
-    last_num=$(ls $tmp_dir/*.txt | sed "s,$tmp_dir\/,,g" | sed 's/.txt$//' | sort -n | tail -n 1)
+  if ls $log_dir/*.log >/dev/null 2>&1; then
+    last_num=$(ls $log_dir/*.log | sed "s,$log_dir\/,,g" | sed 's/.log$//' | sort -n | tail -n 1)
   fi
   next_num=$((last_num + 1))
-  output_file="$tmp_dir/${next_num}.txt"
+  output_file="$log_dir/${next_num}.log"
 else
-  output_file="$tmp_dir/$f.txt"
+  output_file="$log_dir/$f.log"
 fi
 
 echo Output file: "$output_file" Contents: $'\n'

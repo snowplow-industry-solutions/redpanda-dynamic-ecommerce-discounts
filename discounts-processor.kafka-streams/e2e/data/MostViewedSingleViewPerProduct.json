@@ -1,0 +1,12 @@
+{
+  "discount": {
+    "rate": 0.1,
+    "by_number_of_views": {
+      "views": 1,
+      "duration_in_seconds": 80
+    }
+  },
+  "user_id": "user1",
+  "product_id": "product2",
+  "generated_at": "2025-05-02T09:41:34.285Z"
+}

@@ -1,0 +1,29 @@
+{"collector_tstamp":"2025-05-02T09:41:34.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page1","product_id":"product1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-05-02T09:41:44.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-02T09:41:54.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-02T09:42:04.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-02T09:42:14.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-02T09:42:19.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page2","product_id":"product2","product_name":"SP Air Force 1 Shadow","product_price":129.99}
+{"collector_tstamp":"2025-05-02T09:42:29.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page2"}
+{"collector_tstamp":"2025-05-02T09:42:39.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page2"}
+{"collector_tstamp":"2025-05-02T09:42:49.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page2"}
+{"collector_tstamp":"2025-05-02T09:42:59.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page2"}
+{"collector_tstamp":"2025-05-02T09:43:09.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page2"}
+{"collector_tstamp":"2025-05-02T09:43:19.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page2"}
+{"collector_tstamp":"2025-05-02T09:43:29.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page2"}
+{"collector_tstamp":"2025-05-02T09:43:33.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page9","product_id":"product9","product_name":"SP Free Run 5.0","product_price":109.99}
+{"collector_tstamp":"2025-05-02T09:43:38.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page6","product_id":"product6","product_name":"SP React Vision","product_price":159.99}
+{"collector_tstamp":"2025-05-02T09:43:42.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page8","product_id":"product8","product_name":"SP Metcon 8","product_price":149.99}
+{"collector_tstamp":"2025-05-02T09:43:44.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page4","product_id":"product4","product_name":"SP Air Max Plus 3","product_price":189.99}
+{"collector_tstamp":"2025-05-02T09:43:49.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page7","product_id":"product7","product_name":"SP Zoom Pegasus","product_price":139.99}
+{"collector_tstamp":"2025-05-02T09:43:53.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page3","product_id":"product3","product_name":"Total Orange","product_price":129.99}
+{"collector_tstamp":"2025-05-02T09:44:03.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page3"}
+{"collector_tstamp":"2025-05-02T09:44:13.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page3"}
+{"collector_tstamp":"2025-05-02T09:44:23.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page3"}
+{"collector_tstamp":"2025-05-02T09:44:33.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page3"}
+{"collector_tstamp":"2025-05-02T09:44:36.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page5","product_id":"product5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-05-02T09:44:46.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page5"}
+{"collector_tstamp":"2025-05-02T09:44:56.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page5"}
+{"collector_tstamp":"2025-05-02T09:45:06.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page5"}
+{"collector_tstamp":"2025-05-02T09:45:16.285Z","event_name":"page_ping","user_id":"user1","webpage_id":"page5"}
+{"collector_tstamp":"2025-05-02T09:45:18.285Z","event_name":"product_view","user_id":"user1","webpage_id":"page10","product_id":"product10","product_name":"SP Air Zoom Structure","product_price":169.99}

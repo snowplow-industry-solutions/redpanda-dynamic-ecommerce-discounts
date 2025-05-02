@@ -1,0 +1,31 @@
+= End to end testing using Docker Compose
+
+== "Manual" procedures
+
+Assuming that you are in this directory (`discounts-processor`), type:
+
+[,console]
+----
+$ tmux new-session -d \; send-keys "less E2E-TESTING.adoc" C-m \; split-window -v \; split-window -v \; select-pane -t 0 \; attach
+----
+
+In the midle pane opened by tmux, type:
+
+[,console]
+----
+$ ./test-service.sh
+----
+
+In the lower pane opened by tmux, type:
+
+[,console]
+----
+$ e2e -t SingleProduct
+$ kill -SIGUSR1 $(<./test-service.pid) # <- restart all services
+
+$ e2e -t MultiProduct
+$ !kill
+
+$ e2e -t MostViewedMultipleViewsPerProduct
+$ kill -SIGTERM $(<./test-service.pid)
+----

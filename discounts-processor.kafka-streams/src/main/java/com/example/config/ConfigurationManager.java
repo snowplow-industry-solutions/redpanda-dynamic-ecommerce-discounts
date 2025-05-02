@@ -22,12 +22,10 @@ public class ConfigurationManager {
 
   private ConfigurationManager() {
     this(loadDefaultProperties());
-    validateConfiguration();
   }
 
   private ConfigurationManager(Properties properties) {
     this.properties = properties;
-    validateConfiguration();
   }
 
   @SneakyThrows
@@ -58,18 +56,25 @@ public class ConfigurationManager {
   public void logConfiguration() {
     log.info("Configuration loaded:");
     log.info("  Enabled processors: {}", getEnabledProcessors());
-    if (isContinuousViewProcessorEnabled()) {
-      log.info("  Continuous view implementation: {}", getContinuousViewImplementation());
-    }
     log.info("  Bootstrap servers: {}", getBootstrapServers());
     log.info("  Input topic: {}", getInputTopic());
     log.info("  Output topic: {}", getOutputTopic());
     log.info("  Group ID: {}", getGroupId());
     log.info("  Auto offset reset: {}", getAutoOffsetReset());
     log.info("  Window duration: {}s", getWindowDuration().getSeconds());
+    log.info("  Delay to first ping: {}s", getDelayToFirstPingSeconds());
     log.info("  Ping interval: {}s", getPingIntervalSeconds());
     log.info("  Minimum pings: {}", getMinPingsForContinuousViewDiscount());
     log.info("  Discount rate: {}", getDiscountRate());
+    if (isContinuousViewProcessorEnabled()) {
+      log.info(
+          "  Continuous view window check interval: {}s",
+          getContinuousViewWindowCheckIntervalSeconds());
+    }
+    if (isMostViewedProcessorEnabled()) {
+      log.info(
+          "  Most viewed window check interval: {}s", getMostViewedWindowCheckIntervalSeconds());
+    }
   }
 
   private String getEnabledProcessors() {
@@ -143,11 +148,6 @@ public class ConfigurationManager {
         properties.getProperty("processor.most-viewed.min-views-for-discount", "5"));
   }
 
-  public int getContinuousViewImplementation() {
-    return Integer.parseInt(
-        properties.getProperty("processor.continuous-view.implementation", "1"));
-  }
-
   public long getDelayToFirstPingSeconds() {
     return Integer.parseInt(
         properties.getProperty("processor.continuous-view.delay-to-first-ping.seconds", "10"));
@@ -159,12 +159,17 @@ public class ConfigurationManager {
     return delayToFirstPingSeconds + (numberOfPings * pingIntervalSeconds);
   }
 
-  private void validateConfiguration() {
-    int continuousViewImplementation = getContinuousViewImplementation();
+  public boolean showCheckingWindows() {
+    return Boolean.parseBoolean(properties.getProperty("processor.show-checking-windows", "false"));
+  }
 
-    if (continuousViewImplementation != 1 && continuousViewImplementation != 2) {
-      throw new IllegalArgumentException(
-          "processor.continuous-view.implementation must be either 1 or 2");
-    }
+  public long getMostViewedWindowCheckIntervalSeconds() {
+    return Long.parseLong(
+        properties.getProperty("processor.most-viewed.window-check-interval.seconds", "5"));
+  }
+
+  public long getContinuousViewWindowCheckIntervalSeconds() {
+    return Long.parseLong(
+        properties.getProperty("processor.continuous-view.window-check-interval.seconds", "5"));
   }
 }

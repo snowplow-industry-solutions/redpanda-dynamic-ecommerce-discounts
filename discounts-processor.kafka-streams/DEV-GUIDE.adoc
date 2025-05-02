@@ -115,3 +115,47 @@ The project includes convenient scripts for Redpanda operations:
 $ ./redpanda.sh up      # Start Redpanda
 $ ./redpanda.sh down    # Stop Redpanda
 ----
+
+== Troubleshooting
+
+Sometimes, you may need to clean up Java processss to start fresh.
+If you have strange issues while testing the application, like in the following output:
+
+[,console]
+----
+$ run
+Starting Discounts Processor...
+Console output will be logged to: private/logs/run.log
+10:08:18.621 Loading configuration from application.properties...
+10:08:18.623 Configuration loaded:
+10:08:18.626   Enabled processors: ContinuousView
+10:08:18.628   Continuous view implementation: 2
+10:08:18.628   Bootstrap servers: localhost:19092
+10:08:18.628   Input topic: snowplow-enriched-good
+10:08:18.628   Output topic: shopper-discounts
+10:08:18.628   Group ID: discounts-processor
+10:08:18.628   Auto offset reset: earliest
+10:08:18.629   Window duration: 300s
+10:08:18.629   Ping interval: 10s
+10:08:18.629   Minimum pings: 8
+10:08:18.629   Discount rate: 0.1
+10:08:18.630 Initializing Discounts Processor...
+10:08:18.739 Configuring ContinuousViewProcessor (implementation 2)...
+Exception in thread "main" org.apache.kafka.streams.errors.StreamsException: Unable to initialize state, this can happen if multiple instances of Kafka Streams are running in the same state directory (current state directory is [/tmp/kafka-streams/discounts-processor]
+        at org.apache.kafka.streams.processor.internals.StateDirectory.initializeProcessId(StateDirectory.java:191)
+        at org.apache.kafka.streams.KafkaStreams.<init>(KafkaStreams.java:879)
+        at org.apache.kafka.streams.KafkaStreams.<init>(KafkaStreams.java:862)
+        at org.apache.kafka.streams.KafkaStreams.<init>(KafkaStreams.java:832)
+        at org.apache.kafka.streams.KafkaStreams.<init>(KafkaStreams.java:744)
+        at com.example.DiscountsProcessor.start(DiscountsProcessor.java:160)
+        at com.example.DiscountsProcessor.main(DiscountsProcessor.java:184)
+Application terminated successfully
+----
+
+Run these commands to clean up:
+
+[,console]
+----
+$ sudo pkill java
+$ rm -rf /tmp/kafka-streams/discounts-processor/
+----

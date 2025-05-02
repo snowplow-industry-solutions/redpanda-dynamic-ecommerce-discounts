@@ -1,0 +1,11 @@
+services:
+  ecommerce-nextjs:
+    container_name: snowplow-ecommerce
+    build: ../ecommerce-nextjs-example-store
+    image: accel2/ecommerce-nextjs
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - ../ecommerce-nextjs-example-store/.env.local

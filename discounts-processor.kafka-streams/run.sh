@@ -6,6 +6,10 @@ JAR_DIR="build/libs"
 JAR_NAME="discounts-processor-1.0-SNAPSHOT.jar"
 JAR_PATH="$JAR_DIR/$JAR_NAME"
 
+# Default log file location if not set
+CONSOLE_LOG_FILE=${CONSOLE_LOG_FILE:-"private/logs/run.log"}
+mkdir -p "$(dirname "$CONSOLE_LOG_FILE")"
+
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
@@ -84,6 +88,7 @@ if [ ! -f "$JAR_PATH" ]; then
 fi
 
 echo -e "${YELLOW}Starting Discounts Processor...${NC}"
+echo -e "${YELLOW}Console output will be logged to: $CONSOLE_LOG_FILE${NC}"
 
 JVM_OPTS=(
   "--add-opens=java.base/java.util=ALL-UNNAMED"
@@ -93,6 +98,10 @@ JVM_OPTS=(
   "-Xmx1g"
   "-Xms512m"
 )
+
+# Use process substitution with tee, but in a way that preserves signal handling
+exec > >(trap '' INT; tee "$CONSOLE_LOG_FILE")
+exec 2>&1
 
 java "${JVM_OPTS[@]}" -jar "$JAR_PATH" &
 JAVA_PID=$!

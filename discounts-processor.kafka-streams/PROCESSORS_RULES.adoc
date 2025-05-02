@@ -1,0 +1,83 @@
+[[processors-rules]]
+= Processors Rules
+
+This section describes the rules and business logic implemented by the two discount processors.
+
+[[processor-configuration]]
+== Processor Configuration
+
+The `DiscountsProcessor` provides flexible configuration options for both processors:
+
+* Both processors can be enabled simultaneously
+* Either processor can be disabled independently
+* At least one processor must be enabled for the system to function
+* Configuration is managed through the `ConfigurationManager`
+
+This flexibility allows for different business scenarios:
+
+* Running both processors together provides the most comprehensive discount strategy
+* Running only the `MostViewedProcessor` can be useful when focusing on product discovery behavior
+* Running only the `ContinuousViewProcessor` emphasizes deep product engagement
+
+When running only the `MostViewedProcessor`, it's recommended to:
+
+* Adjust the `processor.continuous-view.min-pings-for-discount` property to a higher value
+* This ensures that discounts are only given for products with significant user engagement
+* Helps maintain the quality of the discount program while focusing on the most viewed products
+
+[[continuous-view-processor]]
+== Continuous View Processor
+
+The `ContinuousViewProcessor` implements the primary discount strategy, which rewards users for continuous engagement with a single product.
+
+=== Rules
+
+* A 10% discount is generated when a user views the same product continuously for 90 seconds
+* The viewing time is calculated as:
+  * Initial viewing time (when `product_view` occurs)
+  * 10-second delay to first ping
+  * Each subsequent `page_ping` adds 10 seconds
+* Only one discount per user per 5-minute window
+* Cooldown period of 5 minutes after receiving any discount
+
+=== Business Value
+
+This processor encourages deep product engagement by rewarding users who spend significant time examining a single product. This behavior often indicates strong purchase intent and can lead to higher conversion rates.
+
+[[most-viewed-processor]]
+== Most Viewed Processor
+
+The `MostViewedProcessor` serves as a fallback mechanism when the continuous view criteria aren't met, but the user still shows significant interest in multiple products.
+
+=== Rules
+
+* A 10% discount is generated for the most viewed product within a 5-minute window
+* View counting:
+** Minimum threshold: 3 views within the window
+** Only `page_ping` events count towards view totals
+** View duration is calculated using `page_ping` timestamps
+* Tiebreaker rules:
+** Product with longest total viewing time wins
+** If still tied, most recently viewed product wins
+* One discount per user per window
+* 5-minute cooldown period after receiving any discount
+
+=== Business Value
+
+This processor serves as a valuable fallback for several reasons:
+
+. It captures users who browse multiple products but don't spend enough time on any single one to trigger the continuous view discount
+. It rewards product discovery behavior, encouraging users to explore the catalog
+. It provides a second chance for discounts when the primary continuous view strategy doesn't apply
+. It helps maintain user engagement by offering alternative paths to discounts
+
+=== Relationship with Continuous View Processor
+
+The `MostViewedProcessor` complements the `ContinuousViewProcessor` by:
+
+* Providing an alternative discount path for different user behaviors
+* Ensuring users who show interest in multiple products can still receive discounts
+* Creating a more comprehensive discount strategy that covers various shopping patterns
+* Maintaining user engagement through multiple interaction patterns
+
+This dual-processor approach creates a more robust and flexible discount system that can accommodate different user behaviors while maintaining clear business rules and objectives.

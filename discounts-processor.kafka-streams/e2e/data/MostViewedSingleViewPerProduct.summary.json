@@ -1,0 +1,140 @@
+{
+  "products": [
+    {
+      "productId": "product2",
+      "productName": "SP Air Force 1 Shadow",
+      "views": 1,
+      "durationInSeconds": 80,
+      "pingCount": [
+        7
+      ],
+      "lastView": "2025-05-02T09:43:29.285Z",
+      "delayToNextProduct": [
+        4
+      ]
+    },
+    {
+      "productId": "product5",
+      "productName": "SP Flex Runner 2",
+      "views": 1,
+      "durationInSeconds": 50,
+      "pingCount": [
+        4
+      ],
+      "lastView": "2025-05-02T09:45:16.285Z",
+      "delayToNextProduct": [
+        2
+      ]
+    },
+    {
+      "productId": "product3",
+      "productName": "Total Orange",
+      "views": 1,
+      "durationInSeconds": 50,
+      "pingCount": [
+        4
+      ],
+      "lastView": "2025-05-02T09:44:33.285Z",
+      "delayToNextProduct": [
+        3
+      ]
+    },
+    {
+      "productId": "product1",
+      "productName": "SP Dunk Low Retro",
+      "views": 1,
+      "durationInSeconds": 50,
+      "pingCount": [
+        4
+      ],
+      "lastView": "2025-05-02T09:42:14.285Z",
+      "delayToNextProduct": [
+        5
+      ]
+    },
+    {
+      "productId": "product10",
+      "productName": "SP Air Zoom Structure",
+      "views": 1,
+      "durationInSeconds": 0,
+      "pingCount": [
+        0
+      ],
+      "lastView": "2025-05-02T09:45:18.285Z",
+      "delayToNextProduct": [
+        0
+      ]
+    },
+    {
+      "productId": "product7",
+      "productName": "SP Zoom Pegasus",
+      "views": 1,
+      "durationInSeconds": 0,
+      "pingCount": [
+        0
+      ],
+      "lastView": "2025-05-02T09:43:49.285Z",
+      "delayToNextProduct": [
+        4
+      ]
+    },
+    {
+      "productId": "product4",
+      "productName": "SP Air Max Plus 3",
+      "views": 1,
+      "durationInSeconds": 0,
+      "pingCount": [
+        0
+      ],
+      "lastView": "2025-05-02T09:43:44.285Z",
+      "delayToNextProduct": [
+        5
+      ]
+    },
+    {
+      "productId": "product8",
+      "productName": "SP Metcon 8",
+      "views": 1,
+      "durationInSeconds": 0,
+      "pingCount": [
+        0
+      ],
+      "lastView": "2025-05-02T09:43:42.285Z",
+      "delayToNextProduct": [
+        2
+      ]
+    },
+    {
+      "productId": "product6",
+      "productName": "SP React Vision",
+      "views": 1,
+      "durationInSeconds": 0,
+      "pingCount": [
+        0
+      ],
+      "lastView": "2025-05-02T09:43:38.285Z",
+      "delayToNextProduct": [
+        4
+      ]
+    },
+    {
+      "productId": "product9",
+      "productName": "SP Free Run 5.0",
+      "views": 1,
+      "durationInSeconds": 0,
+      "pingCount": [
+        0
+      ],
+      "lastView": "2025-05-02T09:43:33.285Z",
+      "delayToNextProduct": [
+        5
+      ]
+    }
+  ],
+  "windowStart": "2025-05-02T09:41:34.285Z",
+  "windowEnd": "2025-05-02T09:45:18.285Z",
+  "duration": "00:04:24",
+  "totalViewingTime": 230,
+  "totalRandomDelays": 34,
+  "totalTimeWithDelays": 264
+}

@@ -14,7 +14,8 @@ fun main(args: Array<String>) {
     System.exit(1)
   }
 
-  val outputFile = args[0]
+  val outputFile = File(args[0])
+  outputFile.parentFile?.mkdirs()
 
   val mapper =
     ObjectMapper()
@@ -37,5 +38,5 @@ fun main(args: Array<String>) {
   val processor = ProcessorHelper()
   val summary = processor.summarizeViews(events)
 
-  File(outputFile).writeText(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(summary))
+  outputFile.writeText(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(summary))
 }

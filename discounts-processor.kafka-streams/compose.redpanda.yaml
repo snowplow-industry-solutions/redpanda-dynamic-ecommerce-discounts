@@ -31,7 +31,7 @@ services:
       timeout: 5s
       retries: 10
 
-  topics-creator:
+  redpanda-topics-creator:
     entrypoint: /bin/sh
     command: -c 'for topic in snowplow-enriched-good shopper-discounts; do rpk topic create $$topic --brokers=redpanda:9092; done'
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.6
@@ -40,7 +40,7 @@ services:
       redpanda:
         condition: service_healthy
 
-  console:
+  redpanda-console:
     container_name: redpanda-console
     image: docker.redpanda.com/redpandadata/console:v2.8.3
     entrypoint: /bin/sh
@@ -61,4 +61,4 @@ services:
       - 8080:8080
     depends_on:
       - redpanda
-      - topics-creator
+      - redpanda-topics-creator
