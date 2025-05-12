@@ -1,0 +1,49 @@
+{
+  "products": [
+    {
+      "productId": "product3",
+      "productName": "Product 3",
+      "views": 1,
+      "durationInSeconds": 130,
+      "pingCount": [
+        12
+      ],
+      "lastView": "2025-04-26T19:29:57.949Z",
+      "delayToNextProduct": [
+        0
+      ]
+    },
+    {
+      "productId": "product2",
+      "productName": "Product 2",
+      "views": 1,
+      "durationInSeconds": 110,
+      "pingCount": [
+        10
+      ],
+      "lastView": "2025-04-26T19:18:37.949Z",
+      "delayToNextProduct": [
+        10
+      ]
+    },
+    {
+      "productId": "product1",
+      "productName": "Product 1",
+      "views": 1,
+      "durationInSeconds": 100,
+      "pingCount": [
+        9
+      ],
+      "lastView": "2025-04-26T19:10:47.949Z",
+      "delayToNextProduct": [
+        10
+      ]
+    }
+  ],
+  "windowStart": "2025-04-26T19:04:37.949Z",
+  "windowEnd": "2025-04-26T19:29:57.949Z",
+  "duration": "00:06:00",
+  "totalViewingTime": 340,
+  "totalRandomDelays": 20,
+  "totalTimeWithDelays": 360
+}

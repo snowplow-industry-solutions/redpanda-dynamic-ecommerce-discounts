@@ -1,0 +1,27 @@
+[[next-steps]]
+= Next steps
+
+The following steps describe features or activities that could not be delivered when the <<demo-videos,demo videos>> were created.
+
+So, here are some tasks that can be developed for the subsequent releases.
+
+[[next-steps-fixing-bugs]]
+== Fix some known bugs and do some refactoring
+
+. One of the bugs is related to the link:../../discounts-processor/e2e/test/MostViewedSingleViewPerProduct.js[], which currently does not pass.
+. Regarding refactoring, one of them concerns the processor code that contains duplicated logic. This can undoubtedly be improved.
+
+[[next-steps-redpanda-connect]]
+== Development of a discounts processor version using Redpanda Connect
+
+. We tried to implement a solution faster using Bloblang. However, besides forcing a learning curve, testing the solutions with the expected requirements was not easy. Therefore, we abandoned this solution until we had a clearer vision of what we wanted to implement.
+
+[[next-steps-terraform-deployment]]
+== Deployment via Terraform in a cloud, such as AWS (for example)
+
+. The first accelerator developed in partnership with OSO demonstrates this.
+
+[[next-steps-presentation-in-front-end]]
+== Presentation of the discount event directly on the front end
+
+. Due to the time spent on the backend and the difficulty in implementing the discount processors, we did not have enough time to complete the development of a visualisation of discount events on the frontend. So this is a good task to be developed.

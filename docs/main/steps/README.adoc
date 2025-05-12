@@ -1,0 +1,115 @@
+[[steps]]
+= Steps (to run this application as is)
+:numbered!:
+
+[[step1]]
+== Step 1 -> Start the containers
+
+[,console]
+----
+$ up.sh
+----
+
+[TIP]
+.Tips:
+====
+. You can press kbd:[Ctrl+C] at any time. The docker containers will remain running.
+. If there is no file `docker/.env` in the project, this script will try to locate it in a file named `../{project-name}.env` and copy it to `docker/.env`.
+This allows you to call `git clean -fdX` at any time you want without losing your configuration.
+.. If the file `../{project-name}.env` does not exists, it will copy the file `docker/.env.sample` to `docker/.env` and use it.
+. You can pass "services" as an argument option to this script. It will list the options you can pass to it by adding the suffix "-services":
++
+[,console]
+----
+$ up.sh services
+apps
+discounts-processor
+ecommerce-nextjs
+localstack
+redpanda
+snowplow
+----
++
+. By adding the "-services" to one of the options listed above, you will start only the services listed in the file `copose.<service>.yaml`.
+So, this will start only the redpanda services (services listed in `compose.redpanda.yaml`):
++
+[,console]
+----
+$ up.sh redpanda-services
+----
++
+. You can also call the script `up.sh` by using the `compose.sh` script this way:
++
+[,console]
+----
+$ compose.sh up
+----
++
+. Finally, *_if you can don't want to use this script, you can change your current directory to `docker` and use the `docker` commands you alredy know_*.
+link:../../docker/README.html[Check this README file].
+====
+
+[[step2]]
+== Step 2 -> Know the URL provided by the services
+
+. *LocalStack*: https://app.localstack.cloud <- [[localstack]] localstack
+. *Redpanda*: 
+.. *Internal (docker containers access)* http://localhost:9092 <- [[redpanda-internal]] redpanda-internal
+.. *Console*: http://localhost:8080 <- [[redpanda-console]] redpanda-console
+... User / password: jane / some-other-secret-password
+. *Ecommerce store*: http://localhost:3000 <- [[ecommerce-store]] ecommerce-store
+.. It connects with *Snowplow collector* configured to run in http://localhost:9090 <- [[snowplow-collector]] snowplow-collector
+
+[[step3]]
+== Step 3 -> Browse the application pages
+:uri-page-view-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/page-views/
+:uri-product-view-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#product-view
+:uri-internal-promotion-view-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#promotion-view
+:uri-internal-promotion-click-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#promotion-click
+:uri-product-list-view-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#product-list-view
+:uri-product-list-click-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#product-list-click
+:uri-add-to-cart-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#add-to-cart
+:uri-checkout-step-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#checkout-step
+:uri-transaction-event: https://docs.snowplow.io/docs/sources/trackers/javascript-trackers/web-tracker/tracking-events/ecommerce/?platform=browser#transaction
+:uri-enriched-tsv-format: https://docs.snowplow.io/docs/fundamentals/canonical-event/understanding-the-enriched-tsv-format/
+:uri-raw-messages-dir: {uri-project-github}/tree/main/scripts/raw-messages.sample
+:uri-images-dir: {uri-project-github}/tree/main/docs/main/images
+
+As expected, in the <<ecommerce-store>>, during every page navigation, we are tracking a {uri-page-view-event}[page view] event.
+
+For ecommerce interactions we track the following:
+
+* When a customer goes to a product page we track a {uri-product-view-event}[product view] event.
+* When a customer sees an internal promotion list, e.g. Homepage promotions, we track an {uri-internal-promotion-view-event}[internal promotion view] event.
+* When a customer clicks an internal promotion, we track an {uri-internal-promotion-click-event}[internal promotion click] event.
+* When a customer goes to a product list page, we track a {uri-product-list-view-event}[product list view] event.
+* When a customer clicks a product on a product list page, we track a {uri-product-list-click-event}[product list click] event.
+* When a customer sees a recommended product list on the product page, we track a {uri-product-list-view-event}[product list view] event.
+* When a customer clicks on a recommended product list on the product page, we track a {uri-product-list-click-event}[product list click] event.
+* When the customer adds a product to the cart, we track an {uri-add-to-cart-event}[add to cart] event.
+* When the customer goes to the cart page we track a {uri-checkout-step-event}[checkout step] event.
+* When they go to the payment step, another {uri-checkout-step-event}[checkout step] event is tracked.
+* When the customer successfully completes a transaction, we track a {uri-transaction-event}[transaction] event (triggered on the server-side but formulated with the spec of Snowplow ecommerce)
+
+[[step4]]
+== Step 4 -> Access the redpanda-console and check the generated events
+
+After browsing the [[ecommerce-store]], you can access the [[redpanda-console]] and check the generated events in the topic `snowplow-enriched-good`.
+See these images: {uri-images-dir}/redpanda-1.png[redpanda-1.png], {uri-images-dir}/redpanda-2.png[redpanda-2.png].
+
+You can explore the data format of these events in {uri-enriched-tsv-format}[enriched TSV format].
+In the {uri-raw-messages-dir}[scripts/raw-messages.sample] directory, there are examples of the events recorded by Snowplow when they are transferred to Redpanda.
+These sample TSV files were created by running the script {uri-project-github}/tree/main/scripts/extract-snowplow-raw-messages.sh[extract-snowplow-raw-messages.sh].
+Note: _these are not the events final format of the events sent from <<snowbridge>> component to <<redpanda>>_.
+
+[[stepX]]
+== Step N -> (optional) Use {LazyDocker} to monitor the containers and logs
+
+[,console]
+----
+$ lazy.sh
+----
+
+image:lazydocker.png[]
+
+:numbered:

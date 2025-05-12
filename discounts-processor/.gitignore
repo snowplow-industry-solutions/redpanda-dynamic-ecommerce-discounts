@@ -1,0 +1,12 @@
+bin/
+build/
+.idea/
+.gradle/
+.classpath
+.factorypath
+.project
+.settings/
+.test-service
+# SpecStory explanation file
+.specstory/.what-is-this.md
+*.pid

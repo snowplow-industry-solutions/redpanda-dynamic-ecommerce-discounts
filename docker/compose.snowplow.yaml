@@ -1,0 +1,84 @@
+services:
+  stream-collector:
+    container_name: snowplow-stream-collector
+    image: snowplow/scala-stream-collector-kinesis:3.2.0-distroless
+    command: ["--config", "/snowplow/collector/config.hocon"]
+    restart: always
+    ports:
+      - 9090:8080
+    environment:
+      - ACCEPT_LICENSE=${ACCEPT_LICENSE}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SNOWBRIDGE_CONFIG_FILE=/config/snowbridge-config.hcl
+    volumes:
+      - ../stream-collector/config.hocon:/snowplow/collector/config.hocon
+    extra_hosts:
+      - localhost.localstack.cloud:host-gateway
+      - host.docker.internal:host-gateway
+
+  enrich:
+    container_name: snowplow-enrich
+    image: snowplow/snowplow-enrich-kinesis:5.0.0-distroless
+    command:
+      [
+        "--config",
+        "/snowplow/enrich/config.hocon",
+        "--iglu-config",
+        "/snowplow/iglu-client/iglu_resolver.json",
+        "--enrichments",
+        "/snowplow/enrich/enrichments",
+      ]
+    restart: always
+    environment:
+      - ACCEPT_LICENSE=${ACCEPT_LICENSE}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL:-}
+    volumes:
+      - ../enrich:/snowplow/enrich
+      - ../iglu-client:/snowplow/iglu-client
+    extra_hosts:
+      - localhost.localstack.cloud:host-gateway
+      - host.docker.internal:host-gateway
+    depends_on:
+      stream-collector:
+        condition: service_started
+
+  snowbridge:
+    container_name: snowplow-snowbridge
+    image: snowplow/snowbridge:3.2.1-aws-only
+    command: ["/opt/snowplow/snowbridge"]
+    environment:
+      - ACCEPT_LICENSE=${ACCEPT_LICENSE}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ENDPOINT_URL=${AWS_ENDPOINT_URL:-}
+      - JS_SCRIPT_PATH=/snowbridge/product_view.js
+      - SNOWBRIDGE_CONFIG_FILE=/snowbridge/config.hcl
+    volumes:
+      - ../snowbridge:/snowbridge
+    extra_hosts:
+      - localhost.localstack.cloud:host-gateway
+      - host.docker.internal:host-gateway
+    depends_on:
+      enrich:
+        condition: service_started
+      redpanda:
+        condition: service_healthy
+    restart: unless-stopped
+
+  iglu-server:
+    image: snowplow/iglu-server:0.14.0
+    container_name: snowplow-iglu-server
+    command: --config /snowplow/config/config.hocon
+    ports:
+      - "8180:8080"
+    environment:
+      IGLU_SUPER_API_KEY: ${IGLU_SUPER_API_KEY:-5fb4713d-73ad-4163-93a9-2b82f0177c5b}
+      IGLU_DB_PASSWORD: ${IGLU_DB_PASSWORD:-iglusecret}
+    volumes:
+      - "../iglu-server/config.minimal.hocon:/snowplow/config/config.hocon"

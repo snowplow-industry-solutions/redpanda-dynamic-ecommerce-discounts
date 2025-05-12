@@ -1,0 +1,27 @@
+{"collector_tstamp":"2025-05-01T18:30:54.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page1","product_id":"product1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-05-01T18:31:04.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:31:14.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:31:24.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:31:26.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page10","product_id":"product10","product_name":"SP Air Zoom Structure","product_price":169.99}
+{"collector_tstamp":"2025-05-01T18:31:30.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page1","product_id":"product1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-05-01T18:31:40.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:31:44.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page10","product_id":"product10","product_name":"SP Air Zoom Structure","product_price":169.99}
+{"collector_tstamp":"2025-05-01T18:31:48.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page1","product_id":"product1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-05-01T18:31:53.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page10","product_id":"product10","product_name":"SP Air Zoom Structure","product_price":169.99}
+{"collector_tstamp":"2025-05-01T18:32:03.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page10"}
+{"collector_tstamp":"2025-05-01T18:32:08.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page1","product_id":"product1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-05-01T18:32:18.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:32:28.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:32:38.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:32:48.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:32:51.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page10","product_id":"product10","product_name":"SP Air Zoom Structure","product_price":169.99}
+{"collector_tstamp":"2025-05-01T18:32:54.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page5","product_id":"product5","product_name":"SP Flex Runner 2","product_price":42.99}
+{"collector_tstamp":"2025-05-01T18:33:04.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page5"}
+{"collector_tstamp":"2025-05-01T18:33:08.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page1","product_id":"product1","product_name":"SP Dunk Low Retro","product_price":119.99}
+{"collector_tstamp":"2025-05-01T18:33:18.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:33:28.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:33:38.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:33:48.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page1"}
+{"collector_tstamp":"2025-05-01T18:33:52.575Z","event_name":"product_view","user_id":"user1","webpage_id":"page7","product_id":"product7","product_name":"SP Zoom Pegasus","product_price":139.99}
+{"collector_tstamp":"2025-05-01T18:34:02.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page7"}
+{"collector_tstamp":"2025-05-01T18:34:12.575Z","event_name":"page_ping","user_id":"user1","webpage_id":"page7"}

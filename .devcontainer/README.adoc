@@ -1,0 +1,143 @@
+ifdef::env-github[]
+https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/.devcontainer/README.html[Open README.html]
+endif::env-github[]
+ifndef::env-github[]
+= DevContainers Configuration
+Paulo Jerônimo
+include::common/head.adoc[]
+
+== Introduction
+
+This project uses Development Containers (devcontainers) to provide a consistent development environment across different machines and platforms. The configuration ensures that all developers have the same tools and dependencies installed, reducing "it works on my machine" issues.
+
+== Configuration Details
+
+=== Base Image
+
+The project uses Microsoft's Universal DevContainer image as its base:
+
+[source,json]
+----
+include::devcontainer.json[lines=3]
+----
+
+This image comes with many development tools pre-installed, including:
+
+* Git
+* nvm (Node Version Manager)
+* Basic build tools
+* Common Unix utilities
+
+=== VS Code Extensions
+
+The following VS Code extensions are automatically installed:
+
+[source,json]
+----
+include::devcontainer.json[lines=9..15]
+----
+
+=== Port Forwarding
+
+The container automatically forwards the following ports:
+
+[source,json]
+----
+include::devcontainer.json[lines=17..23]
+----
+
+=== Post-Creation Setup
+
+After the container is created, the `postCreate.sh` script runs automatically to set up the development environment. This script:
+
+. Updates the system packages and installs tmux:
++
+[source,bash]
+----
+include::postCreate.sh[tag=system-packages]
+----
++
+. Installs Java 21 (Temurin) using SDKMAN:
++
+[source,bash]
+----
+include::postCreate.sh[tag=java-install]
+----
++
+. Installs the LTS version of Node.js and sets it as default:
++
+[source,bash]
+----
+include::postCreate.sh[tag=node-install]
+----
+. Installs yq:
++
+[source,bash]
+----
+include::postCreate.sh[tag=yq-install]
+----
+. Installs docker-asciidoctor-builder:
++
+[source,bash]
+----
+include::postCreate.sh[tag=docker-asciidoctor-builder-install]
+----
+. Calls `source scripts/misc/functions.sh` and add it to `~/.bashrc`:
++
+[source,bash]
+----
+include::postCreate.sh[tag=functions-install]
+----
+
+== Usage
+
+=== Starting the DevContainer
+
+There are three ways to use this devcontainer:
+
+. In GitHub Codespaces:
+* Click the green "Code" button on the GitHub repository
+* Select "Create codespace on main"
+. In VS Code:
+* Install the "Remote Development" extension
+* Clone the repository
+* Press F1 and select "Dev Containers: Reopen in Container"
+. Using DevContainer CLI:
++
+[source,bash]
+----
+# Install the CLI
+npm install -g @devcontainers/cli
+
+# Start the container
+devcontainer up --workspace-folder .
+
+# Open a shell in the container
+devcontainer exec --workspace-folder . bash
+----
+
+=== Verifying the Setup
+
+After the container starts and the setup completes, you can verify the installation:
+
+[source,bash]
+----
+# Check Java version
+java -version
+
+# Check Node.js version
+node --version
+
+# Check if tmux is installed
+tmux -V
+----
+
+== Customization
+
+If you need to modify the development environment:
+
+* Edit `.devcontainer/devcontainer.json` for container configuration
+* Modify `.devcontainer/postCreate.sh` for setup changes
+* Update VS Code extensions in the `customizations.vscode.extensions` section of `devcontainer.json`
+
+endif::env-github[]

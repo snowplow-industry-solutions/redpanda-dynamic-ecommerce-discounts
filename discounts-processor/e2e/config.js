@@ -1,0 +1,14 @@
+const config = {
+  USER_ID: 'user1',
+  DELAY_SECONDS_TO_FIRST_PAGE_PING: 10,
+  DELAY_SECONDS_BETWEEN_PINGS: 10,
+  MIN_PINGS_FOR_DISCOUNT: 8,
+  MIN_DELAY_SECONDS_TO_NEXT_PRODUCT: 2,
+  MAX_DELAY_SECONDS_TO_NEXT_PRODUCT: 5,
+  NO_PINGS_PROBABILITY: 0.2,
+  durationInSeconds: function (pingCount) {
+    return this.DELAY_SECONDS_TO_FIRST_PAGE_PING + pingCount * this.DELAY_SECONDS_BETWEEN_PINGS
+  }
+}
+
+export default config

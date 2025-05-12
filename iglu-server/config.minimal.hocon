@@ -1,0 +1,15 @@
+{
+  "license": {
+    "accept": true
+  }
+
+  "database": {
+    "type": "dummy"
+    "host": "iglu-db"
+    "dbname": "igludb"
+    "username": "postgres"
+    "password": ${IGLU_DB_PASSWORD}
+  }
+
+  "superApiKey": ${?IGLU_SUPER_API_KEY}
+}

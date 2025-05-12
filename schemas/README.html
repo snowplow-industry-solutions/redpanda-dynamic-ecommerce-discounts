@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<meta name="author" content="Paulo Jerônimo">
+<title>Schema implementation and testing</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Schema implementation and testing</h1>
+<div class="details">
+<span id="author" class="author">Paulo Jerônimo</span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#introduction">1. Introduction</a></li>
+<li><a href="#schema">2. Custom schema implementation</a></li>
+<li><a href="#registering-the-custom-schema-in-iglu-server">3. Registering the custom schema in Iglu Server</a></li>
+<li><a href="#validating-events-against-the-schema-in-iglu-server">4. Validating events against the schema in Iglu Server</a></li>
+<li><a href="#demonstration">5. Demonstration</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Last updated: 2025-05-05 01:54:19 -0300</strong><br>
+<strong>Last commit: 98860e2</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="introduction"><a class="anchor" href="#introduction"></a>1. Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Here you have details about the schema for the generated discount event.</p>
+</div>
+<div class="paragraph">
+<p>As implemented by the <a href="../discounts-processor" class="bare">../discounts-processor</a>, there are two possible discount formats.</p>
+</div>
+<div id="discount-event" class="paragraph">
+<p>A <strong>Discount Event</strong> can be exemplified by these two examples:</p>
+</div>
+<div class="listingblock">
+<div class="title"><a href="../discounts-processor/e2e/data/MultiProduct.json" class="bare">../discounts-processor/e2e/data/MultiProduct.json</a>:</div>
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"discount"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"rate"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"by_view_time"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"duration_in_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">130</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"product_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product3"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"generated_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-04-26T19:04:37.949Z"</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title"><a href="../discounts-processor/e2e/data/MostViewedMultipleViewsPerProduct.json" class="bare">../discounts-processor/e2e/data/MostViewedMultipleViewsPerProduct.json</a>:</div>
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"discount"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"rate"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"by_number_of_views"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"views"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"duration_in_seconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">130</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"user1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"product_id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"product1"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"generated_at"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2025-05-02T01:50:24.813Z"</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>So, the <a href="#schema">Custom schema implementation</a> must be able to attend both formats.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="schema"><a class="anchor" href="#schema"></a>2. Custom schema implementation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The schema for <a href="#discount-events">for the events above</a> is definined below.</p>
+</div>
+<div class="listingblock">
+<div class="title"><a href="./com.snowplow/shopper_discount_applied/jsonschema/1-0-0" class="bare">./com.snowplow/shopper_discount_applied/jsonschema/1-0-0</a>:</div>
+<div class="content">
+<pre class="rouge highlight"><code data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="nl">"$schema"</span><span class="p">:</span><span class="w"> </span><span class="s2">"http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Schema for tracking shopper discounts based on user behavior"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"self"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"vendor"</span><span class="p">:</span><span class="w"> </span><span class="s2">"com.snowplow"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"shopper_discount_applied"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"jsonschema"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"version"</span><span class="p">:</span><span class="w"> </span><span class="s2">"1-0-0"</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"object"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"discount"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"object"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Discount configuration and trigger conditions"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+        </span><span class="nl">"rate"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"minimum"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"maximum"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Discount rate as decimal (e.g., 0.1 for 10%)"</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="nl">"by_view_time"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"object"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Discount triggered by viewing duration"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"duration_in_seconds"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+              </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"minimum"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Duration in seconds that triggered the discount"</span><span class="w">
+            </span><span class="p">}</span><span class="w">
+          </span><span class="p">},</span><span class="w">
+          </span><span class="nl">"required"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+            </span><span class="s2">"duration_in_seconds"</span><span class="w">
+          </span><span class="p">],</span><span class="w">
+          </span><span class="nl">"additionalProperties"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="nl">"by_number_of_views"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"object"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Discount triggered by number of views"</span><span class="p">,</span><span class="w">
+          </span><span class="nl">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+            </span><span class="nl">"views"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+              </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"minimum"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Number of views that triggered the discount"</span><span class="w">
+            </span><span class="p">},</span><span class="w">
+            </span><span class="nl">"duration_in_seconds"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+              </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"number"</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"minimum"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w">
+              </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Duration in seconds that triggered the discount"</span><span class="w">
+            </span><span class="p">}</span><span class="w">
+          </span><span class="p">},</span><span class="w">
+          </span><span class="nl">"required"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+            </span><span class="s2">"views"</span><span class="p">,</span><span class="w">
+            </span><span class="s2">"duration_in_seconds"</span><span class="w">
+          </span><span class="p">],</span><span class="w">
+          </span><span class="nl">"additionalProperties"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+      </span><span class="p">},</span><span class="w">
+      </span><span class="nl">"required"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="s2">"rate"</span><span class="w">
+      </span><span class="p">],</span><span class="w">
+      </span><span class="nl">"oneOf"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"required"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+            </span><span class="s2">"by_view_time"</span><span class="w">
+          </span><span class="p">]</span><span class="w">
+        </span><span class="p">},</span><span class="w">
+        </span><span class="p">{</span><span class="w">
+          </span><span class="nl">"required"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+            </span><span class="s2">"by_number_of_views"</span><span class="w">
+          </span><span class="p">]</span><span class="w">
+        </span><span class="p">}</span><span class="w">
+      </span><span class="p">],</span><span class="w">
+      </span><span class="nl">"additionalProperties"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"user_id"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"minLength"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The ID of the user who received the discount"</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"product_id"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"minLength"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"The product SKU that received the discount"</span><span class="w">
+    </span><span class="p">},</span><span class="w">
+    </span><span class="nl">"generated_at"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"string"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"date-time"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"description"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ISO 8601 timestamp when the discount was generated"</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="nl">"required"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
+    </span><span class="s2">"discount"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"user_id"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"product_id"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"generated_at"</span><span class="w">
+  </span><span class="p">],</span><span class="w">
+  </span><span class="nl">"additionalProperties"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w">
+</span><span class="p">}</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="registering-the-custom-schema-in-iglu-server"><a class="anchor" href="#registering-the-custom-schema-in-iglu-server"></a>3. Registering the custom schema in Iglu Server</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The script <a href="./register.sh" class="bare">./register.sh</a> is responsible for registering the custom discount event schema in the Iglu Server. It uses a simple <code>curl</code> command to POST the schema file (located at <code>com.snowplow/shopper_discount_applied/jsonschema/1-0-0</code>) to the Iglu Server&#8217;s <code>/api/schemas</code> endpoint, authenticating with the API key.</p>
+</div>
+<div class="paragraph">
+<p>For demonstration purposes, the Iglu Server configuration (see <a href="../docker/compose.snowplow.yaml" class="bare">../docker/compose.snowplow.yaml</a>) is set to use the "dummy" database mode, which means all schemas are stored only in memory. <strong>Any schema registered will be lost if the Iglu Server container is restarted.</strong> This setup is ideal for local development and testing, but not for production.</p>
+</div>
+<div class="paragraph">
+<p>To register the schema, simply run the <code>register.sh</code> script.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="validating-events-against-the-schema-in-iglu-server"><a class="anchor" href="#validating-events-against-the-schema-in-iglu-server"></a>4. Validating events against the schema in Iglu Server</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>After registering the schema, you can use the <a href="./validate_events.sh" class="bare">./validate_events.sh</a> script (which calls <a href="./validate_events.js" class="bare">./validate_events.js</a>) to verify two things:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>That the schema is actually available in the Iglu Server (the script fetches it via HTTP).</p>
+</li>
+<li>
+<p>That your discount event examples (such as <a href="../discounts-processor/e2e/data/MultiProduct.json" class="bare">../discounts-processor/e2e/data/MultiProduct.json</a> and <a href="../discounts-processor/e2e/data/MostViewedMultipleViewsPerProduct.json" class="bare">../discounts-processor/e2e/data/MostViewedMultipleViewsPerProduct.json</a>) are valid according to the registered schema.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The validation script will:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Fetch the schema from the Iglu Server using the configured URL and API key.</p>
+</li>
+<li>
+<p>Validate each event file against the fetched schema using the Ajv JSON Schema validator (with support for formats like <code>"date-time"</code>).</p>
+</li>
+<li>
+<p>Print a message for each event indicating whether it is valid or, if not, what validation errors were found.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>To run the validation, simply run the <code>validate_events.sh</code> script.
+It will ensures your schema is correctly registered and your events conform to it, simulating the validation that will occur in the Snowplow pipeline.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="demonstration"><a class="anchor" href="#demonstration"></a>5. Demonstration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Inside the <code>schemas</code> directory, with all other containers stopped, run the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">#</span><span class="w"> </span>Start the Iglu Server:
+<span class="gp">$</span><span class="w"> </span><span class="o">(</span><span class="nb">cd</span> ../docker<span class="p">;</span> docker compose up <span class="nt">-d</span> iglu-server<span class="o">)</span>
+<span class="go">
+</span><span class="gp">#</span><span class="w"> </span>Register the schema:
+<span class="gp">$</span><span class="w"> </span>./register.sh
+<span class="go">{"message":"Schema created","updated":false,"location":"iglu:com.snowplow/shopper_discount_applied/jsonschema/1-0-0","status":201}
+
+</span><span class="gp">#</span><span class="w"> </span>Validate the events:
+<span class="gp">$</span><span class="w"> </span>./validate_events.sh
+<span class="go">Schema fetched from: http://localhost:8180/api/schemas/com.snowplow/shopper_discount_applied/jsonschema/1-0-0
+OK: MultiProduct.json is valid.
+OK: MostViewedMultipleViewsPerProduct.json is valid.
+
+</span><span class="gp">#</span><span class="w"> </span>Stop the Iglu Server:
+<span class="gp">$</span><span class="w"> </span><span class="o">(</span><span class="nb">cd</span> ../docker<span class="p">;</span> docker compose down <span class="nt">-v</span><span class="o">)</span></code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

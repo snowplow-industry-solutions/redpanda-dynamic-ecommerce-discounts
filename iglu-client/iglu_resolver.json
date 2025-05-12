@@ -1,0 +1,28 @@
+{
+  "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-3",
+  "data": {
+    "cacheSize": 0,
+    "repositories": [
+      {
+        "name": "Local Iglu Server",
+        "priority": 1,
+        "vendorPrefixes": ["com.snowplow"],
+        "connection": {
+          "http": {
+            "uri": "http://iglu-server:8180"
+          }
+        }
+      },
+      {
+        "name": "Iglu Central",
+        "priority": 0,
+        "vendorPrefixes": ["com.snowplowanalytics"],
+        "connection": {
+          "http": {
+            "uri": "http://iglucentral.com"
+          }
+        }
+      }
+    ]
+  }
+}

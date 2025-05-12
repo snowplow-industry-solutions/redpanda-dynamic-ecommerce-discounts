@@ -1,0 +1,11 @@
+services:
+  discounts-processor:
+    container_name: discounts-processor
+    build: ../discounts-processor
+    depends_on:
+      redpanda:
+        condition: service_healthy
+      redpanda-topics-creator:
+        condition: service_completed_successfully
+    network_mode: host
+    restart: unless-stopped

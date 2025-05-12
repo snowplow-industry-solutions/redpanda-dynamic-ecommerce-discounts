@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<meta name="author" content="Paulo Jerônimo">
+<title>End-to-End (E2E) Testing</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>End-to-End (E2E) Testing</h1>
+<div class="details">
+<span id="author" class="author">Paulo Jerônimo</span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#introduction">1. Introduction</a></li>
+<li><a href="#prerequisites">2. Prerequisites</a>
+<ul class="sectlevel2">
+<li><a href="#change-your-current-directory">2.1. Change your current directory</a></li>
+<li><a href="#install-playwright-and-configure-it-to-run-in-a-devcontainer">2.2. Install Playwright and configure it to run in a devcontainer</a></li>
+</ul>
+</li>
+<li><a href="#steps">3. Steps</a>
+<ul class="sectlevel2">
+<li><a href="#start-all-the-services">3.1. Start all the services</a></li>
+<li><a href="#testing-the-continuosviewprocessor">3.2. Testing the ContinuosViewProcessor</a>
+<ul class="sectlevel3">
+<li><a href="#saving-and-analysing-the-generated-data">3.2.1. Saving and analysing the generated data</a></li>
+</ul>
+</li>
+<li><a href="#restarting-the-topics">3.3. Restarting the topics</a></li>
+<li><a href="#testing-the-mostviewedprocessor">3.4. Testing the MostViewedProcessor</a>
+<ul class="sectlevel3">
+<li><a href="#saving-and-analysing-the-generated-data-2">3.4.1. Saving and analysing the generated data</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#expected-final-results">4. Expected final results</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Last updated: 2025-05-11 17:58:34 -0300</strong><br>
+<strong>Last commit: c8295c9</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="introduction"><a class="anchor" href="#introduction"></a>1. Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The following <a href="#steps">Steps</a> allow you to test this project by automating user behaviour and executing scripts that access the front end through the <a href="https://playwright.dev">Playwright</a> framework.</p>
+</div>
+<div class="paragraph">
+<p>If you&#8217;re unfamiliar with Playwright, the only thing you need to know is that it&#8217;s like a robot that accesses a website and simulates the behaviour of a real human. However, as a robot, its steps are completely predetermined through automated scripts.</p>
+</div>
+<div class="paragraph">
+<p>Technically speaking, these Playwright tests are written in this project using <a href="https://www.typescriptlang.org/">TypeScript</a>. Additionally, there are some <a href="https://www.gnu.org/software/bash/">Bash</a> and <a href="https://stedolan.github.io/jq/">jq</a> scripts that assist this process.</p>
+</div>
+<div class="paragraph">
+<p>So, this is an end-to-end test that almost completely validates the architecture described in the <a href="../../docs/main/README.html">main document</a>.
+See the <a href="#expected-final-results">Expected final results</a> for this test.</p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>2. Prerequisites</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="change-your-current-directory"><a class="anchor" href="#change-your-current-directory"></a>2.1. Change your current directory</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>To execute the following commands, from the project&#8217;s root, you must ensure that your current directory is <code>scripts/e2e</code>.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="install-playwright-and-configure-it-to-run-in-a-devcontainer"><a class="anchor" href="#install-playwright-and-configure-it-to-run-in-a-devcontainer"></a>2.2. Install Playwright and configure it to run in a devcontainer</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>We will use more than one terminal to execute the following commands. I will use <a href="https://github.com/tmux/tmux/">Tmux</a>. Feel free to open terminals however you like.</p>
+</li>
+<li>
+<p>Before starting, playwright needs to be installed using these commands:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ npx playwright install-deps
+$ npx playwright install</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Since we will be running playwright in a non-interactive environment, run this command:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ export DEBIAN_FRONTEND=noninteractive</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="steps"><a class="anchor" href="#steps"></a>3. Steps</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="start-all-the-services"><a class="anchor" href="#start-all-the-services"></a>3.1. Start all the services</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Open another terminal window.</p>
+</li>
+<li>
+<p>Start all docker services (if they are not started yet):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>../docker/up.sh</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Wait until all services are available&#8230;&#8203;</p>
+</li>
+<li>
+<p>You can type <span class="keyseq"><kbd>Ctrl</kbd>+<kbd>C</kbd></span> on the windows showing the logs for all services. Then, watch only the <code>discounts-processor</code> logs through this command:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>../docker/logs.sh discounts-processor</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Alternatively, running the following commands has the same effect as above:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ cd ../../docker
+
+$ # run the following if you are starting the devcontainer for the first time:
+$ ./setup.sh
+
+$ # tip: use --build below only if you changed some code
+$ docker compose up --build -d
+
+$ docker compose logs -f discounts-processor</pre>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+<div class="sect2">
+<h3 id="testing-the-continuosviewprocessor"><a class="anchor" href="#testing-the-continuosviewprocessor"></a>3.2. Testing the ContinuosViewProcessor</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Open another terminal to start testing the "ContinuousView" processor:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./test.sh
+<span class="gp">Usage: ./test.sh &lt;test&gt;</span><span class="w">
+</span><span class="go">Available tests: ContinuousView MostViewed
+
+</span><span class="gp">$</span><span class="w"> </span><span class="nb">rm</span> <span class="nt">-rf</span> data
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span>./test.sh ContinuousView</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Wait for the test script to finish. This should take up to 5 minutes since this is an end-to-end test that simulates real user behaviour.</p>
+</li>
+</ol>
+</div>
+<div class="sect3">
+<h4 id="saving-and-analysing-the-generated-data"><a class="anchor" href="#saving-and-analysing-the-generated-data"></a>3.2.1. Saving and analysing the generated data</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>See the generated log for the last command:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>tree data
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span><span class="nb">cat </span>data/ContinuousView.log</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Save the data generated in the topics:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./save-data.sh ContinuousView
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span><span class="nb">cat </span>data/ContinuousView/snowplow-enriched-good.jsonl
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span><span class="o">!!</span> | jq <span class="nb">.</span> <span class="c"># &lt;- to see the results pretty formatted.</span></code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>The discount event, if it has been successfully generated, can be viewed with this command:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ cat data/ContinuousView/shopper-discounts.jsonl | jq .</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Use the <code>summarize.sh</code> script. It will provide details about the events generated.</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>It executes a small <a href="https://kotlinlang.org/">Kotlin</a> app to get details about these events.
+This app uses the same <a href="https://www.java.com/">Java</a> code created to generate the discount event.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./summarize.sh ContinuousView
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span><span class="nb">cat </span>data/ContinuousView/snowplow-enriched-good.summary-by-kt.json | jq .</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Alternatively, you can summarize by using a different implementation (written in <a href="https://262.ecma-international.org/">JavaScript</a>).
+This is useful to double check if <a href="https://www.java.com/">Java</a> implementation is correct.</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ version=js ./summarize.sh ContinuousView
+
+$ cat data/ContinuousView/snowplow-enriched-good.summary-by-js.json | jq .</pre>
+</div>
+</div>
+</li>
+<li>
+<p><a id="diff-between-summaries"></a> <strong>It should be obvious that summarisation, regardless of the algorithm, should produce the same result for the same set of events. So, test this with the following command:</strong></p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./diff-between-summaries.sh ContinuousView</code></pre>
+</div>
+</div>
+<div class="olist lowerroman">
+<ol class="lowerroman" type="i">
+<li>
+<p>You should not see any results in the output of the above command. However, there may be a minor difference in the formatting of some timestamps presented.</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="restarting-the-topics"><a class="anchor" href="#restarting-the-topics"></a>3.3. Restarting the topics</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>To execute the next test and get only the date related to it, you need to restart the topics:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./restart-topics.sh</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>At this point, if you had a terminal open to display the discounts-processor logs, you will need to reopen it.</p>
+</li>
+</ol>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+<div class="sect2">
+<h3 id="testing-the-mostviewedprocessor"><a class="anchor" href="#testing-the-mostviewedprocessor"></a>3.4. Testing the MostViewedProcessor</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Start testing the <code>MostViewed</code> processor:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./test.sh MostViewed</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Wait about 5 minutes (since this is a end-to-end testing by simulating the real user behaviour).</p>
+</li>
+<li>
+<p>Up to this point, this should be the data already generated:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ tree data/
+data/
+|-- ContinuousView
+|   |-- shopper-discounts.jsonl
+|   |-- shopper-discounts.rpk.jsonl
+|   |-- snowplow-enriched-good.jsonl
+|   |-- snowplow-enriched-good.rpk.jsonl
+|   |-- snowplow-enriched-good.summary-by-js.json
+|   `-- snowplow-enriched-good.summary-by-kt.json
+|-- ContinuousView.log
+`-- MostViewed.log
+
+2 directories, 8 files</pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="sect3">
+<h4 id="saving-and-analysing-the-generated-data-2"><a class="anchor" href="#saving-and-analysing-the-generated-data-2"></a>3.4.1. Saving and analysing the generated data</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Save the data generated in the topics and check it:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./save-data.sh MostViewed
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span><span class="nb">cat </span>data/MostViewed/snowplow-enriched-good.jsonl
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span><span class="o">!!</span> | jq .</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>The discount event, if it has been successfully generated, can be viewed with this command:</p>
+<div class="listingblock">
+<div class="content">
+<pre>$ cat data/MostViewed/shopper-discounts.jsonl | jq .</pre>
+</div>
+</div>
+</li>
+<li>
+<p>Use the <code>summarize.sh</code> script:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./summarize.sh MostViewed
+<span class="gp">$</span><span class="w"> </span><span class="nb">cat </span>data/MostViewed/snowplow-enriched-good.summary-by-kt.json | jq <span class="nb">.</span>
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span><span class="nv">version</span><span class="o">=</span>js ./summarize.sh MostViewed
+<span class="gp">$</span><span class="w"> </span><span class="nb">cat </span>data/MostViewed/snowplow-enriched-good.summary-by-js.json | jq .</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p><a href="#diff-between-summaries">As done previously</a>, check if there is any differences between the generated summaries:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./diff-between-summaries.sh MostViewed</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="expected-final-results"><a class="anchor" href="#expected-final-results"></a>4. Expected final results</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As final results of this end-to-end test it is expected that:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>The following directory and file structure has been generated on your machine:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>tree data/
+<span class="go">data/
+|-- ContinuousView
+|   |-- shopper-discounts.jsonl
+|   |-- shopper-discounts.rpk.jsonl
+|   |-- snowplow-enriched-good.jsonl
+|   |-- snowplow-enriched-good.rpk.jsonl
+|   |-- snowplow-enriched-good.summary-by-js.json
+|   `-- snowplow-enriched-good.summary-by-kt.json
+|-- ContinuousView.log
+|-- MostViewed
+|   |-- shopper-discounts.jsonl
+|   |-- shopper-discounts.rpk.jsonl
+|   |-- snowplow-enriched-good.jsonl
+|   |-- snowplow-enriched-good.rpk.jsonl
+|   |-- snowplow-enriched-good.summary-by-js.json
+|   `-- snowplow-enriched-good.summary-by-kt.json
+`-- MostViewed.log
+
+3 directories, 14 files</span></code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Discount events must have been generated and must be available in the <code>shopper-discounts.jsonl</code> files.</p>
+</li>
+<li>
+<p>The content of the <code>snowplow-enriched-good.summary-by-*.json</code> files should be practically the same (minor differences may occur).</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

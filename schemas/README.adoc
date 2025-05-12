@@ -1,0 +1,90 @@
+ifdef::env-github[]
+https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/schemas/README.html[Open README.html]
+endif::env-github[]
+ifndef::env-github[]
+= Schema implementation and testing
+Paulo Jerônimo
+include::common/head.adoc[]
+
+== Introduction
+
+Here you have details about the schema for the generated discount event.
+
+As implemented by the link:../discounts-processor[], there are two possible discount formats.
+
+[[discount-event]]
+A *Discount Event* can be exemplified by these two examples:
+
+[,json]
+.link:../discounts-processor/e2e/data/MultiProduct.json[]:
+----
+include::MultiProduct.json[]
+----
+
+[,json]
+.link:../discounts-processor/e2e/data/MostViewedMultipleViewsPerProduct.json[]:
+----
+include::MostViewedMultipleViewsPerProduct.json[]
+----
+
+So, the <<schema>> must be able to attend both formats.
+
+[[schema]]
+== Custom schema implementation
+
+The schema for <<discount-events,for the events above>> is definined below.
+
+[,json]
+.link:./com.snowplow/shopper_discount_applied/jsonschema/1-0-0[]:
+----
+include::1-0-0[]
+----
+
+== Registering the custom schema in Iglu Server
+
+The script link:./register.sh[] is responsible for registering the custom discount event schema in the Iglu Server. It uses a simple `curl` command to POST the schema file (located at `com.snowplow/shopper_discount_applied/jsonschema/1-0-0`) to the Iglu Server's `/api/schemas` endpoint, authenticating with the API key.
+
+For demonstration purposes, the Iglu Server configuration (see link:../docker/compose.snowplow.yaml[]) is set to use the "dummy" database mode, which means all schemas are stored only in memory. **Any schema registered will be lost if the Iglu Server container is restarted.** This setup is ideal for local development and testing, but not for production.
+
+To register the schema, simply run the `register.sh` script.
+
+== Validating events against the schema in Iglu Server
+
+After registering the schema, you can use the link:./validate_events.sh[] script (which calls link:./validate_events.js[]) to verify two things:
+
+. That the schema is actually available in the Iglu Server (the script fetches it via HTTP).
+. That your discount event examples (such as link:../discounts-processor/e2e/data/MultiProduct.json[] and link:../discounts-processor/e2e/data/MostViewedMultipleViewsPerProduct.json[]) are valid according to the registered schema.
+
+The validation script will:
+
+. Fetch the schema from the Iglu Server using the configured URL and API key.
+. Validate each event file against the fetched schema using the Ajv JSON Schema validator (with support for formats like `"date-time"`).
+. Print a message for each event indicating whether it is valid or, if not, what validation errors were found.
+
+To run the validation, simply run the `validate_events.sh` script.
+It will ensures your schema is correctly registered and your events conform to it, simulating the validation that will occur in the Snowplow pipeline.
+
+== Demonstration
+
+Inside the `schemas` directory, with all other containers stopped, run the following commands:
+
+[,console]
+----
+# Start the Iglu Server:
+$ (cd ../docker; docker compose up -d iglu-server)
+
+# Register the schema:
+$ ./register.sh 
+{"message":"Schema created","updated":false,"location":"iglu:com.snowplow/shopper_discount_applied/jsonschema/1-0-0","status":201}
+
+# Validate the events:
+$ ./validate_events.sh 
+Schema fetched from: http://localhost:8180/api/schemas/com.snowplow/shopper_discount_applied/jsonschema/1-0-0
+OK: MultiProduct.json is valid.
+OK: MostViewedMultipleViewsPerProduct.json is valid.
+
+# Stop the Iglu Server:
+$ (cd ../docker; docker compose down -v)
+----
+
+endif::env-github[]

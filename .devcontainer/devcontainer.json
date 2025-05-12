@@ -1,0 +1,27 @@
+{
+  "name": "accel2",
+  "image": "mcr.microsoft.com/devcontainers/universal:2-linux",
+  "hostRequirements": {
+    "memory": "16gb"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "redhat.java",
+        "vscjava.vscode-gradle",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+  "appPort": [
+    9092,
+    9090,
+    8180,
+    8080,
+    4566,
+    3000
+  ],
+  "forwardPorts": [9090],
+  "postCreateCommand": "bash .devcontainer/postCreate.sh"
+}

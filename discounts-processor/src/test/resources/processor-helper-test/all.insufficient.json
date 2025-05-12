@@ -1,0 +1,19 @@
+[ {
+  "collector_tstamp" : "2024-01-01T10:00:00.000Z",
+  "event_name" : "product_view",
+  "user_id" : "user123",
+  "webpage_id" : "page789",
+  "product_name" : "Test Product",
+  "product_price" : 99.99,
+  "product_id" : "prod456"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:10.000Z",
+  "event_name" : "page_ping",
+  "user_id" : "user123",
+  "webpage_id" : "page789"
+}, {
+  "collector_tstamp" : "2024-01-01T10:00:20.000Z",
+  "event_name" : "page_ping",
+  "user_id" : "user123",
+  "webpage_id" : "page789"
+} ]

@@ -1,0 +1,99 @@
+{
+  "$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
+  "description": "Schema for tracking shopper discounts based on user behavior",
+  "self": {
+    "vendor": "com.snowplow",
+    "name": "shopper_discount_applied",
+    "format": "jsonschema",
+    "version": "1-0-0"
+  },
+  "type": "object",
+  "properties": {
+    "discount": {
+      "type": "object",
+      "description": "Discount configuration and trigger conditions",
+      "properties": {
+        "rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Discount rate as decimal (e.g., 0.1 for 10%)"
+        },
+        "by_view_time": {
+          "type": "object",
+          "description": "Discount triggered by viewing duration",
+          "properties": {
+            "duration_in_seconds": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Duration in seconds that triggered the discount"
+            }
+          },
+          "required": [
+            "duration_in_seconds"
+          ],
+          "additionalProperties": false
+        },
+        "by_number_of_views": {
+          "type": "object",
+          "description": "Discount triggered by number of views",
+          "properties": {
+            "views": {
+              "type": "number",
+              "minimum": 1,
+              "description": "Number of views that triggered the discount"
+            },
+            "duration_in_seconds": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Duration in seconds that triggered the discount"
+            }
+          },
+          "required": [
+            "views",
+            "duration_in_seconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "rate"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "by_view_time"
+          ]
+        },
+        {
+          "required": [
+            "by_number_of_views"
+          ]
+        }
+      ],
+      "additionalProperties": false
+    },
+    "user_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The ID of the user who received the discount"
+    },
+    "product_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The product SKU that received the discount"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the discount was generated"
+    }
+  },
+  "required": [
+    "discount",
+    "user_id",
+    "product_id",
+    "generated_at"
+  ],
+  "additionalProperties": false
+}

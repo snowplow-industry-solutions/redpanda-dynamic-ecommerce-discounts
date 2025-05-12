@@ -1,0 +1,13 @@
+[[additional-docs]]
+= Additional docs
+
+The documentation for this project is designed to be modular, just like all of its code.
+Therefore, this topic serves as a summary to help you find these additional documents.
+You can always run a `find . -name README.sh` command from the project root to locate all the scripts that generates additional documents.
+
+Anyway, here are links to the additional documents:
+
+* [[discounts-processor-doc]] *discounts-processor-doc*: link:../../discounts-processor/README{outfilesuffix}[Discounts Processor Implementation]
+* [[docker-doc]] *docker-doc*: link:../../docker/README{outfilesuffix}[Some docker commands used in this project]
+* [[devcontainer-doc]] *devcontainer-doc*: link:../../.devcontainer/README{outfilesuffix}[DevContainers Configuration]
+* [[schemas-doc]] *schema-doc*: link:../../schemas/README{outfilesuffix}[Schema implementation and testing]

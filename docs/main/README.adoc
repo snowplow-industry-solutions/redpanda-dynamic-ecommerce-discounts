@@ -1,0 +1,40 @@
+ifdef::env-github[]
+https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/docs/main/README.html[Open README.html]
+endif::env-github[]
+ifndef::env-github[]
+= Dynamic Ecommerce Discounts with Redpanda
+Paulo Jerônimo
+include::common/head.adoc[]
+
+:leveloffset: +1
+
+<<<
+include::introduction/README.adoc[]
+
+<<<
+include::architecture/README.adoc[]
+
+<<<
+include::prerequisites/README.adoc[]
+
+<<<
+include::steps/README.adoc[]
+
+<<<
+include::cleanup-steps/README.adoc[]
+
+<<<
+include::references/README.adoc[]
+
+<<<
+include::additional-docs/README.adoc[]
+
+<<<
+include::demo-videos/README.adoc[]
+
+<<<
+include::next-steps/README.adoc[]
+
+:leveloffset: -1
+
+endif::env-github[]

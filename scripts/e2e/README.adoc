@@ -1,0 +1,265 @@
+ifdef::env-github[]
+https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/scripts/e2e-tests/README.html[Open README.html]
+endif::env-github[]
+ifndef::env-github[]
+= End-to-End (E2E) Testing
+Paulo Jerônimo
+include::common/head.adoc[]
+
+== Introduction
+
+The following <<Steps>> allow you to test this project by automating user behaviour and executing scripts that access the front end through the {Playwright} framework.
+
+If you're unfamiliar with Playwright, the only thing you need to know is that it's like a robot that accesses a website and simulates the behaviour of a real human. However, as a robot, its steps are completely predetermined through automated scripts.
+
+Technically speaking, these Playwright tests are written in this project using {TypeScript}. Additionally, there are some {Bash} and {jq} scripts that assist this process.
+
+So, this is an end-to-end test that almost completely validates the architecture described in the link:../../docs/main/README{outfilesuffix}[main document].
+See the <<expected-final-results>> for this test.
+
+<<<
+== Prerequisites
+
+=== Change your current directory
+
+. To execute the following commands, from the project's root, you must ensure that your current directory is `scripts/e2e`.
+
+=== Install Playwright and configure it to run in a devcontainer
+
+. We will use more than one terminal to execute the following commands. I will use {Tmux}. Feel free to open terminals however you like.
+. Before starting, playwright needs to be installed using these commands:
++
+----
+$ npx playwright install-deps
+$ npx playwright install
+----
++
+. Since we will be running playwright in a non-interactive environment, run this command:
++
+----
+$ export DEBIAN_FRONTEND=noninteractive
+----
+
+<<<
+== Steps
+
+=== Start all the services
+
+. Open another terminal window.
+. Start all docker services (if they are not started yet):
++
+[,console]
+----
+$ ../docker/up.sh
+----
+. Wait until all services are available...
+. You can type kbd:[Ctrl+C] on the windows showing the logs for all services. Then, watch only the `discounts-processor` logs through this command:
++
+[,console]
+----
+$ ../docker/logs.sh discounts-processor
+----
++
+[TIP]
+====
+Alternatively, running the following commands has the same effect as above:
+----
+$ cd ../../docker
+
+$ # run the following if you are starting the devcontainer for the first time:
+$ ./setup.sh
+
+$ # tip: use --build below only if you changed some code
+$ docker compose up --build -d
+
+$ docker compose logs -f discounts-processor
+----
+====
+
+<<<
+=== Testing the ContinuosViewProcessor
+
+. Open another terminal to start testing the "ContinuousView" processor:
++
+[,console]
+----
+$ ./test.sh 
+Usage: ./test.sh <test>
+Available tests: ContinuousView MostViewed
+
+$ rm -rf data
+
+$ ./test.sh ContinuousView
+----
+. Wait for the test script to finish. This should take up to 5 minutes since this is an end-to-end test that simulates real user behaviour.
+
+==== Saving and analysing the generated data
+
+. See the generated log for the last command:
++
+[,console]
+----
+$ tree data
+
+$ cat data/ContinuousView.log
+----
++
+. Save the data generated in the topics:
++
+[,console]
+----
+$ ./save-data.sh ContinuousView
+
+$ cat data/ContinuousView/snowplow-enriched-good.jsonl
+
+$ !! | jq . # <- to see the results pretty formatted.
+----
++
+. The discount event, if it has been successfully generated, can be viewed with this command:
++
+----
+$ cat data/ContinuousView/shopper-discounts.jsonl | jq .
+----
++
+. Use the `summarize.sh` script. It will provide details about the events generated.
+.. It executes a small {Kotlin} app to get details about these events.
+This app uses the same {Java} code created to generate the discount event.
++
+[,console]
+----
+$ ./summarize.sh ContinuousView
+
+$ cat data/ContinuousView/snowplow-enriched-good.summary-by-kt.json | jq .
+----
++
+.. Alternatively, you can summarize by using a different implementation (written in {JavaScript}).
+This is useful to double check if {Java} implementation is correct.
++
+----
+$ version=js ./summarize.sh ContinuousView
+
+$ cat data/ContinuousView/snowplow-enriched-good.summary-by-js.json | jq .
+----
++
+.. [[diff-between-summaries]] *It should be obvious that summarisation, regardless of the algorithm, should produce the same result for the same set of events. So, test this with the following command:*
++
+[,console]
+----
+$ ./diff-between-summaries.sh ContinuousView
+----
++
+... You should not see any results in the output of the above command. However, there may be a minor difference in the formatting of some timestamps presented.
+
+<<<
+=== Restarting the topics
+
+. To execute the next test and get only the date related to it, you need to restart the topics:
++
+[,console]
+----
+$ ./restart-topics.sh
+----
+. At this point, if you had a terminal open to display the discounts-processor logs, you will need to reopen it.
+
+<<<
+=== Testing the MostViewedProcessor
+
+. Start testing the `MostViewed` processor:
++
+[,console]
+----
+$ ./test.sh MostViewed
+----
++
+. Wait about 5 minutes (since this is a end-to-end testing by simulating the real user behaviour).
+. Up to this point, this should be the data already generated:
++
+----
+$ tree data/
+data/
+|-- ContinuousView
+|   |-- shopper-discounts.jsonl
+|   |-- shopper-discounts.rpk.jsonl
+|   |-- snowplow-enriched-good.jsonl
+|   |-- snowplow-enriched-good.rpk.jsonl
+|   |-- snowplow-enriched-good.summary-by-js.json
+|   `-- snowplow-enriched-good.summary-by-kt.json
+|-- ContinuousView.log
+`-- MostViewed.log
+
+2 directories, 8 files
+----
+
+==== Saving and analysing the generated data
+
+. Save the data generated in the topics and check it:
++
+[,console]
+----
+$ ./save-data.sh MostViewed
+
+$ cat data/MostViewed/snowplow-enriched-good.jsonl
+
+$ !! | jq .
+----
++
+. The discount event, if it has been successfully generated, can be viewed with this command:
++
+----
+$ cat data/MostViewed/shopper-discounts.jsonl | jq .
+----
++
+. Use the `summarize.sh` script:
++
+[,console]
+----
+$ ./summarize.sh MostViewed
+$ cat data/MostViewed/snowplow-enriched-good.summary-by-kt.json | jq .
+
+$ version=js ./summarize.sh MostViewed
+$ cat data/MostViewed/snowplow-enriched-good.summary-by-js.json | jq .
+----
++
+. <<diff-between-summaries,As done previously>>, check if there is any differences between the generated summaries:
++
+[,console]
+----
+$ ./diff-between-summaries.sh MostViewed
+----
+
+<<<
+[[expected-final-results]]
+== Expected final results
+
+As final results of this end-to-end test it is expected that:
+
+. The following directory and file structure has been generated on your machine:
++
+[,console]
+----
+$ tree data/
+data/
+|-- ContinuousView
+|   |-- shopper-discounts.jsonl
+|   |-- shopper-discounts.rpk.jsonl
+|   |-- snowplow-enriched-good.jsonl
+|   |-- snowplow-enriched-good.rpk.jsonl
+|   |-- snowplow-enriched-good.summary-by-js.json
+|   `-- snowplow-enriched-good.summary-by-kt.json
+|-- ContinuousView.log
+|-- MostViewed
+|   |-- shopper-discounts.jsonl
+|   |-- shopper-discounts.rpk.jsonl
+|   |-- snowplow-enriched-good.jsonl
+|   |-- snowplow-enriched-good.rpk.jsonl
+|   |-- snowplow-enriched-good.summary-by-js.json
+|   `-- snowplow-enriched-good.summary-by-kt.json
+`-- MostViewed.log
+
+3 directories, 14 files
+----
++
+. Discount events must have been generated and must be available in the `shopper-discounts.jsonl` files.
+. The content of the `snowplow-enriched-good.summary-by-*.json` files should be practically the same (minor differences may occur).
+
+endif::env-github[]

@@ -1,0 +1,55 @@
+ifdef::env-github[]
+https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/docker/README.html[Open README.html]
+endif::env-github[]
+ifndef::env-github[]
+= Some docker commands used in this project
+Paulo Jerônimo
+include::common/head.adoc[]
+
+== Prerequisites
+
+. Inside this directory (`docker`), configure your `.env` file.
+. Setup the {ecommerce-nextjs-example-store} project:
++
+[,console]
+----
+$ ./ecommerce-nextjs-example-store/setup.sh
+----
+
+== Some Docker commands
+
+Inside this directory (`docker`) you can type any of the following commands you already know. Some examples are:
+
+To start and stop all services:
+
+[,console]
+----
+$ docker compose up -d # to start all services
+$ docker compose down -v --remove-orphans # to stop and remove all volumes
+----
+
+To start/stop and see logs for services individually:
+
+[,console]
+----
+# LocalStack:
+$ docker compose up -d localstack # to start only localstack
+
+# Redpanda:
+$ docker compose up -d redpanda-console
+$ docker compose down -v --remove-orphans redpanda-console redpanda
+
+# Snowplow:
+$ docker compose up -d stream-collector enrich snowbridge iglu-server
+
+# Discounts Processor (backend implemented with Kafka Streams):
+$ docker compose up -d discounts-processor
+$ docker compose logs -f discounts-processor
+$ docker compose down discounts-processor
+
+# Ecommerce Next.js (frontend):
+$ docker compose up -d ecommerce-nextjs
+$ docker compose down ecommerce-nextjs
+----
+
+endif::env-github[]

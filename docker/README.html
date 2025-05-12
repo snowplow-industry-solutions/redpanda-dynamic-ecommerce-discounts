@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<meta name="author" content="Paulo Jerônimo">
+<title>Some docker commands used in this project</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Some docker commands used in this project</h1>
+<div class="details">
+<span id="author" class="author">Paulo Jerônimo</span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#prerequisites">1. Prerequisites</a></li>
+<li><a href="#some-docker-commands">2. Some Docker commands</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Last updated: 2025-05-05 01:54:17 -0300</strong><br>
+<strong>Last commit: 98860e2</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>1. Prerequisites</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Inside this directory (<code>docker</code>), configure your <code>.env</code> file.</p>
+</li>
+<li>
+<p>Setup the <a href="https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store">Example Next.js Ecommerce Store for Snowplow</a> project:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./ecommerce-nextjs-example-store/setup.sh</code></pre>
+</div>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="some-docker-commands"><a class="anchor" href="#some-docker-commands"></a>2. Some Docker commands</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Inside this directory (<code>docker</code>) you can type any of the following commands you already know. Some examples are:</p>
+</div>
+<div class="paragraph">
+<p>To start and stop all services:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>docker compose up <span class="nt">-d</span> <span class="c"># to start all services</span>
+<span class="gp">$</span><span class="w"> </span>docker compose down <span class="nt">-v</span> <span class="nt">--remove-orphans</span> <span class="c"># to stop and remove all volumes</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To start/stop and see logs for services individually:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">#</span><span class="w"> </span>LocalStack:
+<span class="gp">$</span><span class="w"> </span>docker compose up <span class="nt">-d</span> localstack <span class="c"># to start only localstack</span>
+<span class="go">
+</span><span class="gp">#</span><span class="w"> </span>Redpanda:
+<span class="gp">$</span><span class="w"> </span>docker compose up <span class="nt">-d</span> redpanda-console
+<span class="gp">$</span><span class="w"> </span>docker compose down <span class="nt">-v</span> <span class="nt">--remove-orphans</span> redpanda-console redpanda
+<span class="go">
+</span><span class="gp">#</span><span class="w"> </span>Snowplow:
+<span class="gp">$</span><span class="w"> </span>docker compose up <span class="nt">-d</span> stream-collector enrich snowbridge iglu-server
+<span class="go">
+</span><span class="gp">#</span><span class="w"> </span>Discounts Processor <span class="o">(</span>backend implemented with Kafka Streams<span class="o">)</span>:
+<span class="gp">$</span><span class="w"> </span>docker compose up <span class="nt">-d</span> discounts-processor
+<span class="gp">$</span><span class="w"> </span>docker compose logs <span class="nt">-f</span> discounts-processor
+<span class="gp">$</span><span class="w"> </span>docker compose down discounts-processor
+<span class="go">
+</span><span class="gp">#</span><span class="w"> </span>Ecommerce Next.js <span class="o">(</span>frontend<span class="o">)</span>:
+<span class="gp">$</span><span class="w"> </span>docker compose up <span class="nt">-d</span> ecommerce-nextjs
+<span class="gp">$</span><span class="w"> </span>docker compose down ecommerce-nextjs</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+services:
+  discounts-processor:
+    container_name: discounts-processor
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    network_mode: host
+    restart: unless-stopped
+    user: "1000:1000"
+    logging:
+      driver: "local"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        compress: "true"
+    volumes:
+      - ./private/logs:/var/log

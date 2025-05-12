@@ -1,0 +1,39 @@
+[[running-with-devcontainer]]
+= Running with DevContainers
+:projectdir: ../..
+
+Watch the video <<introduction-video>>.
+
+== Inside {GitHubCodeSpaces}
+
+Watch the video <<introduction-video>>.
+
+== Locally, inside {VSCode}
+
+Watch the video <<introduction-video>>.
+
+== Locally, With {DevContainerCLI}
+
+*Step 1 ->* Install the `devcontainer` command:
+
+[,console]
+----
+$ npm install -g @devcontainers/cli
+----
+
+*Step 2 ->* Start the dev container:
+
+[,console]
+----
+$ # cd TO_THE_PROJECT_FOLDER (the directory where you clone this project)
+$ devcontainer up --workspace-folder .
+----
+
+*Step 3 ->* Open a Bash terminal in the container:
+
+[,console]
+----
+$ devcontainer exec --workspace-folder . bash
+----
+
+Please, see more details about how {DevContainers} is configured in this project by viewing its <<devcontainer-doc,README file (devcontainer-doc)>>.

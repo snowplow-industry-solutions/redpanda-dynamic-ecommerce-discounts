@@ -1,0 +1,18 @@
+[[references]]
+= References
+
+{LocalStack}::
+* https://docs.localstack.cloud/
+* [[localstack-devcontainers]] https://docs.localstack.cloud/user-guide/integrations/devcontainers/ *<- localstack-devcontainers*
+
+{Redpanda}::
+* https://docs.redpanda.com/current/get-started/docker-compose-labs/[Docker Compose Labs]
+** https://docs.redpanda.com/redpanda-labs/docker-compose/single-broker/[Start a Single Redpanda Broker with Redpanda Console in Docker]
+* https://docs.redpanda.com/current/get-started/quick-start/[Redpanda Self-Managed Quickstart]
+* https://redpanda-data.medium.com/how-we-engineered-our-cli-to-improve-developer-productivity-347a497e45e8[How we engineered our CLI to improve developer productivity]
+* Some YouTube videos:
+** https://www.youtube.com/watch?v=WWQu01vsFwo[Why did Redpanda rewrite Apache Kafka? (with Christina Lin)]
+** https://www.youtube.com/watch?v=dbqRJgPgXcU[Redpanda Office Hour: HUGE rpk - Redpanda CLI update!]
+Redpanda Connect::
+* https://docs.redpanda.com/redpanda-connect/get-started/quickstarts/rpk/
+* https://docs.redpanda.com/current/get-started/quick-start/

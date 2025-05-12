@@ -1,0 +1,6 @@
+include:
+  - compose.localstack.yaml
+  - compose.redpanda.yaml
+  - compose.snowplow.yaml
+  - compose.discounts-processor.yaml
+  - compose.ecommerce-nextjs.yaml
