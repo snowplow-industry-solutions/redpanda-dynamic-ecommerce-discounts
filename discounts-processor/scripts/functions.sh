@@ -50,15 +50,3 @@ run() {
 send-events-file() {
   cat $1 | docker exec -i redpanda rpk topic produce snowplow-enriched-good -k user1
 }
-
-test-service() {
-  check-current-dir || return 1
-  case "$1" in
-  stop) kill -SIGTERM $(<./test-service.pid) ;;
-  restart) kill -SIGUSR1 $(<./test-service.pid) ;;
-  start)
-    shift
-    ./test-service.sh "$@"
-    ;;
-  esac
-}

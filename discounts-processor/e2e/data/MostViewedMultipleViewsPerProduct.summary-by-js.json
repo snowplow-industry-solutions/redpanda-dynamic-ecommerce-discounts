@@ -22,6 +22,25 @@
       ]
     },
     {
+      "productId": "product10",
+      "productName": "SP Air Zoom Structure",
+      "views": 4,
+      "durationInSeconds": 20,
+      "pingCount": [
+        0,
+        0,
+        1,
+        0
+      ],
+      "lastView": "2025-05-01T18:32:03.575Z",
+      "delayToNextProduct": [
+        4,
+        4,
+        5,
+        3
+      ]
+    },
+    {
       "productId": "product7",
       "productName": "SP Zoom Pegasus",
       "views": 1,
@@ -45,25 +64,6 @@
       "lastView": "2025-05-01T18:33:04.575Z",
       "delayToNextProduct": [
         4
-      ]
-    },
-    {
-      "productId": "product10",
-      "productName": "SP Air Zoom Structure",
-      "views": 4,
-      "durationInSeconds": 20,
-      "pingCount": [
-        0,
-        0,
-        1,
-        0
-      ],
-      "lastView": "2025-05-01T18:32:51.575Z",
-      "delayToNextProduct": [
-        4,
-        4,
-        5,
-        3
       ]
     }
   ],

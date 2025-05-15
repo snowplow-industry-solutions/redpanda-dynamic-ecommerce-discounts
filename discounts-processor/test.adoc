@@ -1,0 +1,53 @@
+= Testing
+
+Assuming that you are in this directory (`discounts-processor`), to test this backend you will need to open some terminals.
+
+In my case, since I love to use {Tmux} I'll open it with this command:
+
+[,console]
+----
+$ tmux new-session -d \; send-keys "less test.adoc" C-m \; split-window -v \; split-window -v \; select-pane -t 0 \; attach
+----
+
+This will open a window with three panes:
+
+. The first one will keep showping this document.
+. The second pane (in the middle) I'll use to show the logs for the disconts-processor container.
+. The last pane (below in the screen) I'll use to execute the tests.
+
+NOTE: You don't need to use {Tmux} if you are unfamiliar with it.
+Just open three terminals (one to see this doc plus other two).
+
+So, in the terminal on the middle, type:
+
+[,console]
+----
+$ ./test.sh reconfigure discount-event-sender false
+$ ./test.sh start-services
+----
+
+In the lower terminal opened, type:
+
+[,console]
+----
+$ ./test.sh run SingleProduct
+$ ./test.sh restart-services
+
+$ ./test.sh run MultiProduct
+$ ./test.sh restart-services
+
+$ ./test.sh run MostViewedMultipleViewsPerProduct
+$ ./test.sh restart-services
+
+$ ./test.sh run MostViewedMultipleViewsPerProduct now
+$ ./test.sh stop-services
+----
+
+After all these tests, remember to reconfigure discount-event-sender again:
+
+[,console]
+----
+$ ./test.sh reconfigure discount-event-sender true
+----
+
+That's it!

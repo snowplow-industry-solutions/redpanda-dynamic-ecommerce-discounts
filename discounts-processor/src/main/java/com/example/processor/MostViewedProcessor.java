@@ -54,7 +54,6 @@ public class MostViewedProcessor
       String userId = record.key();
       PagePingEvent event = record.value();
       long currentTimestamp = record.timestamp();
-      long systemTime = System.currentTimeMillis();
 
       if (userId == null || event == null) {
         log.error("Invalid record: userId={}, event={}", userId, event);
@@ -62,16 +61,15 @@ public class MostViewedProcessor
       }
 
       log.debug(
-          "Processing event: user={}, webpage={}, timestamp={}, systemTime={}",
+          "Processing event: user={}, webpage={}, timestamp={}",
           userId,
           event.getWebpageId(),
-          currentTimestamp,
-          systemTime);
+          currentTimestamp);
 
       Long lastDiscountTime = lastDiscountStore.get(userId);
 
       if (lastDiscountTime == null
-          || (systemTime - lastDiscountTime) >= config.getWindowDurationMs()) {
+          || (currentTimestamp - lastDiscountTime) >= config.getWindowDurationMs()) {
         tempEventCache.computeIfAbsent(userId, k -> new ArrayList<>()).add(event);
 
         String viewKey = createKey(userId, event.getWebpageId());
@@ -100,11 +98,10 @@ public class MostViewedProcessor
         }
       } else {
         log.debug(
-            "Skipping - still in cooldown period. User={}, lastDiscount={}, current={}, system={}",
+            "Skipping - still in cooldown period. User={}, lastDiscount={}, current={}",
             userId,
             lastDiscountTime,
-            currentTimestamp,
-            systemTime);
+            currentTimestamp);
       }
 
     } catch (Exception e) {
@@ -133,6 +130,23 @@ public class MostViewedProcessor
               List<PagePingEvent> events = entry.getValue();
 
               try {
+                Long lastDiscountTime = lastDiscountStore.get(userId);
+                if (lastDiscountTime != null) {
+                  long timeRemaining =
+                      (lastDiscountTime + config.getWindowDurationMs()) - timestamp;
+                  if (timeRemaining > 0) {
+                    log.info(
+                        "User {} - time remaining until new window: {}ms ({}s)",
+                        userId,
+                        timeRemaining,
+                        timeRemaining / 1000);
+                  } else {
+                    log.info("User {} - window expired, ready for processing", userId);
+                  }
+                } else {
+                  log.info("User {} - first window, no previous discount", userId);
+                }
+
                 processUserWindow(userId, events, timestamp);
               } catch (Exception e) {
                 log.error("Error processing window for user {}: {}", userId, e.getMessage(), e);
@@ -143,7 +157,12 @@ public class MostViewedProcessor
   private void processUserWindow(String userId, List<PagePingEvent> events, long timestamp) {
     Long lastDiscountTime = lastDiscountStore.get(userId);
     if (lastDiscountTime != null && isInSameWindow(lastDiscountTime, timestamp)) {
-      log.info("User {} still in discount window, skipping", userId);
+      long timeRemaining = (lastDiscountTime + config.getWindowDurationMs()) - timestamp;
+      log.info(
+          "User {} still in discount window, time remaining: {}ms ({}s)",
+          userId,
+          timeRemaining,
+          timeRemaining / 1000);
       return;
     }
 
@@ -191,28 +210,29 @@ public class MostViewedProcessor
       return;
     }
 
+    int minViewsRequired = config.getMinViewsForMostViewedDiscount();
+
     List<ProductSummary> eligibleProducts =
         products.stream()
-            .filter(p -> p.getViews() >= config.getMinViewsForMostViewedDiscount())
+            .filter(p -> p.getViews() >= minViewsRequired)
             .collect(Collectors.toList());
-
-    if (eligibleProducts.isEmpty()) {
-      log.info(
-          "No products meet the criteria for user {}: min views={}",
-          userId,
-          config.getMinViewsForMostViewedDiscount());
-      clearUserState(userId);
-      return;
-    }
 
     for (ProductSummary product : products) {
       log.info(
-          "Product summary: id={}, name={}, views={}, seconds={}, pings={}",
+          "Product summary: id={}, name={}, views={}, seconds={}, pings={}, needs {} more views to qualify",
           product.getProductId(),
           product.getProductName(),
           product.getViews(),
           product.getDurationInSeconds(),
-          product.getPingCount());
+          product.getPingCount(),
+          minViewsRequired - product.getViews());
+    }
+
+    if (eligibleProducts.isEmpty()) {
+      log.info("No products meet the criteria for user {}: min views={}", userId, minViewsRequired);
+
+      log.info("Keeping state for user {} to accumulate more views", userId);
+      return;
     }
 
     ProductSummary mostViewedProduct = eligibleProducts.get(0);
@@ -296,23 +316,23 @@ public class MostViewedProcessor
   }
 
   private boolean isInSameWindow(long lastDiscountTime, long currentTime) {
-    long systemTime = System.currentTimeMillis();
-    if (lastDiscountTime > systemTime) {
-      log.warn(
-          "Last discount time {} is in the future compared to system time {}. Treating as not in same window.",
-          lastDiscountTime,
-          systemTime);
-      return false;
-    }
+    boolean result = currentTime < lastDiscountTime + config.getWindowDurationMs();
 
-    long effectiveCurrentTime = Math.max(currentTime, systemTime);
-    boolean result = effectiveCurrentTime < lastDiscountTime + config.getWindowDurationMs();
+    long timeRemaining = (lastDiscountTime + config.getWindowDurationMs()) - currentTime;
 
     if (result) {
-      log.debug(
-          "Current time {} is within window of last discount {} + {}ms",
-          effectiveCurrentTime,
+      log.info(
+          "Current time {} is within window of last discount {} + {}ms. Time remaining: {}ms ({}s)",
+          currentTime,
           lastDiscountTime,
+          config.getWindowDurationMs(),
+          timeRemaining,
+          timeRemaining / 1000);
+    } else {
+      log.info(
+          "Discount window expired. Last discount: {}, current time: {}, window duration: {}ms",
+          lastDiscountTime,
+          currentTime,
           config.getWindowDurationMs());
     }
     return result;

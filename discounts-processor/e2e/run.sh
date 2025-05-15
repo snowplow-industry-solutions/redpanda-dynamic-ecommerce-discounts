@@ -33,8 +33,13 @@ check_npm_install() {
 
 main() {
   check_npm_install
-  log "$GREEN" "Running: node index.js $*"
-  node index.js "$@"
+  if [ "${1:-}" != now ]; then
+    log "$GREEN" "Running: node index.js $*"
+    node index.js "$@"
+  else
+    shift
+    node send-now.js "$@"
+  fi
 }
 
 main "$@"

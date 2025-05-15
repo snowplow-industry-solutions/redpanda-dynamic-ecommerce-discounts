@@ -1,1 +1,3 @@
 node_modules/
+# SpecStory explanation file
+.specstory/.what-is-this.md
