@@ -2,7 +2,7 @@ ifdef::env-github[]
 https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/docs/main/README.html[Open README.html]
 endif::env-github[]
 ifndef::env-github[]
-= Dynamic Ecommerce Discounts with Redpanda
+= Dynamic Discounts in E-commerce
 Paulo Jerônimo
 include::common/head.adoc[]
 

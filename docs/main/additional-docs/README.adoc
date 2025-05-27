@@ -3,11 +3,28 @@
 
 The documentation for this project is designed to be modular, just like all of its code.
 Therefore, this topic serves as a summary to help you find these additional documents.
-You can always run a `find . -name README.sh` command from the project root to locate all the scripts that generates additional documents.
 
-Anyway, here are links to the additional documents:
+****
+. [[devcontainer-doc]] *devcontainer-doc -> .devcontainer/README.adoc* +
+link:../../.devcontainer/README{outfilesuffix}[DevContainers Configuration^]
+. [[docker-doc]] *docker-doc -> docker/README.adoc* +
+link:../../docker/README{outfilesuffix}[Some docker commands used in this project^]
+. [[e2e-doc]] *e2e-doc -> scripts/e2e/README.adoc* +
+link:../../scripts/e2e/README{outfilesuffix}[End-to-End (E2E) Testing^]
+. [[discounts-processor-doc]] *discounts-processor-doc -> discounts-processor/README.adoc* +
+link:../../discounts-processor/README{outfilesuffix}[Testing the Discounts Processor Implementation^] +
+. [[schemas-doc]] *schemas-doc -> schemas/README.adoc* +
+link:../../schemas/README{outfilesuffix}[Schema implementation and testing^]
+****
 
-* [[discounts-processor-doc]] *discounts-processor-doc*: link:../../discounts-processor/README{outfilesuffix}[Discounts Processor Implementation]
-* [[docker-doc]] *docker-doc*: link:../../docker/README{outfilesuffix}[Some docker commands used in this project]
-* [[devcontainer-doc]] *devcontainer-doc*: link:../../.devcontainer/README{outfilesuffix}[DevContainers Configuration]
-* [[schemas-doc]] *schema-doc*: link:../../schemas/README{outfilesuffix}[Schema implementation and testing]
+[TIP]
+====
+You can always run this command in the root of the project:
+
+[,console]
+----
+$ find . -name README.sh
+----
+
+It will locate all the scripts that generates additional documents.
+====

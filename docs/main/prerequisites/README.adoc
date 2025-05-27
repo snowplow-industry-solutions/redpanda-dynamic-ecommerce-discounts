@@ -1,10 +1,10 @@
-= Prerequisites
+= Prerequisites for
 
 :leveloffset: +1
 
-include::running-with-docker/README.adoc[]
+include::running-with-devcontainer/README.adoc[]
 
 <<<
-include::running-with-devcontainer/README.adoc[]
+include::running-with-docker/README.adoc[]
 
 :leveloffset: -1

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.23">
+<meta name="author" content="Paulo Jerônimo">
+<title>Testing the Discounts Processor Implementation</title>
+<link rel="stylesheet" href="./README.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="./rouge-github.css">
+</head>
+<body class="article toc2 toc-left">
+<div id="header">
+<h1>Testing the Discounts Processor Implementation</h1>
+<div class="details">
+<span id="author" class="author">Paulo Jerônimo</span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#testing">1. Testing</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph text-center">
+<p><strong><a href="README.pdf">PDF version</a></strong><br>
+<strong>Last updated: 2025-05-27 11:54:48 -0300</strong><br>
+<strong>Last commit: 3a32aa3</strong></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="testing"><a class="anchor" href="#testing"></a>1. Testing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Assuming that you are in this directory (<code>discounts-processor</code>), to test this backend you will need to open some terminals.</p>
+</div>
+<div class="paragraph">
+<p>In my case, since I love to use <a href="https://github.com/tmux/tmux/" target="_blank" rel="noopener">Tmux</a> I&#8217;ll open it with this command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>tmux new-session <span class="nt">-d</span> <span class="se">\;</span> send-keys <span class="s2">"less README.adoc"</span> C-m <span class="se">\;</span> split-window <span class="nt">-v</span> <span class="se">\;</span> split-window <span class="nt">-v</span> <span class="se">\;</span> <span class="k">select</span><span class="nt">-pane</span> <span class="nt">-t</span> 0 <span class="se">\;</span> attach</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will open a window with three panes:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>The first one will keep showping this document.</p>
+</li>
+<li>
+<p>The second pane (in the middle) I&#8217;ll use to show the logs for the disconts-processor container.</p>
+</li>
+<li>
+<p>The last pane (below in the screen) I&#8217;ll use to execute the tests.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>You don&#8217;t need to use <a href="https://github.com/tmux/tmux/" target="_blank" rel="noopener">Tmux</a> if you are unfamiliar with it.
+Just open three terminals (one to see this doc plus other two).</p>
+</li>
+<li>
+<p>If you are using Tmux, the combination prefix key (<span class="keyseq"><kbd>Ctrl</kbd>+<kbd>b</kbd></span>) plus <code>M</code> can be useful to enable or disable the mouse support.</p>
+</li>
+</ol>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>So, in the terminal on the middle, type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./test.sh reconfigure discount-event-sender <span class="nb">false</span>
+<span class="gp">$</span><span class="w"> </span>./test.sh start-services</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the lower terminal opened, type:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./test.sh run SingleProduct
+<span class="gp">$</span><span class="w"> </span>./test.sh restart-services
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span>./test.sh run MultiProduct
+<span class="gp">$</span><span class="w"> </span>./test.sh restart-services
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span>./test.sh run MostViewedMultipleViewsPerProduct
+<span class="gp">$</span><span class="w"> </span>./test.sh restart-services
+<span class="go">
+</span><span class="gp">$</span><span class="w"> </span><span class="c"># For the following test, check if the event is producted in Redpanda Console manually.</span>
+<span class="gp">$</span><span class="w"> </span>./test.sh run MostViewedMultipleViewsPerProduct now
+<span class="gp">$</span><span class="w"> </span>./test.sh stop-services</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After all these tests, remember to reconfigure discount-event-sender again:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>./test.sh reconfigure discount-event-sender <span class="nb">true</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That&#8217;s it!</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>

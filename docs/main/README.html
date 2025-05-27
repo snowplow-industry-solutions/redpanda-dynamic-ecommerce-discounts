@@ -6,14 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
 <meta name="author" content="Paulo Jerônimo">
-<title>Dynamic Ecommerce Discounts with Redpanda</title>
+<title>Dynamic Discounts in E-commerce</title>
 <link rel="stylesheet" href="./README.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <link rel="stylesheet" href="./rouge-github.css">
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Dynamic Ecommerce Discounts with Redpanda</h1>
+<h1>Dynamic Discounts in E-commerce</h1>
 <div class="details">
 <span id="author" class="author">Paulo Jerônimo</span><br>
 </div>
@@ -22,21 +22,27 @@
 <ul class="sectlevel1">
 <li><a href="#introduction">1. Introduction</a>
 <ul class="sectlevel2">
-<li><a href="#business-value">1.1. The busissess value of this solution</a></li>
+<li><a href="#business-value">1.1.  The business value of this solution</a></li>
 <li><a href="#technologies-used">1.2. Technologies used</a></li>
+<li><a href="#license">1.3. LICENSE</a></li>
 </ul>
 </li>
-<li><a href="#architecture">2. Architecture</a></li>
-<li><a href="#prerequisites">3. Prerequisites</a>
+<li><a href="#architecture">2. Architecture</a>
 <ul class="sectlevel2">
-<li><a href="#running-with-docker">3.1. Running with Docker</a></li>
-<li><a href="#running-with-devcontainer">3.2. Running with DevContainers</a>
-<ul class="sectlevel3">
-<li><a href="#inside-github-codespaces">3.2.1. Inside GitHub Codespaces</a></li>
-<li><a href="#locally-inside-vscode">3.2.2. Locally, inside VSCode</a></li>
-<li><a href="#locally-with-devcontainer-cli">3.2.3. Locally, With DevContainer CLI</a></li>
+<li><a href="#architecture-diagram">2.1. Diagram</a></li>
+<li><a href="#architecture-components">2.2. Components</a></li>
 </ul>
 </li>
+<li><a href="#prerequisites-for">3. Prerequisites for</a>
+<ul class="sectlevel2">
+<li><a href="#running-with-devcontainer">3.1. Running with DevContainers</a>
+<ul class="sectlevel3">
+<li><a href="#inside-github-codespaces">3.1.1. Inside GitHub Codespaces</a></li>
+<li><a href="#locally-inside-vscode">3.1.2. Locally, inside VSCode</a></li>
+<li><a href="#locally-with-devcontainer-cli">3.1.3. Locally, with DevContainer CLI</a></li>
+</ul>
+</li>
+<li><a href="#running-with-docker">3.2. Running with Docker</a></li>
 </ul>
 </li>
 <li><a href="#steps">4. Steps (to run this application as is)</a>
@@ -57,12 +63,15 @@
 <li><a href="#references">6. References</a></li>
 <li><a href="#additional-docs">7. Additional docs</a></li>
 <li><a href="#demo-videos">8. Demo videos</a></li>
-<li><a href="#next-steps">9. Next steps</a>
+<li><a href="#next-steps">9. Ideas for the next steps</a>
 <ul class="sectlevel2">
-<li><a href="#next-steps-fixing-bugs">9.1. Fix some known bugs and do some refactoring</a></li>
-<li><a href="#next-steps-redpanda-connect">9.2. Development of a discounts processor version using Redpanda Connect</a></li>
-<li><a href="#next-steps-terraform-deployment">9.3. Deployment via Terraform in a cloud, such as AWS (for example)</a></li>
-<li><a href="#next-steps-presentation-in-front-end">9.4. Presentation of the discount event directly on the front end</a></li>
+<li><a href="#next-steps-fixing-bugs">Do some refactoring</a></li>
+<li><a href="#next-steps-redpanda-connect">Develop a discounts processor version using Redpanda Connect</a></li>
+<li><a href="#next-steps-apache-flink">Develop a discounts processor version using Apache Flink</a></li>
+<li><a href="#next-steps-terraform-deployment">Deploy in AWS, via Terraform</a></li>
+<li><a href="#next-steps-presentation-in-front-end">Show the discount event directly in the front end</a></li>
+<li><a href="#next-steps-testcontainers">Use TestContainers to implement E2E testing</a></li>
+<li><a href="#next-steps-chat-with-author">Chat with Paulo Jerônimo (for more ideas)</a></li>
 </ul>
 </li>
 </ul>
@@ -73,8 +82,8 @@
 <div class="sectionbody">
 <div class="paragraph text-center">
 <p><strong><a href="README.pdf">PDF version</a></strong><br>
-<strong>Last updated: 2025-05-04 19:03:04 -0300</strong><br>
-<strong>Last commit: 78b7216</strong></p>
+<strong>Last updated: 2025-05-25 11:11:26 -0300</strong><br>
+<strong>Last commit: 08ef1d3</strong></p>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
@@ -83,80 +92,96 @@
 <h2 id="introduction"><a class="anchor" href="#introduction"></a>1. Introduction</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="business-value"><a class="anchor" href="#business-value"></a>1.1. The busissess value of this solution</h3>
+<h3 id="business-value"><a class="anchor" href="#business-value"></a>1.1. <a id="business-requirements"></a> The business value of this solution</h3>
 <div class="paragraph">
-<p>This solution allows <a href="https://snowplow.io">Snowplow</a> users to learn how their components can be integrated with e-commerce solutions to offer discounts dynamically when detecting an hesitant shopper.</p>
+<p>This solution accelerator allows <a href="https://snowplow.io" target="_blank" rel="noopener">Snowplow</a> users to learn how their components can be integrated with e-commerce solutions to offer discounts dynamically when detecting an hesitant shopper.</p>
 </div>
 <div class="paragraph">
-<p>A hesitant shopper is one who has shown a certain amount of interest in a given product without
-adding it to cart.</p>
+<p>A hesitant shopper is one who has shown a certain amount of interest in a given product without adding it to cart.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+This is one of <a href="#snowplow-solution-accelerators">Snowplow’s solution accelerators</a> (the second one developed by Paulo Jerônimo @ <a href="https://oso.sh" target="_blank" rel="noopener">OSO</a>).
+<a href="#snowplow-solution-accel1">Check the first one (snowplow-solution-accel1)</a>.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
-<p>This <strong>solution acclerator</strong> implements two complementary ways of offering discounts.</p>
+<p>This solution implements two complementary ways of offering discounts:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
+<div class="ulist">
+<ul>
 <li>
 <p><a id="the-first-processor"></a> The first way to get a discount on a product is to <strong>view it for more than 90 seconds in a 5-minute window</strong>.</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+<div class="ulist">
+<ul>
 <li>
 <p>In the <a href="#architecture">Architecture</a> section, the <a href="#ContinuousViewProcessor">[ContinuousViewProcessor]</a> implements this feature.</p>
 </li>
-</ol>
+</ul>
 </div>
 </li>
 <li>
 <p><a id="the-second-processor"></a> The second way to get a discount on a product is to <strong>view it more than five times in the same 5-minute window</strong>.</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
+<div class="ulist">
+<ul>
 <li>
 <p>In the <a href="#architecture">Architecture</a> section, the <a href="#MostViewedProcessor">[MostViewedProcessor]</a> implements this feature.</p>
 </li>
-</ol>
+</ul>
 </div>
 </li>
-</ol>
+</ul>
 </div>
 <div id="the-event-back-to-snowplow" class="paragraph">
 <p>After the discount event is generated, one of the situations that can occur in the solution implemented by this accelerator is that it emits the discount event back to the Snowplow pipeline. In the <a href="#architecture">Architecture</a>, this is done by the <a href="#DiscountEventSender">[DiscountEventSender]</a> component.</p>
 </div>
 <div class="paragraph">
-<p>In addition to offering this possibility, the processors of this implementation already record the discount event in a <a href="https://www.redpanda.com/">Redpanda</a> topic, allowing any consumer with access to this topic to consume it.</p>
+<p>In addition to offering this possibility, the processors of this implementation already record the discount event in a <a href="https://www.redpanda.com/" target="_blank" rel="noopener">Redpanda</a> topic, allowing any consumer with access to this topic to consume it.</p>
 </div>
 <div class="paragraph">
-<p>When a discount event is available in the Snowplow pipleline, it can be consumed in some other ways, including:</p>
+<p>When a discount event is available in the Snowplow pipeline, it can be consumed in some other ways, including:</p>
 </div>
-<div class="olist arabic">
-<ol class="arabic">
+<div class="ulist">
+<ul>
 <li>
-<p>From the data warehouse, use the <a href="https://developers.getcensus.com/dataset-api/guide">Census Dataset API</a> to make the discount available to the front end application</p>
+<p>From the data warehouse, use the <a href="https://developers.getcensus.com/dataset-api/guide" target="_blank" rel="noopener">Census Dataset API</a> to make the discount available to the front end application</p>
 </li>
 <li>
-<p>Using Snowbridge to send the discount to <a href="https://www.braze.com/">Braze</a> for live couponing.</p>
+<p>Using Snowbridge to send the discount to <a href="https://www.braze.com/" target="_blank" rel="noopener">Braze</a> for live couponing.</p>
 </li>
-</ol>
+</ul>
 </div>
 <div class="paragraph">
 <p>Detecting high-interest products without purchases is a popular real-time use case for e-commerce.</p>
 </div>
-<div class="paragraph">
-<p>Although the above definitions seem simple, <strong><a href="#discounts-processor-doc">implementing dynamic discounts is not trivial (discounts-processor-doc)</a></strong>.</p>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph lead text-center">
+<p><strong><em>Although the above definitions seem simple, <a href="#discounts-processor-doc">implementing dynamic discounts are not a trivial task (read more in discounts-processor-doc)</a></em></strong>.</p>
+</div>
+</div>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
 <div class="sect2">
 <h3 id="technologies-used"><a class="anchor" href="#technologies-used"></a>1.2. Technologies used</h3>
 <div class="paragraph">
-<p>This project is a companion to the <a href="https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store">Example Next.js Ecommerce Store for Snowplow</a>.</p>
+<p>This project is a companion to the <a href="#ecommerce-nextjs-example-store">[ecommerce-nextjs-example-store]</a>.</p>
 </div>
 <div class="paragraph">
-<p>It allows you to test this it locally, using <a href="https://www.localstack.cloud/">LocalStack</a>, <span class="line-through"><a href="#next-steps-terraform-deployment">in the AWS&#8217;s cloud (via Terraform)</a></span> or <a href="https://containers.dev">Development Containers</a> (read <a href="#localstack-devcontainers">[localstack-devcontainers]</a>)).</p>
+<p>It allows you to test it locally, using <a href="https://containers.dev" target="_blank" rel="noopener">Development Containers</a> or <a href="https://docs.docker.com/compose/" target="_blank" rel="noopener">Docker Compose</a>.</p>
 </div>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph lead text-center">
-<p>The development of this project can be done entirely in the cloud because it uses <a href="https://containers.dev">Development Containers</a> in <a href="https://github.com/features/codespaces">GitHub Codespaces</a>.
+<p>The development of this project can be done entirely in the cloud because it uses <a href="https://containers.dev" target="_blank" rel="noopener">Development Containers</a> in <a href="https://github.com/features/codespaces" target="_blank" rel="noopener">GitHub Codespaces</a>.
 This way, you only need a browser to get started!<br>
 <br>
 This solution was designed so developers can quickly and easily set up their environment to create new features or test existing ones.<br>
@@ -166,10 +191,54 @@ This solution was designed so developers can quickly and easily set up their env
 </div>
 </div>
 <div class="paragraph">
-<p>What this project does to complement the existence of <a href="#ecommerce-nextjs-example-store">[ecommerce-nextjs-example-store]</a> is to create the entire infrastructure that allows it to be executed <a href="#running-with-docker">via Docker Compose</a>, or <a href="#running-with-devcontainer">DevContainer + Docker Compose</a> and, ultimately, meet the business requirements.</p>
+<p>What this project does to complement the existence of <a href="#ecommerce-nextjs-example-store">[ecommerce-nextjs-example-store]</a> is to create the entire infrastructure that allows it to be executed <a href="#running-with-docker">via Docker Compose</a>, or <a href="#running-with-devcontainer">DevContainer + Docker Compose</a> and, ultimately, meet the <a href="#business-requirements">business requirements</a>.</p>
 </div>
 <div class="paragraph">
-<p>So, this solution integrates <a href="https://www.localstack.cloud/">LocalStack</a> with <a href="https://snowplow.io">Snowplow</a>, <a href="https://www.redpanda.com/">Redpanda</a> and implements the processors using <a href="https://kafka.apache.org/documentation/streams">Kafka Streams</a>.</p>
+<p>This solution integrates <a href="https://www.localstack.cloud/" target="_blank" rel="noopener">LocalStack</a> with <a href="https://snowplow.io" target="_blank" rel="noopener">Snowplow</a>, <a href="https://www.redpanda.com/" target="_blank" rel="noopener">Redpanda</a> and implements the processors using <a href="https://kafka.apache.org/documentation/streams" target="_blank" rel="noopener">Kafka Streams</a>.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="title">So, in short, these are the ways to get started:</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Using <a href="https://github.com/features/codespaces" target="_blank" rel="noopener">GitHub Codespaces</a> &#8592; <strong>the easiest way</strong>.</p>
+</li>
+<li>
+<p>Using your own computer:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Through <a href="https://containers.dev" target="_blank" rel="noopener">Development Containers</a> (read <a href="#running-with-devcontainer">Running with DevContainers</a> section) &#8592; <strong>prefer this way</strong>.</p>
+</li>
+<li>
+<p>Through <a href="https://docs.docker.com/compose/" target="_blank" rel="noopener">Docker Compose</a> (read <a href="#running-with-docker-compose">[running-with-docker-compose]</a> section).</p>
+</li>
+</ol>
+</div>
+</li>
+</ol>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="license"><a class="anchor" href="#license"></a>1.3. LICENSE</h3>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph lead text-center">
+<p><strong><span class="underline">This is an open-source project</span></strong>.<br>
+<br>
+Check the details in the <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/LICENSE" target="_blank" rel="noopener">LICENSE</a> file.</p>
+</div>
+</div>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
@@ -178,16 +247,42 @@ This solution was designed so developers can quickly and easily set up their env
 <div class="sect1">
 <h2 id="architecture"><a class="anchor" href="#architecture"></a>2. Architecture</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="architecture-diagram"><a class="anchor" href="#architecture-diagram"></a>2.1. Diagram</h3>
 <div class="paragraph">
-<p><span class="image"><img src="images/architecture.png" alt="architecture"></span></p>
+<p><br>
+<br>
+<br>
+<span class="image"><img src="images/architecture.png" alt="architecture"></span></p>
 </div>
+<div class="paragraph">
+<p><br>
+<br></p>
+</div>
+<div class="paragraph lead text-center">
+<p><strong>All details are in the next section</strong>.</p>
+</div>
+<div style="page-break-after: always;"></div>
+</div>
+<div class="sect2">
+<h3 id="architecture-components"><a class="anchor" href="#architecture-components"></a>2.2. Components</h3>
 <div class="ulist">
 <ul>
 <li>
-<p><a id="ecommerce-nextjs-example-store"></a> The <strong><a href="https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store">ecommerce-nextjs-example-store</a></strong> is a Next.js application that generates tracking events.</p>
+<p><a id="ecommerce-nextjs-example-store"></a> The <strong>ecommerce-nextjs-example-store</strong> is a <a href="https://nextjs.org/" target="_blank" rel="noopener">Next.js</a> application that generates tracking events.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>This application was developed by Snowplow&#8217;s team before the creation of this solution accelerator.</p>
 </li>
 <li>
-<p><a id="stream-collector"></a> The <strong>stream-collector</strong> component sends these events via Kinesis to the <strong><a href="#snowbridge">[snowbridge]</a></strong> component.</p>
+<p><a href="https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store" class="bare">https://github.com/snowplow-industry-solutions/ecommerce-nextjs-example-store</a>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><a id="stream-collector"></a> The <strong>stream-collector</strong> component sends these events via <a href="https://aws.amazon.com/kinesis/" target="_blank" rel="noopener">Kinesis</a> to the <strong><a href="#snowbridge">[snowbridge]</a></strong> component.</p>
 </li>
 <li>
 <p><a id="snowbridge"></a> The <strong>snowbridge</strong> component enriches these events, inserts more information (via <strong><a href="#enrich">[enrich]</a></strong> component), and sends them to <a href="#redpanda">[redpanda]</a>.</p>
@@ -203,7 +298,7 @@ This solution was designed so developers can quickly and easily set up their env
 </div>
 </li>
 <li>
-<p><a id="redpanda"></a> The <strong>redpanda</strong> broker is receives the events from <a href="#snowbridge">[snowbridge]</a>.</p>
+<p><a id="redpanda"></a> The <strong>redpanda</strong> broker receives the events from <a href="#snowbridge">[snowbridge]</a> in the input-topic (<code>snowplow-enriched-good</code>). The events can be from two types: <code>product_view</code> or <code>page_ping</code>.</p>
 </li>
 <li>
 <p>For the following components, read details in the <a href="#discounts-processor-doc">[discounts-processor-doc]</a>:</p>
@@ -216,11 +311,25 @@ This solution was designed so developers can quickly and easily set up their env
 <p><a id="MostViewedProcessor"></a> The <strong>MostViewedProcessor</strong> component implements <a href="#the-second-processor">the second processor</a>.</p>
 </li>
 <li>
+<p>Both processors generates a discount event in the output-topic (<code>shopper-discounts</code>).</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The JSON schema of this event is defined in the file:<br>
+<code>schemas/com.snowplow/shopper_discount_applied/jsonschema/1-0-0</code>.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
 <p><a id="DiscountEventSender"></a> The <strong>DiscountEventSender</strong> component implements <a href="#the-event-back-to-snowplow">the way to send an event back to Snowplow</a>.</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Please, also read the additional <a href="#schemas-doc">[schemas-doc]</a>.</p>
+<p>Basically, it sends the discount event back to Snowplow by sending a POST request to <a href="#stream-collector">[stream-collector]</a>.</p>
+</li>
+<li>
+<p>Please, read the additional <a href="#schemas-doc">[schemas-doc]</a>.</p>
 </li>
 </ul>
 </div>
@@ -236,7 +345,7 @@ This solution was designed so developers can quickly and easily set up their env
 <div class="ulist">
 <ul>
 <li>
-<p><a id="compose-localstack"></a> The infrastructure to provide the AWS resources locally (Kinesis, DyanmoDB, etc) is created by <a href="https://www.localstack.cloud/">LocalStack</a>, in the file <code>compose.localstack.yaml</code>.</p>
+<p><a id="compose-localstack"></a> The infrastructure to provide the AWS resources locally (<a href="https://aws.amazon.com/kinesis/" target="_blank" rel="noopener">Kinesis</a>, <a href="https://aws.amazon.com/dynamodb/" target="_blank" rel="noopener">DynamoDB</a>, etc) is created by <a href="https://www.localstack.cloud/" target="_blank" rel="noopener">LocalStack</a>, in the file <code>compose.localstack.yaml</code>.</p>
 </li>
 <li>
 <p><a id="compose-snowplow"></a> The Snowplow&#8217;s components (<strong><a href="#stream-collector">[stream-collector]</a></strong>, <strong><a href="#enrich">[enrich]</a></strong>, <strong><a href="#snowbridge">[snowbridge]</a> and <a href="#iglu-server">[iglu-server]</a></strong>) are defined in the file <code>compose.snowplow.yaml</code>.</p>
@@ -245,134 +354,39 @@ This solution was designed so developers can quickly and easily set up their env
 <p><a id="compose-repanda"></a> Redpanda&#8217;s infrastructure is provided by the file <code>compose.redpanda.yaml</code>.</p>
 </li>
 <li>
-<p><a id="compose-ecommerce-nextjs"></a> The fron end application (<strong><a href="#ecommerce-nextjs-example-store">[ecommerce-nextjs-example-store]</a></strong>) is defined in the file <code>compose.ecommerce-nextjs.yaml</code>.</p>
+<p><a id="compose-ecommerce-nextjs"></a> The front-end application (<strong><a href="#ecommerce-nextjs-example-store">[ecommerce-nextjs-example-store]</a></strong>) is defined in the file <code>compose.ecommerce-nextjs.yaml</code>.</p>
 </li>
 <li>
-<p><a id="compose-discounts-processor"></a> The <strong><a href="#ContinuousViewProcessor">[ContinuousViewProcessor]</a></strong>, <strong><a href="#MostViewedProcessor">[MostViewedProcessor]</a></strong> and <strong><a href="#DiscountEventSender">[DiscountEventSender]</a></strong> components executed by <a href="https://kafka.apache.org/documentation/streams">Kafka Streams</a> which executes a Java application running by Docker through the configuration in the file <code>compose.discounts-processor.yaml</code>.</p>
+<p><a id="compose-discounts-processor"></a> The <strong><a href="#ContinuousViewProcessor">[ContinuousViewProcessor]</a></strong>, <strong><a href="#MostViewedProcessor">[MostViewedProcessor]</a></strong> and <strong><a href="#DiscountEventSender">[DiscountEventSender]</a></strong> components executed by <a href="https://kafka.apache.org/documentation/streams" target="_blank" rel="noopener">Kafka Streams</a> which executes a Java application running by Docker through the configuration in the file <code>compose.discounts-processor.yaml</code>.</p>
 </li>
 </ul>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
 </div>
+</div>
 <div class="sect1">
-<h2 id="prerequisites"><a class="anchor" href="#prerequisites"></a>3. Prerequisites</h2>
+<h2 id="prerequisites-for"><a class="anchor" href="#prerequisites-for"></a>3. Prerequisites for</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="running-with-docker"><a class="anchor" href="#running-with-docker"></a>3.1. Running with Docker</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Make sure you have this tools installed:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="https://www.gnu.org/software/bash/">Bash</a> (version 5.1 or higher). You will run it in a terminal on your macOS, Linux or Windows (in a WSL2 environment).</p>
-</li>
-<li>
-<p><a href="https://git-scm.com/">Git</a>.</p>
-</li>
-<li>
-<p><a href="https://www.docker.com/">Docker</a> (with <code>docker compose</code> support).</p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p><a id="required-tools"></a> Even though <a href="#docker-doc">you can run most of the demonstrations for this project using Docker Compose (see docker-doc)</a>, in a test environment, in development, or to generate the documentation you are reading for this project, you will need to have a few more tools installed. To run some scripts provided by this project you will need some additional tools:</p>
-<div class="olist loweralpha">
-<ol class="loweralpha" type="a">
-<li>
-<p><a href="https://stedolan.github.io/jq/">jq</a>, <a href="https://github.com/mikefarah/yq">yq</a></p>
-</li>
-<li>
-<p><a href="https://github.com/paulojeronimo/docker-asciidoctor-builder">docker-asciidoctor-builder</a></p>
-</li>
-</ol>
-</div>
-</li>
-<li>
-<p>To create a full development environment, you will also need to install:</p>
-<div class="olist lowerroman">
-<ol class="lowerroman" type="i">
-<li>
-<p>Java 21</p>
-</li>
-<li>
-<p>Node.js 18</p>
-</li>
-<li>
-<p>Python 3.12</p>
-</li>
-</ol>
-</div>
-</li>
-</ol>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-So, here is <strong>the best tip to run this project</strong>: its much more convenient to use the <a href="https://containers.dev">Development Containers</a> to create a development environment. So, check <a href="#running-with-devcontainer">Running with DevContainers</a>.
-</td>
-</tr>
-</table>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Clone this project with Git and cd to it.</p>
-</li>
-<li>
-<p><a id="misc-setup"></a> Execute this command (<strong>&#8592; misc-setup</strong>):</p>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="nb">source </span>scripts/misc/setup.sh</code></pre>
-</div>
-</div>
-</li>
-<li>
-<p>Create a file <code>docker/.env</code> (from <code>docker/.env.sample</code>) and configure the AWS variables on it.</p>
-</li>
-</ol>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-You don&#8217;t need Java or Node.js configured on your machine to follow the steps below.
-<strong>You only need a Bash terminal, a Docker installation, and some <a href="#required-tools">required tools</a>.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div style="page-break-after: always;"></div>
-</div>
-<div class="sect2">
-<h3 id="running-with-devcontainer"><a class="anchor" href="#running-with-devcontainer"></a>3.2. Running with DevContainers</h3>
+<h3 id="running-with-devcontainer"><a class="anchor" href="#running-with-devcontainer"></a>3.1. Running with DevContainers</h3>
 <div class="paragraph">
 <p>Watch the video <a href="#introduction-video">[introduction-video]</a>.</p>
 </div>
 <div class="sect3">
-<h4 id="inside-github-codespaces"><a class="anchor" href="#inside-github-codespaces"></a>3.2.1. Inside <a href="https://github.com/features/codespaces">GitHub Codespaces</a></h4>
+<h4 id="inside-github-codespaces"><a class="anchor" href="#inside-github-codespaces"></a>3.1.1. Inside <a href="https://github.com/features/codespaces" target="_blank" rel="noopener">GitHub Codespaces</a></h4>
 <div class="paragraph">
 <p>Watch the video <a href="#introduction-video">[introduction-video]</a>.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="locally-inside-vscode"><a class="anchor" href="#locally-inside-vscode"></a>3.2.2. Locally, inside <a href="https://code.visualstudio.com/">VSCode</a></h4>
+<h4 id="locally-inside-vscode"><a class="anchor" href="#locally-inside-vscode"></a>3.1.2. Locally, inside <a href="https://code.visualstudio.com/" target="_blank" rel="noopener">VSCode</a></h4>
 <div class="paragraph">
 <p>Watch the video <a href="#introduction-video">[introduction-video]</a>.</p>
 </div>
 </div>
 <div class="sect3">
-<h4 id="locally-with-devcontainer-cli"><a class="anchor" href="#locally-with-devcontainer-cli"></a>3.2.3. Locally, With <a href="https://github.com/devcontainers/cli">DevContainer CLI</a></h4>
+<h4 id="locally-with-devcontainer-cli"><a class="anchor" href="#locally-with-devcontainer-cli"></a>3.1.3. Locally, with <a href="https://github.com/devcontainers/cli" target="_blank" rel="noopener">DevContainer CLI</a></h4>
 <div class="paragraph">
 <p><strong>Step 1 &#8594;</strong> Install the <code>devcontainer</code> command:</p>
 </div>
@@ -399,10 +413,94 @@ You don&#8217;t need Java or Node.js configured on your machine to follow the st
 </div>
 </div>
 <div class="paragraph">
-<p>Please, see more details about how <a href="https://containers.dev">Development Containers</a> is configured in this project by viewing its <a href="#devcontainer-doc">README file (devcontainer-doc)</a>.</p>
+<p>Please, see more details about how <a href="https://containers.dev" target="_blank" rel="noopener">Development Containers</a> is configured in this project by viewing its <a href="#devcontainer-doc">README file (devcontainer-doc)</a>.</p>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="running-with-docker"><a class="anchor" href="#running-with-docker"></a>3.2. Running with Docker</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Make sure you have this tools installed:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p><a href="https://www.gnu.org/software/bash/" target="_blank" rel="noopener">Bash</a> (version 5.1 or higher). You will run it in a terminal on your macOS, Linux or Windows (in a WSL2 environment).</p>
+</li>
+<li>
+<p><a href="https://git-scm.com/" target="_blank" rel="noopener">Git</a>.</p>
+</li>
+<li>
+<p><a href="https://www.docker.com/" target="_blank" rel="noopener">Docker</a> (with <code>docker compose</code> support).</p>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p><a id="required-tools"></a> Even though <a href="#docker-doc">you can run most of the demonstrations for this project using Docker Compose (see docker-doc)</a>, in a test environment, in development, or to generate the documentation you are reading for this project, you will need to have a few more tools installed. To run some scripts provided by this project you will need some additional tools like <a href="https://stedolan.github.io/jq/" target="_blank" rel="noopener">jq</a>, <a href="https://github.com/mikefarah/yq" target="_blank" rel="noopener">yq</a>, <a href="https://manpages.debian.org/testing/moreutils/sponge.1.en.html" target="_blank" rel="noopener">sponge</a>, and <a href="https://github.com/paulojeronimo/docker-asciidoctor-builder" target="_blank" rel="noopener">docker-asciidoctor-builder</a>.</p>
+</li>
+<li>
+<p>To create a full development environment, you will also need to install:</p>
+<div class="olist loweralpha">
+<ol class="loweralpha" type="a">
+<li>
+<p>Java 21.</p>
+</li>
+<li>
+<p>Node.js 18.</p>
+</li>
+<li>
+<p>Python 3.12.</p>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+So, here is the best tip to run this project: <strong>it is much more convenient to use <a href="https://containers.dev" target="_blank" rel="noopener">Development Containers</a> to setup a development environment because, by creating one, you will have all the required tools installed automatically (inside a docker container)</strong>. So, check <a href="#running-with-devcontainer">Running with DevContainers</a>.
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ol>
+</div>
+</li>
+<li>
+<p>Clone this project with Git and cd to it.</p>
+</li>
+<li>
+<p><a id="misc-setup"></a> Execute this command (<strong>&#8592; misc-setup</strong>):</p>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span><span class="nb">source </span>scripts/misc/setup.sh</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Create a file <code>docker/.env</code> (from <code>docker/.env.sample</code>) and configure the AWS variables on it.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="title">Again&#8230;&#8203;</div>
+<div class="paragraph">
+<p><strong>You don&#8217;t need Java or Node.js configured on your machine if you just want to follow the steps to run the project. You only need a Bash terminal, a Docker installation, and some <a href="#required-tools">required tools</a>.</strong></p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div style="page-break-after: always;"></div>
 </div>
 </div>
 </div>
@@ -455,7 +553,7 @@ snowplow</span></code></pre>
 </div>
 </li>
 <li>
-<p>By adding the "-services" to one of the options listed above, you will start only the services listed in the file <code>copose.&lt;service&gt;.yaml</code>.
+<p>By adding the "-services" to one of the options listed above, you will start only the services listed in the file <code>compose.&lt;service&gt;.yaml</code>.
 So, this will start only the redpanda services (services listed in <code>compose.redpanda.yaml</code>):</p>
 <div class="listingblock">
 <div class="content">
@@ -472,7 +570,7 @@ So, this will start only the redpanda services (services listed in <code>compose
 </div>
 </li>
 <li>
-<p>Finally, <strong><em>if you can don&#8217;t want to use this script, you can change your current directory to <code>docker</code> and use the <code>docker</code> commands you alredy know</em></strong>.
+<p>Finally, <strong><em>if you can don&#8217;t want to use this script, you can change your current directory to <code>docker</code> and use the <code>docker</code> commands you already know</em></strong>.
 <a href="../../docker/README.html">Check this README file</a>.</p>
 </li>
 </ol>
@@ -567,22 +665,32 @@ So, this will start only the redpanda services (services listed in <code>compose
 </li>
 </ul>
 </div>
+<div style="page-break-after: always;"></div>
 </div>
 <div class="sect2">
 <h3 id="step4"><a class="anchor" href="#step4"></a>Step 4 &#8594; Access the redpanda-console and check the generated events</h3>
 <div class="paragraph">
-<p>After browsing the <a id="ecommerce-store"></a>, you can access the <a id="redpanda-console"></a> and check the generated events in the topic <code>snowplow-enriched-good</code>.
-See these images: <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/tree/main/docs/main/images/redpanda-1.png">redpanda-1.png</a>, <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/tree/main/docs/main/images/redpanda-2.png">redpanda-2.png</a>.</p>
+<p>After browsing the <a id="ecommerce-store"></a>, you can access the <a id="redpanda-console"></a> and check the generated events in the topic <code>snowplow-enriched-good</code>.</p>
 </div>
-<div class="paragraph">
-<p>You can explore the data format of these events in <a href="https://docs.snowplow.io/docs/fundamentals/canonical-event/understanding-the-enriched-tsv-format/">enriched TSV format</a>.
-In the <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/tree/main/scripts/raw-messages.sample">scripts/raw-messages.sample</a> directory, there are examples of the events recorded by Snowplow when they are transferred to Redpanda.
-These sample TSV files were created by running the script <a href="https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/tree/main/scripts/extract-snowplow-raw-messages.sh">extract-snowplow-raw-messages.sh</a>.
-Note: <em>these are not the events final format of the events sent from <a href="#snowbridge">[snowbridge]</a> component to <a href="#redpanda">[redpanda]</a></em>.</p>
+<div class="sidebarblock">
+<div class="content">
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Check the <a href="#e2e-doc">[e2e-doc]</a> to see how the steps from 1 to 4 are automated.
+</td>
+</tr>
+</table>
+</div>
+</div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="stepX"><a class="anchor" href="#stepX"></a>Step N &#8594; (optional) Use <a href="https://github.com/jesseduffield/lazydocker">LazyDocker</a> to monitor the containers and logs</h3>
+<h3 id="stepX"><a class="anchor" href="#stepX"></a>Step N &#8594; (optional) Use <a href="https://github.com/jesseduffield/lazydocker" target="_blank" rel="noopener">LazyDocker</a> to monitor the containers and logs</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>lazy.sh</code></pre>
@@ -647,7 +755,24 @@ Note: <em>these are not the events final format of the events sent from <a href=
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1"><a href="https://www.localstack.cloud/">LocalStack</a></dt>
+<dt class="hdlist1"><a href="https://snowplow.io" target="_blank" rel="noopener">Snowplow</a></dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="snowplow-solution-accelerators"></a> <a href="https://snowplow.io/solution-accelerators" target="_blank" rel="noopener">Snowplow Solution Accelerators</a></p>
+<div class="ulist">
+<ul>
+<li>
+<p><a id="snowplow-solution-accel1"></a> <a href="https://snowplow.io/solution-accelerators/kafka-live-viewer-profiles" target="_blank" rel="noopener">Kafka Live Viewer Profiles</a> <strong>&#8592; snowplow-solution-accel1</strong>.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</dd>
+<dt class="hdlist1"><a href="https://www.localstack.cloud/" target="_blank" rel="noopener">LocalStack</a></dt>
 <dd>
 <div class="ulist">
 <ul>
@@ -660,7 +785,7 @@ Note: <em>these are not the events final format of the events sent from <a href=
 </ul>
 </div>
 </dd>
-<dt class="hdlist1"><a href="https://www.redpanda.com/">Redpanda</a></dt>
+<dt class="hdlist1"><a href="https://www.redpanda.com/" target="_blank" rel="noopener">Redpanda</a></dt>
 <dd>
 <div class="ulist">
 <ul>
@@ -719,27 +844,57 @@ Note: <em>these are not the events final format of the events sent from <a href=
 <div class="sectionbody">
 <div class="paragraph">
 <p>The documentation for this project is designed to be modular, just like all of its code.
-Therefore, this topic serves as a summary to help you find these additional documents.
-You can always run a <code>find . -name README.sh</code> command from the project root to locate all the scripts that generates additional documents.</p>
+Therefore, this topic serves as a summary to help you find these additional documents.</p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a id="devcontainer-doc"></a> <strong>devcontainer-doc &#8594; .devcontainer/README.adoc</strong><br>
+<a href="../../.devcontainer/README.html" target="_blank" rel="noopener">DevContainers Configuration</a></p>
+</li>
+<li>
+<p><a id="docker-doc"></a> <strong>docker-doc &#8594; docker/README.adoc</strong><br>
+<a href="../../docker/README.html" target="_blank" rel="noopener">Some docker commands used in this project</a></p>
+</li>
+<li>
+<p><a id="e2e-doc"></a> <strong>e2e-doc &#8594; scripts/e2e/README.adoc</strong><br>
+<a href="../../scripts/e2e/README.html" target="_blank" rel="noopener">End-to-End (E2E) Testing</a></p>
+</li>
+<li>
+<p><a id="discounts-processor-doc"></a> <strong>discounts-processor-doc &#8594; discounts-processor/README.adoc</strong><br>
+<a href="../../discounts-processor/README.html" target="_blank" rel="noopener">Testing the Discounts Processor Implementation</a><br></p>
+</li>
+<li>
+<p><a id="schemas-doc"></a> <strong>schemas-doc &#8594; schemas/README.adoc</strong><br>
+<a href="../../schemas/README.html" target="_blank" rel="noopener">Schema implementation and testing</a></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>You can always run this command in the root of the project:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="console"><span class="gp">$</span><span class="w"> </span>find <span class="nb">.</span> <span class="nt">-name</span> README.sh</code></pre>
+</div>
 </div>
 <div class="paragraph">
-<p>Anyway, here are links to the additional documents:</p>
+<p>It will locate all the scripts that generates additional documents.</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p><a id="discounts-processor-doc"></a> <strong>discounts-processor-doc</strong>: <a href="../../discounts-processor/README.html">Discounts Processor Implementation</a></p>
-</li>
-<li>
-<p><a id="docker-doc"></a> <strong>docker-doc</strong>: <a href="../../docker/README.html">Some docker commands used in this project</a></p>
-</li>
-<li>
-<p><a id="devcontainer-doc"></a> <strong>devcontainer-doc</strong>: <a href="../../.devcontainer/README.html">DevContainers Configuration</a></p>
-</li>
-<li>
-<p><a id="schemas-doc"></a> <strong>schema-doc</strong>: <a href="../../schemas/README.html">Schema implementation and testing</a></p>
-</li>
-</ul>
+</td>
+</tr>
+</table>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
@@ -747,66 +902,92 @@ You can always run a <code>find . -name README.sh</code> command from the projec
 <div class="sect1">
 <h2 id="demo-videos"><a class="anchor" href="#demo-videos"></a>8. Demo videos</h2>
 <div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p><a id="introduction-video"></a> Getting started by creating a development environment on GitHub Codespaces <strong>&#8592; introduction-video</strong></p>
-</li>
-</ul>
+<div class="dlist">
+<dl>
+<dt class="hdlist1"><strong>2025 05 15 16 10 11 &#8594;</strong> <a href="https://www.youtube.com/watch?v=T_361vfjt9c" class="bare">https://www.youtube.com/watch?v=T_361vfjt9c</a></dt>
+<dd>
+<p>A video demonstrating the execution of e2e tests through docker, in a local environment.</p>
+</dd>
+</dl>
+</div>
+<div id="introduction-video" class="dlist">
+<dl>
+<dt class="hdlist1"><strong>2025 05 12 12 12 15 (introduction-video) &#8594;</strong> <a href="https://www.youtube.com/watch?v=hA8L2X4ziOk" class="bare">https://www.youtube.com/watch?v=hA8L2X4ziOk</a></dt>
+<dd>
+<p>A video demonstration the execution of the project (running the e2e tests inside a GitHub codespace).
+At the time this video was recorded I had an issue that still needs to be resolved in <a href="#MostViewedProcessor">[MostViewedProcessor]</a>.</p>
+</dd>
+</dl>
 </div>
 <div style="page-break-after: always;"></div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>9. Next steps</h2>
+<h2 id="next-steps"><a class="anchor" href="#next-steps"></a>9. Ideas for the next steps</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The following steps describe features or activities that could not be delivered when the <a href="#demo-videos">demo videos</a> were created.</p>
+<p>The following ideas describe features or activities that could not be delivered when the <a href="#demo-videos">demo videos</a> were created.
+So, they can be considered as tasks to be developed in subsequent releases.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+The order of these ideas was made completely randomly.
+So, ignore the order below because it must be defined according to Snowplow&#8217;s needs.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="next-steps-fixing-bugs"><a class="anchor" href="#next-steps-fixing-bugs"></a>Do some refactoring</h3>
+<div class="paragraph">
+<p>One of them concerns the processor code that contains duplicated logic. This can undoubtedly be improved.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="next-steps-redpanda-connect"><a class="anchor" href="#next-steps-redpanda-connect"></a>Develop a discounts processor version using Redpanda Connect</h3>
+<div class="paragraph">
+<p>We tried to implement a solution faster using <a href="https://docs.redpanda.com/redpanda-connect/guides/bloblang/about/" target="_blank" rel="noopener">Bloblang</a>. However, besides forcing a learning curve, testing the solutions with the expected requirements was not easy. Therefore, we abandoned this solution until we had a clearer vision of what we wanted to implement.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="next-steps-apache-flink"><a class="anchor" href="#next-steps-apache-flink"></a>Develop a discounts processor version using Apache Flink</h3>
+<div class="paragraph">
+<p>We started to develop a solution using <a href="https://flink.apache.org/" target="_blank" rel="noopener">Apache Flink</a>. However, we abandoned this solution because we were not able to implement the expected requirements using this technology. Anyway, this is a good task to be developed.</p>
 </div>
 <div class="paragraph">
-<p>So, here are some tasks that can be developed for the subsequent releases.</p>
-</div>
-<div class="sect2">
-<h3 id="next-steps-fixing-bugs"><a class="anchor" href="#next-steps-fixing-bugs"></a>9.1. Fix some known bugs and do some refactoring</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>One of the bugs is related to the <a href="../../discounts-processor/e2e/test/MostViewedSingleViewPerProduct.js" class="bare">../../discounts-processor/e2e/test/MostViewedSingleViewPerProduct.js</a>, which currently does not pass.</p>
-</li>
-<li>
-<p>Regarding refactoring, one of them concerns the processor code that contains duplicated logic. This can undoubtedly be improved.</p>
-</li>
-</ol>
+<p>A solution using <a href="https://flink.apache.org/" target="_blank" rel="noopener">Apache Flink</a>, running processors in a Docker container in the same way as was created with <a href="https://kafka.apache.org/documentation/streams" target="_blank" rel="noopener">Kafka Streams</a>, is entirely viable.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="next-steps-redpanda-connect"><a class="anchor" href="#next-steps-redpanda-connect"></a>9.2. Development of a discounts processor version using Redpanda Connect</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>We tried to implement a solution faster using Bloblang. However, besides forcing a learning curve, testing the solutions with the expected requirements was not easy. Therefore, we abandoned this solution until we had a clearer vision of what we wanted to implement.</p>
-</li>
-</ol>
+<h3 id="next-steps-terraform-deployment"><a class="anchor" href="#next-steps-terraform-deployment"></a>Deploy in AWS, via Terraform</h3>
+<div class="paragraph">
+<p><a href="#snowplow-solution-accel1">The first accelerator</a> developed in partnership with OSO demonstrates this.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="next-steps-terraform-deployment"><a class="anchor" href="#next-steps-terraform-deployment"></a>9.3. Deployment via Terraform in a cloud, such as AWS (for example)</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>The first accelerator developed in partnership with OSO demonstrates this.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect2">
-<h3 id="next-steps-presentation-in-front-end"><a class="anchor" href="#next-steps-presentation-in-front-end"></a>9.4. Presentation of the discount event directly on the front end</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
+<h3 id="next-steps-presentation-in-front-end"><a class="anchor" href="#next-steps-presentation-in-front-end"></a>Show the discount event directly in the front end</h3>
+<div class="paragraph">
 <p>Due to the time spent on the backend and the difficulty in implementing the discount processors, we did not have enough time to complete the development of a visualisation of discount events on the frontend. So this is a good task to be developed.</p>
-</li>
-</ol>
+</div>
+<div class="paragraph">
+<p>A quick and straightforward way to implement this is to get the discount event directly from the <code>shopper-discounts</code> topic using an API like <a href="https://kafka.js.org/" target="_blank" rel="noopener">KafkaJS</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="next-steps-testcontainers"><a class="anchor" href="#next-steps-testcontainers"></a>Use TestContainers to implement E2E testing</h3>
+<div class="paragraph">
+<p>Since <a href="#e2e-doc">we create some sort of Bash scripts to implement the E2E testing</a>, we decided not to use <a href="https://www.testcontainers.org/" target="_blank" rel="noopener">TestContainers</a> in the first release. However, this is a good task to be developed.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="next-steps-chat-with-author"><a class="anchor" href="#next-steps-chat-with-author"></a>Chat with Paulo Jerônimo (for more ideas)</h3>
+<div class="paragraph">
+<p>In addition to the ideas above, Paulo Jerônimo has ideas that may be useful for implementing this solution on different platforms or using other technologies, including AI.</p>
 </div>
 </div>
 </div>

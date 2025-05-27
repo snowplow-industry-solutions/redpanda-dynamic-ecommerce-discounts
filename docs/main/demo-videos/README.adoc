@@ -1,4 +1,10 @@
 [[demo-videos]]
 = Demo videos
 
-* [[introduction-video]] Getting started by creating a development environment on GitHub Codespaces *<- introduction-video*
+*2025 05 15 16 10 11 ->* https://www.youtube.com/watch?v=T_361vfjt9c::
+A video demonstrating the execution of e2e tests through docker, in a local environment.
+
+[[introduction-video]] 
+*2025 05 12 12 12 15 (introduction-video) ->* https://www.youtube.com/watch?v=hA8L2X4ziOk::
+A video demonstration the execution of the project (running the e2e tests inside a GitHub codespace).
+At the time this video was recorded I had an issue that still needs to be resolved in <<MostViewedProcessor>>.

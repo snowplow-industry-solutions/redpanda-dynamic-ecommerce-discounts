@@ -5,18 +5,14 @@
 .. {Bash} (version 5.1 or higher). You will run it in a terminal on your macOS, Linux or Windows (in a WSL2 environment).
 .. {Git}.
 .. {Docker} (with `docker compose` support).
-
-. [[required-tools]] Even though <<docker-doc,you can run most of the demonstrations for this project using Docker Compose (see docker-doc)>>, in a test environment, in development, or to generate the documentation you are reading for this project, you will need to have a few more tools installed. To run some scripts provided by this project you will need some additional tools:
-.. {jq}, {yq}
-.. {docker-asciidoctor-builder}
-
+. [[required-tools]] Even though <<docker-doc,you can run most of the demonstrations for this project using Docker Compose (see docker-doc)>>, in a test environment, in development, or to generate the documentation you are reading for this project, you will need to have a few more tools installed. To run some scripts provided by this project you will need some additional tools like {jq}, {yq}, {sponge}, and {docker-asciidoctor-builder}.
 . To create a full development environment, you will also need to install:
-... Java 21
-... Node.js 18
-... Python 3.12
-
-TIP: So, here is *the best tip to run this project*: its much more convenient to use the {DevContainers} to create a development environment. So, check <<running-with-devcontainer,Running with DevContainers>>.
-
+.. Java 21.
+.. Node.js 18.
+.. Python 3.12.
++
+TIP: So, here is the best tip to run this project: *it is much more convenient to use {DevContainers} to setup a development environment because, by creating one, you will have all the required tools installed automatically (inside a docker container)*. So, check <<running-with-devcontainer,Running with DevContainers>>.
++
 . Clone this project with Git and cd to it.
 . [[misc-setup]] Execute this command (*<- misc-setup*):
 +
@@ -27,5 +23,8 @@ $ source scripts/misc/setup.sh
 +
 . Create a file `docker/.env` (from `docker/.env.sample`) and configure the AWS variables on it.
 
-NOTE: You don't need Java or Node.js configured on your machine to follow the steps below.
-*You only need a Bash terminal, a Docker installation, and some <<required-tools,required tools>>.*
+[NOTE]
+.Again...
+====
+*You don't need Java or Node.js configured on your machine if you just want to follow the steps to run the project. You only need a Bash terminal, a Docker installation, and some <<required-tools,required tools>>.*
+====

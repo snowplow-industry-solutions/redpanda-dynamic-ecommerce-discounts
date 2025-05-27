@@ -1,24 +1,45 @@
 [[architecture]]
 = Architecture
 
+[[architecture-diagram]]
+== Diagram
+
+{empty} +
+{empty} +
+{empty} +
 image:architecture.png[]
 
-* [[ecommerce-nextjs-example-store]] The *{uri-ecommerce-nextjs-example-store}[ecommerce-nextjs-example-store]* is a Next.js application that generates tracking events.
-* [[stream-collector]] The *stream-collector* component sends these events via Kinesis to the *<<snowbridge>>* component.
+{empty} +
+{empty} +
+[.lead.text-center]
+*All details are in the next section*.
+
+<<<
+[[architecture-components]]
+== Components
+
+* [[ecommerce-nextjs-example-store]] The *ecommerce-nextjs-example-store* is a {NextJS} application that generates tracking events.
+** This application was developed by Snowplow's team before the creation of this solution accelerator.
+** {uri-ecommerce-nextjs-example-store}.
+* [[stream-collector]] The *stream-collector* component sends these events via {Kinesis} to the *<<snowbridge>>* component.
 * [[snowbridge]] The *snowbridge* component enriches these events, inserts more information (via *<<enrich>>* component), and sends them to <<redpanda>>.
 ** [[enrich]] Read more about the *enrich* component here: https://docs.snowplow.io/docs/pipeline-components-and-applications/enrichment-components/enrich-kinesis/.
 ** Read more about the *snowbridge* component here: https://docs.snowplow.io/docs/destinations/forwarding-events/snowbridge/.
-* [[redpanda]] The *redpanda* broker is receives the events from <<snowbridge>>.
+* [[redpanda]] The *redpanda* broker receives the events from <<snowbridge>> in the input-topic (`snowplow-enriched-good`). The events can be from two types: `product_view` or `page_ping`.
 * For the following components, read details in the <<discounts-processor-doc>>:
 ** [[ContinuousViewProcessor]] The *ContinuousViewProcessor* component implements <<the-first-processor,the first processor>>.
 ** [[MostViewedProcessor]] The *MostViewedProcessor* component implements <<the-second-processor,the second processor>>.
+** Both processors generates a discount event in the output-topic (`shopper-discounts`).
+*** The JSON schema of this event is defined in the file: +
+`schemas/com.snowplow/shopper_discount_applied/jsonschema/1-0-0`.
 ** [[DiscountEventSender]] The *DiscountEventSender* component implements <<the-event-back-to-snowplow,the way to send an event back to Snowplow>>.
-*** Please, also read the additional <<schemas-doc>>.
+*** Basically, it sends the discount event back to Snowplow by sending a POST request to <<stream-collector>>.
+*** Please, read the additional <<schemas-doc>>.
 
 All components in this <<architecture>> run as Docker containers via `docker compose`:
 
-* [[compose-localstack]] The infrastructure to provide the AWS resources locally (Kinesis, DyanmoDB, etc) is created by {LocalStack}, in the file `compose.localstack.yaml`.
+* [[compose-localstack]] The infrastructure to provide the AWS resources locally ({Kinesis}, {DynamoDB}, etc) is created by {LocalStack}, in the file `compose.localstack.yaml`.
 * [[compose-snowplow]] The Snowplow's components (*<<stream-collector>>*, *<<enrich>>*, *<<snowbridge>> and <<iglu-server>>*) are defined in the file `compose.snowplow.yaml`.
 * [[compose-repanda]] Redpanda's infrastructure is provided by the file `compose.redpanda.yaml`.
-* [[compose-ecommerce-nextjs]] The fron end application (*<<ecommerce-nextjs-example-store>>*) is defined in the file `compose.ecommerce-nextjs.yaml`.
+* [[compose-ecommerce-nextjs]] The front-end application (*<<ecommerce-nextjs-example-store>>*) is defined in the file `compose.ecommerce-nextjs.yaml`.
 * [[compose-discounts-processor]] The *<<ContinuousViewProcessor>>*, *<<MostViewedProcessor>>* and *<<DiscountEventSender>>* components executed by {KafkaStreams} which executes a Java application running by Docker through the configuration in the file `compose.discounts-processor.yaml`.

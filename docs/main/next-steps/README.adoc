@@ -1,27 +1,51 @@
 [[next-steps]]
-= Next steps
+= Ideas for the next steps
 
-The following steps describe features or activities that could not be delivered when the <<demo-videos,demo videos>> were created.
+The following ideas describe features or activities that could not be delivered when the <<demo-videos,demo videos>> were created.
+So, they can be considered as tasks to be developed in subsequent releases.
 
-So, here are some tasks that can be developed for the subsequent releases.
+WARNING: The order of these ideas was made completely randomly.
+So, ignore the order below because it must be defined according to Snowplow's needs.
+
+:numbered!:
 
 [[next-steps-fixing-bugs]]
-== Fix some known bugs and do some refactoring
+== Do some refactoring
 
-. One of the bugs is related to the link:../../discounts-processor/e2e/test/MostViewedSingleViewPerProduct.js[], which currently does not pass.
-. Regarding refactoring, one of them concerns the processor code that contains duplicated logic. This can undoubtedly be improved.
+One of them concerns the processor code that contains duplicated logic. This can undoubtedly be improved.
 
 [[next-steps-redpanda-connect]]
-== Development of a discounts processor version using Redpanda Connect
+== Develop a discounts processor version using Redpanda Connect
 
-. We tried to implement a solution faster using Bloblang. However, besides forcing a learning curve, testing the solutions with the expected requirements was not easy. Therefore, we abandoned this solution until we had a clearer vision of what we wanted to implement.
+We tried to implement a solution faster using {Bloblang}. However, besides forcing a learning curve, testing the solutions with the expected requirements was not easy. Therefore, we abandoned this solution until we had a clearer vision of what we wanted to implement.
+
+[[next-steps-apache-flink]]
+== Develop a discounts processor version using Apache Flink
+
+We started to develop a solution using {ApacheFlink}. However, we abandoned this solution because we were not able to implement the expected requirements using this technology. Anyway, this is a good task to be developed.
+
+A solution using {ApacheFlink}, running processors in a Docker container in the same way as was created with {KafkaStreams}, is entirely viable.
 
 [[next-steps-terraform-deployment]]
-== Deployment via Terraform in a cloud, such as AWS (for example)
+== Deploy in AWS, via Terraform
 
-. The first accelerator developed in partnership with OSO demonstrates this.
+<<snowplow-solution-accel1,The first accelerator>> developed in partnership with OSO demonstrates this.
 
 [[next-steps-presentation-in-front-end]]
-== Presentation of the discount event directly on the front end
+== Show the discount event directly in the front end
 
-. Due to the time spent on the backend and the difficulty in implementing the discount processors, we did not have enough time to complete the development of a visualisation of discount events on the frontend. So this is a good task to be developed.
+Due to the time spent on the backend and the difficulty in implementing the discount processors, we did not have enough time to complete the development of a visualisation of discount events on the frontend. So this is a good task to be developed.
+
+A quick and straightforward way to implement this is to get the discount event directly from the `shopper-discounts` topic using an API like {KafkaJS}.
+
+[[next-steps-testcontainers]]
+== Use TestContainers to implement E2E testing
+
+Since <<e2e-doc,we create some sort of Bash scripts to implement the E2E testing>>, we decided not to use {TestContainers} in the first release. However, this is a good task to be developed.
+
+[[next-steps-chat-with-author]]
+== Chat with {author} (for more ideas)
+
+In addition to the ideas above, {author} has ideas that may be useful for implementing this solution on different platforms or using other technologies, including AI.
+
+:numbered:

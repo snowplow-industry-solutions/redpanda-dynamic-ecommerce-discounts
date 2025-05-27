@@ -2,40 +2,46 @@
 = Introduction
 
 [[business-value]]
-== The busissess value of this solution
+== [[business-requirements]] The business value of this solution
 
-This solution allows {Snowplow} users to learn how their components can be integrated with e-commerce solutions to offer discounts dynamically when detecting an hesitant shopper.
+This solution accelerator allows {Snowplow} users to learn how their components can be integrated with e-commerce solutions to offer discounts dynamically when detecting an hesitant shopper.
 
-A hesitant shopper is one who has shown a certain amount of interest in a given product without
-adding it to cart.
+A hesitant shopper is one who has shown a certain amount of interest in a given product without adding it to cart.
 
-This *solution acclerator* implements two complementary ways of offering discounts.
+TIP: This is one of <<snowplow-solution-accelerators,Snowplow’s solution accelerators>> (the second one developed by {author} @ {OSO}). 
+<<snowplow-solution-accel1,Check the first one (snowplow-solution-accel1)>>.
 
-. [[the-first-processor]] The first way to get a discount on a product is to *view it for more than 90 seconds in a 5-minute window*.
-.. In the <<architecture>> section, the <<ContinuousViewProcessor>> implements this feature.
-. [[the-second-processor]] The second way to get a discount on a product is to *view it more than five times in the same 5-minute window*.
-.. In the <<architecture>> section, the <<MostViewedProcessor>> implements this feature.
+This solution implements two complementary ways of offering discounts:
+
+* [[the-first-processor]] The first way to get a discount on a product is to *view it for more than 90 seconds in a 5-minute window*.
+** In the <<architecture>> section, the <<ContinuousViewProcessor>> implements this feature.
+* [[the-second-processor]] The second way to get a discount on a product is to *view it more than five times in the same 5-minute window*.
+** In the <<architecture>> section, the <<MostViewedProcessor>> implements this feature.
 
 [[the-event-back-to-snowplow]]
 After the discount event is generated, one of the situations that can occur in the solution implemented by this accelerator is that it emits the discount event back to the Snowplow pipeline. In the <<architecture>>, this is done by the <<DiscountEventSender>> component.
 
 In addition to offering this possibility, the processors of this implementation already record the discount event in a {Redpanda} topic, allowing any consumer with access to this topic to consume it.
 
-When a discount event is available in the Snowplow pipleline, it can be consumed in some other ways, including:
+When a discount event is available in the Snowplow pipeline, it can be consumed in some other ways, including:
 
-. From the data warehouse, use the {CensusDatasetAPI} to make the discount available to the front end application
-. Using Snowbridge to send the discount to {Braze} for live couponing.
+* From the data warehouse, use the {CensusDatasetAPI} to make the discount available to the front end application
+* Using Snowbridge to send the discount to {Braze} for live couponing.
 
 Detecting high-interest products without purchases is a popular real-time use case for e-commerce.
 
-Although the above definitions seem simple, *<<discounts-processor-doc,implementing dynamic discounts is not trivial (discounts-processor-doc)>>*.
+****
+[.lead.text-center]
+*_Although the above definitions seem simple, <<discounts-processor-doc,implementing dynamic discounts are not a trivial task (read more in discounts-processor-doc)>>_*.
+****
 
 <<<
 == Technologies used
 
-This project is a companion to the {ecommerce-nextjs-example-store}.
+This project is a companion to the <<ecommerce-nextjs-example-store>>.
 
-It allows you to test this it locally, using {LocalStack}, [.line-through]#<<next-steps-terraform-deployment,in the AWS's cloud (via Terraform)>># or {DevContainers} (read <<localstack-devcontainers>>)).
+It allows you to test it locally, using {DevContainers} or {DockerCompose}.
+
 
 ****
 [.lead.text-center]
@@ -47,6 +53,24 @@ This solution was designed so developers can quickly and easily set up their env
 *Watch the <<introduction-video>> for details.*
 ****
 
-What this project does to complement the existence of <<ecommerce-nextjs-example-store>> is to create the entire infrastructure that allows it to be executed <<running-with-docker,via Docker Compose>>, or <<running-with-devcontainer,DevContainer + Docker Compose>> and, ultimately, meet the business requirements.
+What this project does to complement the existence of <<ecommerce-nextjs-example-store>> is to create the entire infrastructure that allows it to be executed <<running-with-docker,via Docker Compose>>, or <<running-with-devcontainer,DevContainer + Docker Compose>> and, ultimately, meet the <<business-requirements,business requirements>>.
 
-So, this solution integrates {LocalStack} with {Snowplow}, {Redpanda} and implements the processors using {KafkaStreams}.
+This solution integrates {LocalStack} with {Snowplow}, {Redpanda} and implements the processors using {KafkaStreams}.
+
+[TIP]
+.So, in short, these are the ways to get started:
+====
+. Using {GitHubCodeSpaces} <- *the easiest way*.
+. Using your own computer:
+.. Through {DevContainers} (read <<running-with-devcontainer>> section) <- *prefer this way*.
+.. Through {DockerCompose} (read <<running-with-docker-compose>> section).
+====
+
+== LICENSE
+
+****
+[.lead.text-center]
+*[.underline]#This is an open-source project#*. +
+{empty} +
+Check the details in the {uri-project-license}[LICENSE^] file.
+****

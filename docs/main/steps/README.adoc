@@ -30,7 +30,7 @@ redpanda
 snowplow
 ----
 +
-. By adding the "-services" to one of the options listed above, you will start only the services listed in the file `copose.<service>.yaml`.
+. By adding the "-services" to one of the options listed above, you will start only the services listed in the file `compose.<service>.yaml`.
 So, this will start only the redpanda services (services listed in `compose.redpanda.yaml`):
 +
 [,console]
@@ -45,7 +45,7 @@ $ up.sh redpanda-services
 $ compose.sh up
 ----
 +
-. Finally, *_if you can don't want to use this script, you can change your current directory to `docker` and use the `docker` commands you alredy know_*.
+. Finally, *_if you can don't want to use this script, you can change your current directory to `docker` and use the `docker` commands you already know_*.
 link:../../docker/README.html[Check this README file].
 ====
 
@@ -91,16 +91,15 @@ For ecommerce interactions we track the following:
 * When they go to the payment step, another {uri-checkout-step-event}[checkout step] event is tracked.
 * When the customer successfully completes a transaction, we track a {uri-transaction-event}[transaction] event (triggered on the server-side but formulated with the spec of Snowplow ecommerce)
 
+<<<
 [[step4]]
 == Step 4 -> Access the redpanda-console and check the generated events
 
 After browsing the [[ecommerce-store]], you can access the [[redpanda-console]] and check the generated events in the topic `snowplow-enriched-good`.
-See these images: {uri-images-dir}/redpanda-1.png[redpanda-1.png], {uri-images-dir}/redpanda-2.png[redpanda-2.png].
 
-You can explore the data format of these events in {uri-enriched-tsv-format}[enriched TSV format].
-In the {uri-raw-messages-dir}[scripts/raw-messages.sample] directory, there are examples of the events recorded by Snowplow when they are transferred to Redpanda.
-These sample TSV files were created by running the script {uri-project-github}/tree/main/scripts/extract-snowplow-raw-messages.sh[extract-snowplow-raw-messages.sh].
-Note: _these are not the events final format of the events sent from <<snowbridge>> component to <<redpanda>>_.
+****
+TIP: Check the <<e2e-doc>> to see how the steps from 1 to 4 are automated.
+****
 
 [[stepX]]
 == Step N -> (optional) Use {LazyDocker} to monitor the containers and logs

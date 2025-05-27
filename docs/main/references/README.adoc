@@ -1,6 +1,10 @@
 [[references]]
 = References
 
+{Snowplow}::
+* [[snowplow-solution-accelerators]] https://snowplow.io/solution-accelerators[Snowplow Solution Accelerators^]
+** [[snowplow-solution-accel1]] https://snowplow.io/solution-accelerators/kafka-live-viewer-profiles[Kafka Live Viewer Profiles^] *<- snowplow-solution-accel1*.
+
 {LocalStack}::
 * https://docs.localstack.cloud/
 * [[localstack-devcontainers]] https://docs.localstack.cloud/user-guide/integrations/devcontainers/ *<- localstack-devcontainers*
