@@ -3,8 +3,11 @@
 # Dynamic Ecommerce Discounts with Redpanda
 
 [![License][license-image]][license]
+[![Docs][guide-image]][docs-main]
+[![Snowplow Developer Hub][devhub-image]][solution-accelerators]
+[![Open in Codespaces][codespaces-image]][codespaces]
 
-A [Snowplow solution accelerator][solution-accelerators] showing how dynamic discounts can be applicable to an ecommerce store.
+A [Snowplow solution accelerator][solution-accelerators] showing how dynamic discounts can be applicable to an ecommerce store. Leveraging Snowplow, Apache Kafka and Redpanda. Written in Java by our friends at [OSO][oso].
 
 ## Quickstart
 
@@ -36,6 +39,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 [solution-accelerators]: https://snowplow.io/solution-accelerators
+[devhub-image]: https://img.shields.io/badge/Snowplow-Developer%20Hub-6638f0
 
 [oso]: https://oso.sh/?utm_source=snowplow&utm_medium=web&utm_campaign=solution_accelerator
 
@@ -43,3 +47,7 @@ limitations under the License.
 [license-image]: https://img.shields.io/github/license/snowplow/snowplow-android-tracker
 
 [docs-main]: https://htmlpreview.github.io/?https://github.com/osodevops/dynamic-ecommerce-discounts-with-redpanda/blob/main/docs/main/README.html
+[guide-image]: https://img.shields.io/badge/📚-Documentation-blue
+
+[codespaces]: https://codespaces.new/snowplow-industry-solutions/redpanda-dynamic-ecommerce-discounts
+[codespaces-image]: https://img.shields.io/badge/Open%20in-Codespaces-black.svg?logo=github
