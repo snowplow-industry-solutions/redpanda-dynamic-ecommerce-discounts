@@ -7,7 +7,9 @@
 [![Snowplow Developer Hub][devhub-image]][solution-accelerators]
 [![Open in Codespaces][codespaces-image]][codespaces]
 
-A [Snowplow solution accelerator][solution-accelerators] showing how dynamic discounts can be applicable to an ecommerce store. Leveraging Snowplow, Apache Kafka and Redpanda. Written in Java by our friends at [OSO][oso].
+A [Snowplow solution accelerator][solution-accelerators] showing how dynamic discounts can be applicable to an ecommerce store. Leveraging Snowplow, Apache Kafka and Redpanda.
+
+Written in Java by our friends at [OSO][oso].
 
 ## Quickstart
 
